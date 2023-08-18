@@ -23,7 +23,7 @@ class ChatServer {
     
     this.messageQueue = []; // Queue to store messages from clients
     this.isProcessing = false; // Flag to track if a message is being proce
-    this.llamachild = spawn(consfig.llamacpp, config.params);
+    this.llamachild = spawn(config.llamacpp, config.params);
     console.log(config.params.join(" "));
     this.buffer = '';
   
@@ -117,7 +117,7 @@ class ChatServer {
 
   start() {
     this.server.listen(this.serverPort, this.serverIpAddress, () => {
-    console.log("Server Running on:", this.serverIpAddress+this.serverPort)
+    console.log("Server Running on:", this.serverIpAddress+":"+this.serverPort);
     });
   }
 }
