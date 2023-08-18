@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/bootstrap.min.css?v=<%= version %>" />
+  <link rel="stylesheet" href="css/index.css?v=<%= version %>" />
+  <script type="text/javascript" src="/js/socket.io.js"></script>
+  <script type="text/javascript" src="js/client.js?v=<%= version %>"></script>
+  <title><%= title %></title>
+</head>
+<body>
+  <div class="container chat-container">
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="input-container">
+      <textarea id="messageInput" tabindex="0" rows="1" placeholder="Ask a question" class="form-control"></textarea>
+      <button id="sendMessage" class="btn btn-primary">Send</button>
+    </div>
+  </div>
+  <script>
+    let iphostname =<%- JSON.stringify(hostname) %>;
+    let port = <%- JSON.stringify(port) %>;
+    cui.init(iphostname, port);
+  </script>
+  
+</body>
+</html>
+
+
+
