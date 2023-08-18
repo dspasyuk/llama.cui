@@ -20,7 +20,7 @@ config.params = [
 	  '-t',
 	  '8'
 	];
-config.llamacpp="../../llama.cpp/main"
+config.llamacpp="../llama.cpp/main"
 config.PORT = "5000";
 config.IP= "localhost";
 	
