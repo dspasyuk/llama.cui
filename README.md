@@ -11,13 +11,19 @@ git clone https://github.com/ggerganov/llama.cpp.git
   2.Build Lllama.cpp with GPU support
 cd llama.cpp
 sed -i 's/export NVCCFLAGS="-arch=native"/export NVCCFLAGS="-arch=all"/' llama.cpp/Makefile
+
 make clean && LLAMA_CUBLAS=1 make -j
   3. Clone llcui
 git clone https://github.com/deonis1/llcui
+
   4. Set your configuration parameters
 cd llcui
+
 npm install
+
 Open config.js and change hostname, port, path to llama.cpp main file, and the model name/path
+
 ## Usage
 To run just type:
+
 npm start
