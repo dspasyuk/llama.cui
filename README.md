@@ -21,7 +21,7 @@ make clean && LLAMA_CUBLAS=1 make -j
    
 git clone https://github.com/deonis1/llcui
 
-4. Set your configuration parameters
+4. Install the project and set your configuration parameters
   
 cd llcui
 
