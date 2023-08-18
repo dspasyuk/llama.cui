@@ -1,6 +1,6 @@
 # llcui small llama.ccp wrapper for Node.js
 
-This is work in progress ...
+**Note: This project is a work in progress.**
 
 This project provides a Node.js server for a chat user interface (UI) that interacts with the Llama.cpp library. It allows users to communicate with the Llama.cpp application via a web-based chat interface.
 
