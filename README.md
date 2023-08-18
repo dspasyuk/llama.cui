@@ -6,7 +6,7 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
 ## Installation
 
-  1. Clone the repository:
+1. Clone the repository:
 git clone https://github.com/ggerganov/llama.cpp.git
   
   2.Build Lllama.cpp with GPU support
