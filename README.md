@@ -1,5 +1,7 @@
 # llcui small llama.ccp wrapper for Node.js
 
+This is work in progress ...
+
 This project provides a Node.js server for a chat user interface (UI) that interacts with the Llama.cpp library. It allows users to communicate with the Llama.cpp application via a web-based chat interface.
 
 ## Installation
@@ -14,4 +16,8 @@ make clean && LLAMA_CUBLAS=1 make -j
 git clone https://github.com/deonis1/llcui
   4. Set your configuration parameters
 cd llcui
+npm install
 Open config.js and change hostname, port, path to llama.cpp main file, and the model name/path
+## Usage
+To run just type:
+npm start
