@@ -28,7 +28,7 @@ cui.init = function (iphostname, port) {
 
 cui.listGenerate = function(){
   let allData = cui.getAlldata();
-  if (allData.length>0){
+  if (Object.keys(allData).length !== 0){
     var chatList = Object.keys(allData).map((cid) => {
       return { id: cid, text: JSON.parse(allData[cid])[0].user.toString().substring(1, 25).replace('"', ''), href: "" };
     });
