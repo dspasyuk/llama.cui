@@ -3,10 +3,10 @@
 var config = {}
 config.params = [
 	  '--model',
-	  '../../models/vicuna-7b-v1.5.ggmlv3.q5_1.bin',
+	  '../../models/orca_mini_v3_7b.ggmlv3.q5_K_M.bin',
 	  '--n-gpu-layers',
-	  '18',
-	  '-ins', '-b', '256',
+	  '34',
+	  '-ins', '-b', '2048',
 	  '--ctx_size',
 	  '2048',
 	  '--temp', '0.3',
@@ -16,7 +16,7 @@ config.params = [
 	'storage',
     '--multiline-input',
 	  '--repeat_penalty',
-	  '1.1',
+	  '1',
 	  '-t',
 	  '8'
 	];

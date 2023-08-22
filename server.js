@@ -12,7 +12,7 @@ const http = require('http');
 const socketIO = require('socket.io');
 var cors = require('cors');
 const path = require('path');
-const version = 0.01; 
+const version = 0.03; 
 // const { parseOutput } = require('langchain/output_parser');
 const config = require('./config.js');
 
@@ -28,6 +28,15 @@ class ChatServer {
     this.buffer = '';
   
     this.llamachild.stdout.on('data', (msg) => this.handleLlama(msg));
+
+    // Listen for the 'exit' event to handle process exit.
+    this.llamachild.on('exit', (code, signal) => {
+      if (code !== null) {
+        console.log(`Child process exited with code ${code}`);
+      } else if (signal !== null) {
+        console.log(`Child process terminated by signal ${signal}`);
+      }
+    });
     this.serverIpAddress = config.IP;
     this.serverPort = config.PORT;
 
@@ -60,6 +69,12 @@ class ChatServer {
     });
   }
 
+  handleLlamaError(error) {
+    console.error('An error occurred in the llama child process:', error);
+    // Handle the error appropriately, e.g., logging, cleanup, etc.
+    }
+  
+
   handleLlama(msg) {
     
     this.buffer += msg.toString('utf-8');
@@ -70,7 +85,7 @@ class ChatServer {
       this.buffer = this.buffer.substring(lastSpaceIndex + 1);
       // output = parseOutput(output); 
       this.io.to(this.socketId).emit('output', output);
-      if(output.includes(">")){
+      if(output.includes("\n>")){
         this.messageQueue.splice(0,1);
         this.isProcessing = false;
         
