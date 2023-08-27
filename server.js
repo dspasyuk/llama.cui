@@ -12,7 +12,7 @@ const http = require('http');
 const socketIO = require('socket.io');
 var cors = require('cors');
 const path = require('path');
-const version = 0.03; 
+const version = 0.04; 
 // const { parseOutput } = require('langchain/output_parser');
 const config = require('./config.js');
 
@@ -24,7 +24,7 @@ class ChatServer {
     this.messageQueue = []; // Queue to store messages from clients
     this.isProcessing = false; // Flag to track if a message is being proce
     this.llamachild = spawn(config.llamacpp, config.params);
-    console.log(config.params.join(" "));
+    console.log(config.llamacpp + " "+ config.params.join(" "));
     this.buffer = '';
   
     this.llamachild.stdout.on('data', (msg) => this.handleLlama(msg));
@@ -67,7 +67,15 @@ class ChatServer {
         port:this.serverPort
       })
     });
+
+    this.app.post('/stopper', async (request,response) => {
+      console.log(request.body);
+      this.llamachild.kill("SIGINT");
+      response.send({message:"stopped"});
+    })
   }
+  
+  
 
   handleLlamaError(error) {
     console.error('An error occurred in the llama child process:', error);

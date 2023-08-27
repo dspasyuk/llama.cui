@@ -2,8 +2,9 @@ function cui() {};
 
 cui.init = function (iphostname, port) {
   cui.md = window.markdownit({
+    breaks: true,   
     highlight: (str, lang) => {
-      // console.log(lang, hljs.getLanguage(lang));
+      console.log(lang, hljs.getLanguage(lang));
       if (lang && hljs.getLanguage(lang)) {
         
         try {
@@ -15,6 +16,7 @@ cui.init = function (iphostname, port) {
   });
 
   cui.messageInput = document.getElementById("messageInput");
+  this.synth = window.speechSynthesis;
   cui.sendMessageButton = document.getElementById("sendMessage");
   cui.iphostname = iphostname;
   cui.port = port;
@@ -28,9 +30,12 @@ cui.init = function (iphostname, port) {
 
 cui.listGenerate = function(){
   let allData = cui.getAlldata();
+  console.log(allData);
   if (Object.keys(allData).length !== 0){
-    var chatList = Object.keys(allData).map((cid) => {
-      return { id: cid, text: JSON.parse(allData[cid])[0].user.toString().substring(1, 25).replace('"', ''), href: "" };
+    var chatList = Object.keys(allData).map((chat) => {
+      let theid = Object.keys(allData[chat])[0];
+      console.log(chat, theid);
+      return { id: chat, text: allData[chat][theid]["user"].toString().substring(0, 25).replace('"', ''), href: "" };
     });
     let list = "";
     for (let i = 0; i < chatList.length; i++) {
@@ -39,21 +44,27 @@ cui.listGenerate = function(){
     }
     document.getElementById("savedChats").innerHTML = list; 
   }
-
-
 }
 
-cui.loadMessage = function(theid){
-  let messages = cui.getMessageTree(theid);
-  console.log(theid, messages);
-  cui.currentTile = theid;
+cui.loadMessage = function(chat){
+  let messages = Object.values(cui.getMessageTree(chat));
+  console.log(chat, messages);
+  cui.currentChat= chat;
   const chatMessages = document.getElementById("chatMessages");
   chatMessages.innerHTML ="";
   for(let m=0; m<messages.length; m++){
     cui.createUserTile(messages[m].user);
-    cui.createBotTile(cui.md.render(messages[m].bot));
+    cui.createBotTile(messages[m].bot);
   }
   
+}
+
+cui.onNewChart = function(){
+  cui.currentTile = null;
+  cui.messageId = "";
+  cui.currentChat = cui.getcurrentChat();
+  const chatMessages = document.getElementById("chatMessages");
+  chatMessages.innerHTML ="";
 }
 
 cui.socketInit = function () {
@@ -68,9 +79,12 @@ cui.socketInit = function () {
       text += " "+response
       cui.currentTile.innerHTML =  cui.md.render(text);
       message = cui.getMessageById(cui.messageId);
-      message.bot = JSON.stringify(text);
-      cui.setMessage(message, cui.messageId);
+      console.log(message, cui.messageId);
+      message.bot = cui.md.render(text.replace("\n\n", "\n"));
+      cui.setMessage(message);
+      // cui.speakIt(text.replace("\n>", ""));
       text = "";
+      cui.hideStop();
 
     } else {
       if (!cui.currentTile || cui.currentTile.classList.contains("user-tile")) {
@@ -79,6 +93,7 @@ cui.socketInit = function () {
         cui.currentTile.textContent += " " + response;
         text += " "+response;
         cui.currentTile.innerHTML =  cui.md.render(text);
+        
       }
     }
 
@@ -100,6 +115,11 @@ cui.socketInit = function () {
   });
 };
 
+cui.speakIt =  function(text){
+  let utterThis = new SpeechSynthesisUtterance();
+  utterThis.text = text;
+  this.synth.speak(utterThis);
+}
 
 cui.createBotTile = function (content) {
   this.createTile(content, "bot-tile"); //prettyprint
@@ -117,9 +137,7 @@ cui.createTile = function (content, tileClass) {
   cui.currentTile = tileElement;
 };
 
-cui.askQuestion = function (question) {
-  this.createUserTile(question);
-};
+
 
 cui.get_random_id = function () {
      return (
@@ -137,10 +155,12 @@ cui.sendMessage = function () {
   const input = messageInput.value.trim(); // Get the message content
   if (input !== "") {
     cui.socket.emit("message", { message: input + "\\", socketid: socketid });
-    cui.askQuestion(input); // Create a new user tile for the question
+    cui.createUserTile(input); // Create a new user tile for the question
     cui.messageId = cui.get_random_id();
-    cui.setMessage({id: cui.messageId, user:JSON.stringify(input), bot:""})
+    cui.setMessage({id: cui.messageId, user:input, bot:""})
     cui.createBotTile("");
+    cui.listGenerate();
+    cui.showStop();
     messageInput.value = "";
   }
 };
@@ -158,39 +178,67 @@ cui.returnWatcher = function () {
   });
 };
 
+cui.showStop = function (){
+  const stop = document.getElementById("stop");
+  stop.style.display = "block";
+}
+
+cui.hideStop = function (){
+  const stop = document.getElementById("stop");
+  stop.style.display = "none";
+}
+
+cui.stopGenerating = function (){
+  fetch('/stopper', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ message: 'stop' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Server response:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
 cui.getcurrentChat = function(){
   var tN = Object.keys(cui.getAlldata()).length;
   return `C${tN}` || [];
 }
 
 cui.getAlldata = function() {
-  return { ...localStorage } || {};
-}
-
-cui.getMessages = function() {
-  return JSON.parse(localStorage.getItem('messages')) || [];
+  return JSON.parse(localStorage.getItem("llcui")) || {};
 }
 
 // Function to set a new message
-cui.setMessage = function(message, id) {
-  const messages = JSON.parse(localStorage.getItem(cui.currentChat)) || [];
-  messages.push(message);
-  localStorage.setItem(cui.currentChat, JSON.stringify(messages));
+cui.setMessage = function(message) {
+  const messages = cui.getAlldata();
+  if (messages[cui.currentChat]!==undefined){
+    messages[cui.currentChat][cui.messageId] = message;
+  }else{
+    messages[cui.currentChat] ={};
+    messages[cui.currentChat][cui.messageId] = message;
+  }
+  localStorage.setItem("llcui", JSON.stringify(messages));
 }
 
 // Function to delete a message by its ID
 cui.deleteChats = function(chat) {
-  let chats = cui.getAlldata;
-  delete chats[chat]
+  localStorage.setItem("llcui", JSON.stringify({}))
 }
 
 cui.getMessageTree = function(id) {
-  const messages = JSON.parse(localStorage.getItem(id)) || [];
-  return messages || {};
+  let messages = cui.getAlldata();
+  return messages[id] || {};
 }
 
 cui.getMessageById = function(id) {
-  const messages = JSON.parse(localStorage.getItem(cui.currentChat)) || [];
-  const message = messages.find(message => message.id === id);
+  const chats = cui.getAlldata();
+  console.log(chats);
+  const message = chats[cui.currentChat][id];
   return message || {};
 }

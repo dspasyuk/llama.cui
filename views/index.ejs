@@ -17,12 +17,23 @@
   <!-- <script>hljs.highlightAll()</script> -->
   <title><%= title %></title>
 </head>
+<style>
+.hljs {
+  color: #073802;
+  background: #28293629;
+  border-radius: var(--border-radius-1);
+  border: 1px solid var(--blur-border);
+  font-size: 15px;
+}
+
+
+</style>
 <body>
   <div class="container-fluid">
     <div class="row">
       <!-- Left Sidebar -->
       <div class="col-md-3 rightsidebar">
-        <button class="btn btn-outline-light" style="margin-top:10px; margin-bottom: 10px; width:100%">New Chat</button>
+        <button  onclick ="cui.onNewChart()" class="btn btn-outline-light" style="margin-top:10px; margin-bottom: 10px; width:100%">New Chat</button>
       <div class="sidebar">
         <div>
           <ul class="list-group" id ="savedChats"></ul>
@@ -34,6 +45,8 @@
       <!-- Main Chat Container -->
       <div class="col-md-9 chat-container">
         <div class="chat-messages" id="chatMessages"></div>
+        <div class="stopper" id ="stop">
+        <button id="stopgenerator" onclick="cui.stopGenerating()" type="button" class="btn btn-outline-secondary">Stop generating</button></div>
         <div class="input-container">
           <textarea id="messageInput" tabindex="0" rows="1" placeholder="Ask a question" class="form-control"></textarea>
           <button id="sendMessage" type="button" class="btn btn-outline-dark">Send</button>
