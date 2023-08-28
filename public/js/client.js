@@ -21,6 +21,7 @@ cui.init = function (iphostname, port) {
   cui.iphostname = iphostname;
   cui.port = port;
   cui.messageId = "";
+  cui.isClicked=false;
   cui.socketInit();
   cui.listGenerate();
   cui.currentChat = cui.getcurrentChat();
@@ -30,25 +31,41 @@ cui.init = function (iphostname, port) {
 
 cui.listGenerate = function(){
   let allData = cui.getAlldata();
-  console.log(allData);
   if (Object.keys(allData).length !== 0){
     var chatList = Object.keys(allData).map((chat) => {
       let theid = Object.keys(allData[chat])[0];
-      console.log(chat, theid);
       return { id: chat, text: allData[chat][theid]["user"].toString().substring(0, 25).replace('"', ''), href: "" };
     });
     let list = "";
     for (let i = 0; i < chatList.length; i++) {
       const item = chatList[i];
-      list += `<li class="dark" onclick="cui.loadMessage(this.id)" id=${item.id}><div class="list-group-item">${item.text}</div></li>`;
+      list += `<li class="dark"  > <div style="width:100%" class="list-group-item-container"><div id=${item.id} style="width:75%" onclick="cui.loadMessage(this.id)" class="list-group-item">${item.text}</div><button id="${item.id}_del" onclick="cui.deleteButtons(this.id)" class="noborder">  <img class="trashicon" src="img/trash.svg#trash" alt="*"></button></div></li>`;
     }
     document.getElementById("savedChats").innerHTML = list; 
   }
 }
 
+cui.deleteButtons = function(theid){
+    if (cui.isClicked) {
+      clearTimeout(timer);
+      cui.isClicked = false;
+      document.getElementById(theid.replace("_del", "")).remove();
+      document.getElementById(theid).remove();
+      cui.removeMessageTree(theid.replace("_del", ""));
+    } else {
+      cui.isClicked = true;
+      document.getElementById(theid).classList.add("remove");
+      timer = setTimeout(() => {
+        cui.isClicked = false;
+        document.getElementById(theid).classList.remove("remove");
+      }, 2000);
+    }
+}
+
+
 cui.loadMessage = function(chat){
   let messages = Object.values(cui.getMessageTree(chat));
-  console.log(chat, messages);
+  console.log("adsdas", chat);
   cui.currentChat= chat;
   const chatMessages = document.getElementById("chatMessages");
   chatMessages.innerHTML ="";
@@ -138,7 +155,6 @@ cui.createTile = function (content, tileClass) {
 };
 
 
-
 cui.get_random_id = function () {
      return (
       "id" +
@@ -150,6 +166,7 @@ cui.deleteMessages = function(){
   localStorage.clear();
   document.getElementById("savedChats").innerHTML="";
 }
+
 
 cui.sendMessage = function () {
   const input = messageInput.value.trim(); // Get the message content
@@ -235,6 +252,13 @@ cui.getMessageTree = function(id) {
   let messages = cui.getAlldata();
   return messages[id] || {};
 }
+
+cui.removeMessageTree = function(id) {
+  let messages = cui.getAlldata();
+  delete messages[id];
+  localStorage.setItem("llcui", JSON.stringify(messages));
+}
+
 
 cui.getMessageById = function(id) {
   const chats = cui.getAlldata();
