@@ -1,4 +1,4 @@
-# llcui small llama.ccp wrapper for Node.js
+# Chat UI small llama.ccp wrapper for Node.js
 
 **Note: This project is a work in progress.**
 
@@ -18,7 +18,7 @@ sed -i 's/-arch=native/-arch=all/g' Makefile
 
 make clean && LLAMA_CUBLAS=1 make -j
 
-3. Clone llcui
+3. Clone CUI
    
 git clone https://github.com/deonis1/llcui
 
