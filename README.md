@@ -35,3 +35,7 @@ To run just type:
 
 npm start
 ![Screenshot](https://github.com/deonis1/llcui/blob/main/Screenshot.png)
+
+## Embeddings
+CUI supports embeddings from text file (see doc folder) and mongodb (npm install mongo and config.js to configure database) 
+
