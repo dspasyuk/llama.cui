@@ -77,8 +77,8 @@ vdb.pullDocuments = async function(query){
 
 vdb.pullDatabase = async function(){
     const mdb = require('./mgdb.js');
-    var mjdb = new mdb("mongodb://localhost:27017", "fortknox");
-    var documents = await mjdb.find("clientlist", {});
+    var mjdb = new mdb("mongodb://localhost:27017", config.mongoDatabase.database);
+    var documents = await mjdb.find(config.mongoDatabase.collection, {});
     for (let i = 0; i < documents.length; i++) {
         await this.addItem(vdb.sentanceCompose(documents[i]));
     }
