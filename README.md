@@ -20,7 +20,7 @@ make clean && LLAMA_CUBLAS=1 make -j
 
 3. Clone CUI
    
-git clone https://github.com/deonis1/llcui
+git clone https://github.com/deonis1/cui
 
 4. Install the project and set your configuration parameters
   
