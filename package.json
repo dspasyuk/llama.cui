@@ -1,6 +1,6 @@
 {
-  "name": "llcui",
-  "version": "1.0.0",
+  "name": "cui",
+  "version": "0.0.7",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -10,8 +10,12 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@xenova/transformers": "^2.5.4",
     "ejs": "^3.1.9",
     "express": "^4.18.2",
-    "socket.io": "^4.7.2"
+    "npm": "^10.0.0",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2",
+    "vectra": "^0.2.2"
   }
 }

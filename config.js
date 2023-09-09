@@ -3,26 +3,32 @@
 var config = {}
 config.params = [
 	  '--model',
-	  '../../models/orca_mini_v3_7b.ggmlv3.q5_K_M.bin',
+	    // '../../models/codellama-13b-oasst-sft-v10.ggmlv3.Q5_K_S.bin',
+	    // '../../models/openorca-platypus2-13b.ggmlv3.q5_0.bin',
+	    '../../models/orca_mini_v3_7b.ggmlv3.q5_0.bin',
 	  '--n-gpu-layers',
-	  '34',
+	  '24',
 	  '-ins', '-b', '2048',
 	  '--ctx_size',
 	  '2048',
-	  '--temp', '0.3',
+	  '--temp', '0.1',
 	  '--top_k',
-	  '100',
-    '--prompt-cache', 
-	'storage',
+	  '1000',
+    // '--prompt-cache', 
+	// 'storage',
     '--multiline-input',
 	  '--repeat_penalty',
-	  '1',
+	  '1.1',
 	  '-t',
 	  '8'
 	];
 config.llamacpp="../llama.cpp/main"
 config.PORT = "5000";
 config.IP= "localhost";
+config.mongoDatabase = {database:false, collection:false};
+config.DataFolder = './docs';
+config.embedding = {database:false, documents:true};
+config.embeddingPrefix= "Given the following information ";
 	
 try {
   module.exports = exports = config;

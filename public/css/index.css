@@ -2,13 +2,32 @@ body {
   font-family: Arial, sans-serif;
   background-color: rgb(255, 255, 255);
 }
-.row{
-flex-wrap: nowrap!important;
+
+.row {
+  flex-wrap: nowrap !important;
+}
+
+.toolbar{
+  border-bottom: 1px solid #686868;
+  width: 100%;
+  margin-bottom:10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+textarea:focus {
+  outline: none!important;
+  box-shadow: none!important;
+  border: 1px;
+}
+
+textarea {
+  resize: none;
 }
 
 .chat-container {
   position: relative;
-  max-width: 100vw;
+  max-width: 80vw;
   max-height: 90vh;
   margin: 5px auto;
   /* border-right: 1px solid #ccc;
@@ -22,21 +41,28 @@ flex-wrap: nowrap!important;
   height: 75vh;
   overflow-y: scroll;
   padding-top: 10px;
-  padding-bottom: 60px;
+  padding-bottom: 10px;
   margin-top: 10px;
-  margin-bottom: 30px;
+  margin-bottom: 50px;
 }
+
 .input-container {
   max-height: 20vh;
   display: flex;
 }
+
 .input-container textarea {
   flex-grow: 1;
-  padding: 10px;
-  height: 50px;
-  border: 1px solid #343a40;
+  padding: 16px;
+  height: 60px;
+  border-top: 1px solid #343a40;
+  border-bottom: 1px solid #343a40;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-left-radius: 0;
+  white-space: normal;
+  text-align: justify;
 }
 
 .user-tile {
@@ -47,14 +73,14 @@ flex-wrap: nowrap!important;
 }
 
 .bot-tile {
-  background-color: rgb(228, 232, 228);
+  background-color: rgb(208, 252, 208);
   padding: 10px;
   padding-left: 100px;
   border-radius: 10px;
   margin-bottom: 10px;
 }
 
-#sendMessage{
+#sendMessage {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
@@ -62,27 +88,43 @@ flex-wrap: nowrap!important;
 ul {
   list-style: none;
 }
-
+.btn{
+  padding:0;
+}
 .list-group {
   background-color: rgb(53, 51, 51);
 }
+
 .list-group-item {
-  background-color: rgb(53, 51, 51);
-  color: #ffffff;
-  border-left: none;
-  border-right: none;
-  border-top: 1px solid rgb(83, 83, 83);
-  border-radius: 0 !important;
+  background-color: rgb(80, 77, 77);
+  color: #e6e6e6;
+  border: none;
+  padding: 5px;
+  margin-bottom:0;
+  margin-left: 2px;
+  border-radius: 5px;
+ 
 }
 .list-group-item:hover {
   cursor: pointer;
-  background-color: rgb(110, 109, 109);
+  background-color: rgb(112, 108, 108)
+}
+
+
+.list-group-item-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgb(80, 77, 77);
+  border-radius: 5px !important;
+  margin-bottom: 5px;
+  height: 40px;
 }
 
 .rightsidebar {
   background-color: rgb(53, 51, 51);
   max-width: 300px;
-  height:100vh;
+  height: 100vh;
 }
 
 .sidebar {
@@ -94,55 +136,40 @@ ul {
 .sidebar::-webkit-scrollbar {
   display: none;
 }
-.stopper{
+.stopper {
   width: 100%;
   height: 50px;
   margin-bottom: 10px;
   margin-top: -60px;
   text-align: center;
   /* border: 1px solid #CCC; */
+  z-index: 1000;
   display: none;
 }
 
-.noborder{
-  display: block;
+.noborder {
+  /* display: block; */
   /* border-radius: 0!important; */
-  height:35px!important;
-  width:36px!important;
+  height: 35px !important;
+  width: 35px !important;
   border-radius: 5px !important;
-  border: 1px solid #414040;
-  background-color: rgb(53, 51, 51);
-  outline: none !important;
+  border: none;
+ 
+  background-color: rgb(80, 77, 77);
+  outline: 0 !important;
 }
 
-.noborder:hover{
+.noborder:hover {
   background-color: rgb(112, 108, 108);
-  cursor:pointer;
+  cursor: pointer;
 }
-.remove{
-  background-color: #f18f8f!important;
+.remove {
+  background-color: #f18f8f !important;
   /* border: 1px solid #db0404!important; */
-  color:#faf9f9!important;
+  color: #faf9f9 !important;
 }
 
-.list-group-item-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 
-/* Add margin to the button */
-.list-group-item-container button {
-  margin-right: 10px;
-  /* background-color: rgb(255, 255, 255); */
-}
-
-.trashicon {
-  width:20px; 
-  height:20px;
-  text-align: center;
-  fill: red;
-}
 
 @media (max-width: 767px) {
   .rightsidebar {
@@ -153,6 +180,23 @@ ul {
   }
 }
 
-textarea {
-  resize: none;
+.embed{
+  padding-top:14px; 
+  padding-bottom:14px; 
+  padding-left:10px; 
+  margin-left: 10px;
+  width:60px;
+  display: flex;
+  background-color: rgb(238, 241, 245);
+  border:1px solid #5e5e5e;
+  border-top-right-radius:0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius:5px;
+  border-bottom-left-radius: 5px;
+}
+.embed-check{
+  padding: 3px;
+}
+.embed-icon{
+  padding: 3px;
 }

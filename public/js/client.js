@@ -39,7 +39,7 @@ cui.listGenerate = function(){
     let list = "";
     for (let i = 0; i < chatList.length; i++) {
       const item = chatList[i];
-      list += `<li class="dark"  > <div style="width:100%" class="list-group-item-container"><div id=${item.id} style="width:75%" onclick="cui.loadMessage(this.id)" class="list-group-item">${item.text}</div><button id="${item.id}_del" onclick="cui.deleteButtons(this.id)" class="noborder">  <img class="trashicon" src="img/trash.svg#trash" alt="*"></button></div></li>`;
+      list += `<li class="dark"  > <div style="width:100%" class="list-group-item-container"><div id=${item.id} style="width:78%" onclick="cui.loadMessage(this.id)" class="list-group-item">${item.text}</div><button title="Delete Chat" id="${item.id}_del" onclick="cui.deleteButtons(this.id)" class="noborder"> <i class="fas fa-trash"></i></button></div></li>`;
     }
     document.getElementById("savedChats").innerHTML = list; 
   }
@@ -163,22 +163,25 @@ cui.get_random_id = function () {
   };
 
 cui.deleteMessages = function(){
-  localStorage.clear();
-  document.getElementById("savedChats").innerHTML="";
+  if (window.confirm("Do you really want to delete the chats?")) {
+    localStorage.clear();
+    document.getElementById("savedChats").innerHTML="";
+  }
 }
 
 
 cui.sendMessage = function () {
-  const input = messageInput.value.trim(); // Get the message content
+  const input = cui.messageInput.value.trim(); // Get the message content
+  const embedcheck = document.getElementById("embed");
   if (input !== "") {
-    cui.socket.emit("message", { message: input + "\\", socketid: socketid });
+    cui.socket.emit("message", { message: input, socketid: socketid, embedding:embedcheck.checked });
     cui.createUserTile(input); // Create a new user tile for the question
     cui.messageId = cui.get_random_id();
     cui.setMessage({id: cui.messageId, user:input, bot:""})
     cui.createBotTile("");
     cui.listGenerate();
     cui.showStop();
-    messageInput.value = "";
+    cui.messageInput.value = "";
   }
 };
 
@@ -206,6 +209,7 @@ cui.hideStop = function (){
 }
 
 cui.stopGenerating = function (){
+  console.log("STOPPING");
   fetch('/stopper', {
     method: 'POST',
     headers: {
