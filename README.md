@@ -36,6 +36,6 @@ To run just type:
 npm start
 
 ## Embeddings
-CUI supports embeddings from text file (see doc folder) and mongodb (do npm install mongo and make changes to config.js to configure database) 
+CUI supports embeddings from text file (see docs folder) and mongodb (do npm install mongo and make changes to config.js to configure database) 
 ![Screenshot](https://github.com/deonis1/llcui/blob/main/Screenshot_2.png)
 
