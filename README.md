@@ -34,7 +34,6 @@ Open config.js and change hostname, port, path to llama.cpp main file, and the m
 To run just type:
 
 npm start
-![Screenshot](https://github.com/deonis1/llcui/blob/main/Screenshot.png)
 
 ## Embeddings
 CUI supports embeddings from text file (see doc folder) and mongodb (do npm install mongo and make changes to config.js to configure database) 
