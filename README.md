@@ -24,7 +24,7 @@ git clone https://github.com/deonis1/cui
 
 4. Install the project and set your configuration parameters
   
-cd llcui
+cd cui
 
 npm install
 
