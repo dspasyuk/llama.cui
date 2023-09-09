@@ -3,9 +3,7 @@
 var config = {}
 config.params = [
 	  '--model',
-	    // '../../models/codellama-13b-oasst-sft-v10.ggmlv3.Q5_K_S.bin',
-	    // '../../models/openorca-platypus2-13b.ggmlv3.q5_0.bin',
-	    '../../models/orca_mini_v3_7b.ggmlv3.q5_0.bin',
+	  '../../models/orca_mini_v3_7b.ggmlv3.q5_0.bin',
 	  '--n-gpu-layers',
 	  '24',
 	  '-ins', '-b', '2048',
@@ -14,9 +12,7 @@ config.params = [
 	  '--temp', '0.1',
 	  '--top_k',
 	  '1000',
-    // '--prompt-cache', 
-	// 'storage',
-    '--multiline-input',
+          '--multiline-input',
 	  '--repeat_penalty',
 	  '1.1',
 	  '-t',
