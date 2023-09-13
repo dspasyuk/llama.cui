@@ -1,4 +1,4 @@
-# Chat UI small llama.ccp wrapper for Node.js
+# Chat UI small llama.ccp chat application for Node.js 
 
 **Note: This project is a work in progress.**
 
