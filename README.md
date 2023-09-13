@@ -10,7 +10,7 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
 git clone https://github.com/ggerganov/llama.cpp.git 
 
-2. Build Lllama.cpp with GPU support or CPU  
+2. Build Lllama.cpp with GPU or CPU support
 
 cd llama.cpp
 
