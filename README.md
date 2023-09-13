@@ -16,7 +16,7 @@ cd llama.cpp
 
 sed -i 's/-arch=native/-arch=all/g' Makefile
 
-make clean && LLAMA_CUBLAS=1 make -j # for GPU 
+make clean && LLAMA_CUBLAS=1 make -j   # for GPU version
 
 or make # for CPU version
 
