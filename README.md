@@ -8,29 +8,29 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
 1. Clone the repository:
 
-    git clone https://github.com/ggerganov/llama.cpp.git 
+   git clone https://github.com/ggerganov/llama.cpp.git 
 
 2. Build Lllama.cpp with GPU or CPU support
 
-cd llama.cpp
+   cd llama.cpp
 
-sed -i 's/-arch=native/-arch=all/g' Makefile
+   sed -i 's/-arch=native/-arch=all/g' Makefile
 
-make clean && LLAMA_CUBLAS=1 make -j   # for GPU version
+   make clean && LLAMA_CUBLAS=1 make -j   # for GPU version
 
-or make # for CPU version
+   or make # for CPU version
 
 3. Clone CUI
    
-git clone https://github.com/deonis1/cui
+   git clone https://github.com/deonis1/cui
 
 4. Install the project and set your configuration parameters
   
-cd cui
+   cd cui
 
-npm install
+   npm install
 
-Open config.js and change hostname, port, path to llama.cpp main file, and the model name/path
+   Open config.js and change hostname, port, path to llama.cpp main file, and the model name/path
 
 ## Usage
 To run just type:
