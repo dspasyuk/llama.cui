@@ -18,13 +18,15 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
    make clean && LLAMA_CUBLAS=1 make -j   # for GPU version
 
-   or make # for CPU version
+   or
 
-3. Clone CUI
+   make # for CPU version
+
+4. Clone CUI
    
    git clone https://github.com/deonis1/cui
 
-4. Install the project and set your configuration parameters
+5. Install the project and set your configuration parameters
   
    cd cui
 
