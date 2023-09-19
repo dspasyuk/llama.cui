@@ -20,7 +20,6 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
    or
    
-
    make # for CPU version
 
 4. Clone CUI
