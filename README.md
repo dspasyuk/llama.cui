@@ -1,4 +1,4 @@
-# Chat UI a small llama.cpp chat application for Node.js 
+# Chat UI is a small llama.cpp chat application for Node.js 
 
 **Note: This project is a work in progress.**
 
