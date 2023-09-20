@@ -1,5 +1,5 @@
 {
-  "name": "llama-cui",
+  "name": "llama.cui",
   "version": "0.0.7",
   "main": "server.js",
   "scripts": {
