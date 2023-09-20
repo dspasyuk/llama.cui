@@ -3,21 +3,23 @@
 var config = {}
 config.params = [
 	  '--model',
-	  '../../models/orca_mini_v3_7b.ggmlv3.q5_0.bin',
+	  '../../models/orca_mini_v3_7b.Q5_0.gguf',
 	  '--n-gpu-layers',
-	  '24',
+	  '28',
 	  '-ins', '-b', '2048',
 	  '--ctx_size',
 	  '2048',
 	  '--temp', '0.1',
 	  '--top_k',
-	  '1000',
+	  '100',
           '--multiline-input',
 	  '--repeat_penalty',
 	  '1.1',
 	  '-t',
-	  '8'
-	];
+	  '8',
+	  "--log-disable",
+          "--no-penalize-nl"
+];
 config.llamacpp="../llama.cpp/main"
 config.PORT = "5000";
 config.IP= "localhost";

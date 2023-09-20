@@ -1,7 +1,7 @@
 //Installation
 // git clone https://github.com/ggerganov/llama.cpp.git
 // cd llama.cpp
-// sed -i 's/export NVCCFLAGS="-arch=native"/export NVCCFLAGS="-arch=all"/' llama.cpp/Makefile
+// sed -i 's/-arch=native/-arch=all/g' Makefile
 // make clean && LLAMA_CUBLAS=1 make  -j
 //Copyright Denis Spasyuk
 //License MIT
@@ -13,18 +13,20 @@ const socketIO = require("socket.io");
 var cors = require("cors");
 const path = require("path");
 const vdb = require("./db.js");
-const version = 0.08;
+const version = 0.10;
 // const { parseOutput } = require('langchain/output_parser');
 const config = require("./config.js");
 
 function Ser() {}
 
 Ser.init = function (error) {
+  // console.time("processing");
   this.connectedClients = new Map();
   this.socketId = null;
+  this.TIMEOUT_INTERVAL = 20000;
   this.messageQueue = []; // Queue to store messages from clients
   this.isProcessing = false; // Flag to track if a message is being proce
-  this.llamachild = spawn(config.llamacpp, config.params);
+  this.llamachild = spawn(config.llamacpp, config.params,  { stdio: ['pipe', 'pipe', process.stderr] });
   console.log(config.llamacpp + " " + config.params.join(" "));
   this.buffer = "";
 
@@ -83,23 +85,26 @@ Ser.handleLlamaError = function (error) {
 
 Ser.handleLlama = function (msg) {
   this.buffer += msg.toString("utf-8");
-  //
+  // console.log(this.buffer);
   let lastSpaceIndex = this.buffer.lastIndexOf(" ");
   if (lastSpaceIndex !== -1) {
     let output = this.buffer.substring(0, lastSpaceIndex);
     this.buffer = this.buffer.substring(lastSpaceIndex + 1);
     // output = parseOutput(output);
+    if (output){
+      clearTimeout(this.streamTimeout);
+    }
     this.io.to(this.socketId).emit("output", output);
     if (output.includes("\n>")) {
       this.messageQueue.splice(0, 1);
       this.isProcessing = false;
-
+      // console.timeEnd("processing");
       this.processMessageQueue();
     }
   }
 };
 
-Ser.processMessageQueue = async function () {
+Ser.processMessageQueue = function () {
   if (this.messageQueue.length === 0) {
     this.isProcessing = false;
     return;
@@ -113,6 +118,12 @@ Ser.processMessageQueue = async function () {
   this.llamachild.stdin.write(input + "\n");
 };
 
+Ser.handleTimeout = function () {
+  console.log("Timeout");
+  this.isProcessing = false;
+  this.llamachild.kill("SIGINT");
+}
+
 Ser.handleSocketConnection = async function (socket) {
   socket.on("message", async (data) => {
     var input = data.message;
@@ -124,16 +135,18 @@ Ser.handleSocketConnection = async function (socket) {
     }
     input = input +'\\';
     var socketId = data.socketid;
+    console.log("input",input);
+    // console.time("processing");
     this.connectedClients.set(socketId, input);
     // Add the incoming message to the queue
-
     this.messageQueue.push({ socketId, input });
+    this.streamTimeout = setTimeout(this.handleTimeout, this.TIMEOUT_INTERVAL);
     // Process messages if the queue is not being processed currently
     if (!this.isProcessing) {
       this.processMessageQueue();
     }
   });
-
+  socket.on('error',function(){console.log("Error", error)});
   socket.on("disconnect", () => {
     this.connectedClients.delete(socket.id);
   });
