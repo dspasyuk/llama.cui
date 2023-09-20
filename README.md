@@ -1,4 +1,4 @@
-# Llama-cui is a small llama.cpp chat application for Node.js 
+# Llama.cui is a small llama.cpp chat application for Node.js 
 
 **Note: This project is a work in progress.**
 
@@ -22,13 +22,13 @@ This project provides a Node.js server for a chat user interface (UI) that inter
    
    make # for CPU version
 
-4. Clone llama-cui
+4. Clone llama.cui
    
-   git clone https://github.com/deonis1/llama-cui
+   git clone https://github.com/deonis1/llama.cui
 
 5. Install the project and set your configuration parameters
   
-   cd llama-cui
+   cd llama.cui
 
    npm install
 
@@ -40,6 +40,6 @@ To run just type:
 npm start
 
 ## Embeddings
-llama-cui supports embeddings from text file (see docs folder) and mongodb (do npm install mongo and make changes to config.js to configure database) 
+llama.cui supports embeddings from text file (see docs folder) and mongodb (do npm install mongo and make changes to config.js to configure database) 
 ![Screenshot](https://github.com/deonis1/llcui/blob/main/Screenshot_2.png)
 
