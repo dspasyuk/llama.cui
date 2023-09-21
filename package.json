@@ -1,4 +1,4 @@
-{
+s Spasyuk{
   "name": "llama.cui",
   "version": "0.1.0",
   "main": "server.js",
@@ -6,8 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Denis Spasyuk",
+  "license": "MIT",
   "description": "",
   "dependencies": {
     "@xenova/transformers": "^2.5.4",
