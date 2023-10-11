@@ -41,5 +41,5 @@ npm start
 
 ## Embeddings
 llama.cui supports embeddings from text file (see docs folder) and mongodb (do npm install mongo and make changes to config.js to configure database) 
-![Screenshot](https://github.com/deonis1/llcui/blob/main/Screenshot_2.png)
+![Screenshot](https://github.com/deonis1/llcui/blob/main/Screenshot.png)
 
