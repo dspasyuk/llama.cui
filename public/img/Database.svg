@@ -24,13 +24,14 @@
      showgrid="false"
      inkscape:zoom="0.5275"
      inkscape:cx="220.85308"
-     inkscape:cy="235.07109"
-     inkscape:window-width="1600"
-     inkscape:window-height="863"
-     inkscape:window-x="1920"
-     inkscape:window-y="0"
+     inkscape:cy="234.12322"
+     inkscape:window-width="1870"
+     inkscape:window-height="1016"
+     inkscape:window-x="50"
+     inkscape:window-y="27"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1" />
+     inkscape:current-layer="layer1"
+     inkscape:snap-text-baseline="true" />
   <defs
      id="defs2" />
   <g
@@ -60,15 +61,14 @@
        d="m 125,50.341797 c -41.1175,0 -75,33.882491 -75,75.000003 v 100 c 0,19.157 7.418844,36.679 19.433594,50 C 57.418844,288.6628 50,306.1848 50,325.3418 v 100 c 0,19.157 7.418844,36.679 19.433594,50 C 57.418844,488.6628 50,506.1848 50,525.3418 v 100 c 0,41.1175 33.8825,75 75,75 h 327.7832 c 31.58775,30.89475 74.7433,50 122.2168,50 96.3535,0 175,-78.64625 175,-175 0,-69.54025 -40.97825,-129.87189 -100,-158.05664 V 325.3418 c 0,-19.157 -7.41884,-36.679 -19.43359,-50 12.01475,-13.321 19.43359,-30.843 19.43359,-50 v -100 C 650,84.224288 616.1175,50.341797 575,50.341797 Z m 0,50.000003 h 450 c 14.2825,0 25,10.71775 25,25 v 100 c 0,14.2825 -10.7175,25 -25,25 H 125 c -14.2825,0 -25,-10.7175 -25,-25 v -100 c 0,-14.28225 10.7175,-25 25,-25 z m 0,200 h 450 c 14.2825,0 25,10.71775 25,25 v 76.80664 c -8.17775,-1.18 -16.50525,-1.80664 -25,-1.80664 -47.4735,0 -90.62905,19.10525 -122.2168,50 H 125 c -14.2825,0 -25,-10.7175 -25,-25 v -100 c 0,-14.28225 10.7175,-25 25,-25 z m 450,150 h 0.002 c 69.33084,0.001 124.99805,55.66915 124.99805,125 0,69.33175 -55.66825,125 -125,125 -36.0185,0 -68.3107,-15.04999 -91.06445,-39.20899 a 25,25 0 0 0 -4.19922,-4.63867 C 461.18193,634.69864 450,606.38905 450,575.3418 c 0,-31.409 11.47517,-59.98952 30.41992,-81.88477 a 25,25 0 0 0 1.61328,-1.9043 C 504.86705,466.20468 537.98054,450.34236 575,450.3418 Z m -450,50 H 416.94336 C 406.07611,523.0993 400,548.52855 400,575.3418 c 0,26.81325 6.07611,52.2425 16.94336,75 H 125 c -14.2825,0 -25,-10.7175 -25,-25 v -100 c 0,-14.28225 10.7175,-25 25,-25 z" />
     <text
        xml:space="preserve"
-       style="font-size:9.68729px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;stroke-width:0.0454092"
-       x="315.40472"
-       y="468.73361"
-       id="text22988"
-       transform="scale(1.0126502,0.98750783)"><tspan
+       style="font-size:7.68px;line-height:1.25;font-family:Dyuthi;letter-spacing:0px;word-spacing:0px;stroke-width:0.04;-inkscape-font-specification:Dyuthi;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal"
+       x="319.95819"
+       y="461.47495"
+       id="text3088"><tspan
          sodipodi:role="line"
-         id="tspan22986"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:9.68729px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';stroke-width:0.0454092"
-         x="315.40472"
-         y="468.73361">V</tspan></text>
+         id="tspan3086"
+         style="stroke-width:0.04;-inkscape-font-specification:Dyuthi;font-family:Dyuthi;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal"
+         x="319.95819"
+         y="461.47495">M</tspan></text>
   </g>
 </svg>

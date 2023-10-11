@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Login Llama.cui</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="img/favicon_io/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon_io/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon_io/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="stylesheet" href="./css/bootstrap.min.css" />
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: rgb(48, 49, 51);
+    }
+
+    .formContent {
+      border-radius: 5px;
+      background-color: #e0f4f7;
+      padding-left: 30px;
+      padding-right: 30px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 30px 60px 0 rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .form-title {
+      margin-bottom: 20px;
+      padding: 5px;
+      color: rgb(48, 49, 51);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid rgb(48, 49, 51);
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    .form-control::placeholder {
+      color: rgb(48, 49, 51);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border: 1px solid #b0e0e6;
+    }
+
+    .login-button {
+      background-color: rgb(48, 49, 51);
+      color: #b0e0e6;
+      border: none;
+      margin-top:20px;
+      padding: 10px 50px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .login-button:hover {
+      background-color: #464357;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="formContent">
+    <div class="form-title">
+      <h4>Llama.cui</h4>
+    </div>
+    <form id="loginForm" method="POST" action="/login">
+      <div class="form-outline mb-4">
+        <input class="form-control" type="text" id="username" name="username" placeholder="Username" required>
+      </div>
+      <div class="form-outline mb-4">
+        <input class="form-control" type="password" id="password" name="password" placeholder="Password" required>
+      </div>
+      <div class="form-outline mb-4">
+        <button class="login-button" type="submit" form="loginForm">Login</button>
+      </div>
+    </form>
+  </div>
+</body>
+
+</html>

@@ -1,6 +1,6 @@
 {
   "name": "llama.cui",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -11,9 +11,10 @@
   "description": "",
   "dependencies": {
     "@xenova/transformers": "^2.5.4",
+    "bcrypt": "^5.1.1",
     "ejs": "^3.1.9",
     "express": "^4.18.2",
-    "npm": "^10.0.0",
+    "express-session": "^1.17.3",
     "socket.io": "^4.7.2",
     "socket.io-client": "^4.7.2",
     "vectra": "^0.2.2"

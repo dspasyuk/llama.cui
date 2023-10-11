@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="/css/default.min.css">
   <script src="/js/highlight.min.js"></script>
   <script src="/js/markdown-it.min.js"></script>
-  <script type="text/javascript" src="js/client.js?v=<%= version %>"></script>
+  <script type="text/javascript" src="js/webui.js?v=<%= version %>"></script>
   <!-- <script>hljs.highlightAll()</script> -->
   <title><%= title %></title>
 </head>
@@ -26,20 +26,38 @@
 </style>
 
 <body>
+  <nav class="navbar navbar-expand-lg navbar-dark theme justify-content-between flex-nowrap flex-row">
+    <div class="footerbar nav navbar-nav flex-row float-right">
+    <button id="sidebar-toggle" class="btn theme sidebar-toggle float-left"> <i class="fas fa-bars theme"></i> </button> 
+</div>
+    <div class="footerbar nav navbar-nav flex-row float-right">
+      <button class="btn theme" onclick="window.location.href='/logout'" title = "Log Out" type="button"><i class="fa fa-sign-out-alt"></i></button></div>
+  </nav>
   <div class="container-fluid">
     <div class="row">
       <!-- Left Sidebar -->
-      <div class="col-md-3 rightsidebar">
+      <div class="col-md-3 rightsidebar left-sidebar theme" id="left-sidebar">
         <div class="toolbar">
-        <button title="New Chart" onclick ="cui.onNewChart()" class="btn btn-light noborder" style="margin-left:0px; margin-top:10px; margin-bottom: 10px; width:35px; height:35px"> <i class="fas fa-file  "></i></button>
-        <button title="Delete All" onclick ="cui.deleteMessages()" type="button" class="btn btn-light noborder" style="right:0; margin-top:10px; margin-bottom: 10px; width:35px; height:35px"><i class="fas fa-trash "></i></button>
+          <button title="New Chart" onclick ="cui.onNewChart()" style="width:220px" class="btn theme"> <i class="fas fa-file"></i></button>
+          <button title="Delete All" onclick ="cui.deleteMessages()" type="button" class="btn theme"><i class="fas fa-trash"></i></button>
       </div>
       <div class="sidebar">
-        <div>
-          <ul class="list-group" id ="savedChats"></ul>
+        <div id="accordion">
+           <!-- CARD One -->
+           <button type="button" class="btn collapsible">Chats</button>
+           <div class="content">
+                <ul class="list-group" id ="savedChats"></ul>
+            </div>
+         
+          <!-- <button type="button" class="btn collapsible">Data Channels</button>
+           <div class="content">
+                <ul class="list-group" id ="databases">
+               
+                </ul>
+            </div> -->
+          </div>
         </div>
-      </div>
-    
+      
     </div>
 
       <!-- Main Chat Container -->
@@ -50,68 +68,28 @@
         <div class="input-container">
           <div class="embed">
           <input class="embed-check" id="embed" type="checkbox" name="embedding" value="">
-          <span  class="embed-icon" title="Enable Database Search" > <i class="fas fa-server "></i></span>
+          <span  class="embed-icon" title="Enable Database Search" > <i class="fas fa-server theme"></i></span>
         </div>
 
           <textarea id="messageInput" tabindex="0" rows="1" placeholder="Ask a question" class="form-control"></textarea>
-          <button style="width:65px;" id="sendMessage" type="button" class="btn btn-outline-dark">Send</button>
+          <button style="width:65px;" id="sendMessage" type="button" class="btn theme">Send</button>
         </div>
       </div>
-
-     <!-- Right Sidebar -->
-    <div class="col-md-2" style="display: none;">
-      <div class="sidebar">
-        <form id="configform" class="mt-3 ml-3">
-          <div class="form-group">
-            <label for="model">Model</label>
-            <input type="text" class="form-control" id="model" value="../../models/vicuna-7b-v1.5.ggmlv3.q5_1.bin">
-          </div>
-          <div class="form-group">
-            <label for="n-gpu-layers">Number of GPU Layers</label>
-            <input type="text" class="form-control" id="n-gpu-layers" value="18">
-          </div>
-      
-          <div class="form-group">
-            <label for="ctx_size">Context Size</label>
-            <input type="text" class="form-control" id="ctx_size" value="2048">
-          </div>
-          <div class="form-group">
-            <label for="temp">Temperature</label>
-            <input type="text" class="form-control" id="temp" value="0.3">
-          </div>
-          <div class="form-group">
-            <label for="top_k">Top K</label>
-            <input type="text" class="form-control" id="top_k" value="100">
-          </div>
-          <div class="form-group">
-            <label for="repeat_penalty">Repeat Penalty</label>
-            <input type="text" class="form-control" id="repeat_penalty" value="1.1">
-          </div>
-          <div class="form-group">
-            <label for="t">Temperature</label>
-            <input type="text" class="form-control" id="t" value="8">
-          </div>
-          <!-- Add more input fields for other parameters -->
-          <button type="submit" class="btn btn-outline-dark">Apply</button>
-        </form>
-      </div>
-    </div>
-
 
     <script>
       let iphostname =<%- JSON.stringify(hostname) %>;
       let port = <%- JSON.stringify(port) %>;
-      cui.init(iphostname, port);
-      const configForm = document.getElementById("configform");
-      configForm.addEventListener('submit', function (event) {
-      //event.preventDefault();
-      // Process the form data here
-      const formData = new FormData(configForm);
-      for (const [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
-        // Update the configParams array or handle the values as needed
-      }
-    });
+      let datachanels = <%- JSON.stringify(datachannel) %>;
+      console.log(datachanels);
+      cui.init(iphostname, port, datachanels);
+      const sidebarToggle = document.getElementById('sidebar-toggle');
+      const leftSidebar = document.getElementById('left-sidebar');
+      const chatContainer = document.querySelector('.chat-container');
+
+      sidebarToggle.addEventListener('click', () => {
+        leftSidebar.classList.toggle('open');
+        chatContainer.classList.toggle('open');
+      });
   </script>
 </body>
 </html>
