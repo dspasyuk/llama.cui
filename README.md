@@ -39,6 +39,12 @@ To run just type:
 
 npm start
 
+## Login Information
+Default login and password are specified in config file but could be easily integrated with user a database.
+
+user : admin
+password: 12345
+
 ## Embeddings
 llama.cui supports embeddings from text file (see docs folder) and mongodb (do npm install mongo and make changes to config.js to configure database) 
 ![Screenshot](https://github.com/deonis1/llcui/blob/main/Screenshot.png)
