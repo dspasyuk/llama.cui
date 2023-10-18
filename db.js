@@ -6,7 +6,7 @@ const fs = require('fs')
 function vdb() { };
 
 
-vdb.init = async function (query = "Tell me about bull riding shotgun", dbfile = './db/index.json') {
+vdb.init = async function (query = "Tell me about bull riding shotgun", dbfile = './db/Documents/index.json') {
   this.pipeline;
   this.dbFile = dbfile;
   this.index = {};
@@ -22,7 +22,7 @@ vdb.init = async function (query = "Tell me about bull riding shotgun", dbfile =
   // await this.pullDatabase();
   var result = await this.query(query);
   if (result) {
-    return `${config.embeddingPrefix} ${result} answer this request " ${query} " in details`;
+    return `${config.embeddingPrefix} ${result} help CMCF user with the following: " ${query} "`;
   } else {
     return false;
   }
@@ -66,6 +66,17 @@ vdb.readFile = function (filePath) {
   return fs.readFileSync(filePath, 'utf8');
 }
 
+vdb.tokenize = function(text) {
+  // Split the text into words using whitespace as the separator
+  const words = text.split(/\s+/);
+
+  // Filter out empty strings and punctuation
+  const cleanWords = (words.filter(word => word.length > 0 && !word.match(/[^a-zA-Z0-9]/))).join(" ");
+  console.log(cleanWords);
+  return cleanWords;
+}
+
+
 vdb.pullDocuments = async function (DataFolder) {
   var files = fs.readdirSync(DataFolder);
   // Rank documents (simplified)
@@ -73,6 +84,8 @@ vdb.pullDocuments = async function (DataFolder) {
   for (let i = 0; i < files.length; i++) {
     let filename = path.join(__dirname, DataFolder, files[i])
     let tokens = this.readFile(filename);
+    tokens = tokens.replace(/\n\n/g, ' ');
+    // tokens = vdb.tokenize(tokens);
     documents.push({
       filename: filename,
       tokens: tokens.slice(0, Math.min(tokens.length, config.dataChannel.get("Documents").slice))
@@ -132,13 +145,13 @@ vdb.indexCreate = async function () {
 vdb.findUniqueStrings = function (inputString) {
   // Split the large string into individual strings (e.g., by spaces or any other delimiter)
   const splitStrings = inputString.split(/\s+/);
-  // Use a Set to store unique strings
-  const uniqueWords = new Set();
-  // Step 3: Iterate through the tokenized words/entries and add them to the data structure
-  for (const word of splitStrings) {
-    uniqueWords.add(word.toLowerCase()); // You may want to convert to lowercase for case-insensitive matching
-  }
-  return Array.from(uniqueWords).slice(0, 512);
+  // // Use a Set to store unique strings
+  // const uniqueWords = new Set();
+  // // Step 3: Iterate through the tokenized words/entries and add them to the data structure
+  // for (const word of splitStrings) {
+  //   uniqueWords.add(word.toLowerCase()); // You may want to convert to lowercase for case-insensitive matching
+  // }
+  return Array.from(splitStrings).slice(0, 512);
 }
 
 

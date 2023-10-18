@@ -3,31 +3,30 @@
 var config = {}
 config.params = [
 	  '--model',
-	  '../../models/orca_mini_v3_7b.Q5_0.gguf',
-	//   '../../models/mistral-7b-instruct-v0.1.Q5_0.gguf',
-	//   '../../models/collectivecognition-v1.1-mistral-7b.Q5_0.gguf',
+	  '../../models/dolphin-2.1-mistral-7b.Q8_0.gguf', //best so far for embedding
 	  '--n-gpu-layers',
-	  '32',
+	  '25',
 	  '-ins', '-b', '2048',
 	  '--ctx_size',
 	  '2048',
-	  '--temp', '0.1',
+	  '--temp', '0',
 	  '--top_k',
-	  '100',
-      '--multiline-input',
+	  '10',
+          '--multiline-input',
 	  '--repeat_penalty',
-	  '1.1',
+	  '1.2',
 	  '-t',
 	  '8',
-	  '-r', "/n>",
-	  '-f', "./Alice.txt",
+          '-r', "/n>",
+	  //   '-f', "./Alice.txt",
 	  "--log-disable",
-      "--no-penalize-nl"
+          "--no-penalize-nl"
 ];
 config.llamacpp="../llama.cpp/main"
 config.PORT = "5000";
 config.IP= "localhost";
-config.login = true;
+config.login = false;
+config.timeout = 50000;
 config.session = {
 	secret: "2C44-4D44-WppQ38S", //change before deployment
 	resave: true,
@@ -43,12 +42,12 @@ if (config.login){
 	config.loginTrue();
 }
 config.dataChannel = new Map();
-config.dataChannel.set('Documents', {datastream:'Documents', datafolder:'./docs', slice:512, vectordb:'Documents.js'});
-config.dataChannel.set('MongoDB', {datastream:'MongoDB', database:'fortknox', collection:"clientlist", url:'MongoDB://localhost:27017/', vectordb:'mongodb.js',  slice:512});
-config.dataChannel.set('WebSearch', {datastream:'WebSearch',  slice:512});
+config.dataChannel.set('Documents', {datastream:'Documents', datafolder:'./docs', slice:2000, vectordb:'Documents.js'});
+config.dataChannel.set('MongoDB', {datastream:'MongoDB', database:'test', collection:"test", url:'MongoDB://localhost:27017/', vectordb:'mongodb.js',  slice:2000});
+config.dataChannel.set('WebSearch', {datastream:'WebSearch',  slice:2000});
 config.embedding = {MongoDB:false, Documents:true, WebSearch:false};
-config.embeddingPrefix= "Given the following information ";
-
+config.embeddingPrefix= "Using only information provided next:";
+config.piper ={enabled: false, exec:"../../piper/install/piper", model:"../../piper/models/semaine/en_GB-semaine-medium.onnx"}
 try {
   module.exports = exports = config;
 } catch (e) {}

@@ -13,20 +13,21 @@ const socketIO = require("socket.io");
 var cors = require("cors");
 const path = require("path");
 const vdb = require("./db.js");
+const fs = require('fs');
 
-const version = 0.12;
+const version = 0.15;
 var session = require("express-session");
+// const { parseOutput } = require('langchain/output_parser');
 const config = require("./config.js");
 if (config.login) {
   var hash = require("./hash.js");
 }
-function Ser() {}
+function ser() {}
 
-Ser.init = function (error) {
+ser.init = function (error) {
   // console.time("processing");
   this.connectedClients = new Map();
   this.socketId = null;
-  this.TIMEOUT_INTERVAL = 20000;
   this.messageQueue = []; // Queue to store messages from clients
   this.isProcessing = false; // Flag to track if a message is being proce
   this.llamachild = spawn(config.llamacpp, config.params, {
@@ -34,12 +35,14 @@ Ser.init = function (error) {
   });
   console.log(config.llamacpp + " " + config.params.join(" "));
   this.buffer = "";
-
-  // this.piperspeak();
-  // this.aplayf();
-  // this.piper.stdout.pipe(this.aplay.stdin);
-
-  this.fullmessage = "";
+  if(config.piper.enabled){
+    this.fullmessage = "";
+    this.piperChild();
+    this.aplayChild();
+    this.FileStream();
+    this.piper.stdout.pipe(this.aplay.stdin);
+    // this.piper.stdout.pipe(this.wavFileStream);
+  }
 
   this.llamachild.stdout.on("data", (msg) => this.handleLlama(msg));
 
@@ -75,7 +78,7 @@ Ser.init = function (error) {
   // Serve static files from the 'public' folder
   this.app.use(express.static(path.join(__dirname, "public")));
   // Define a route to render the EJS view
-  this.app.get("/", Ser.loggedIn, (req, res, next) => {
+  this.app.get("/", ser.loggedIn, (req, res, next) => {
     res.render("index", {
       title: "Chat UI",
       version: version,
@@ -87,7 +90,7 @@ Ser.init = function (error) {
 
   this.app.post("/stopper", async (request, response) => {
     console.log("STOPPING");
-    this.llamachild.kill("SIGINT");
+    ser.llamachild.kill("SIGINT");
     response.send({ message: "stopped" });
   });
 
@@ -147,7 +150,7 @@ Ser.init = function (error) {
   this.start();
 };
 
-Ser.loggedIn = function (req, res, next) {
+ser.loggedIn = function (req, res, next) {
   if (!config.login) {
     req.session.loggedin = true;
   }
@@ -158,31 +161,45 @@ Ser.loggedIn = function (req, res, next) {
   }
 };
 
-Ser.handleLlamaError = function (error) {
+ser.handleLlamaError = function (error) {
   console.error("An error occurred in the llama child process:", error);
   // Handle the error appropriately, e.g., logging, cleanup, etc.
 };
 
-// Ser.aplayf = function(){
-//   Ser.aplay = spawn('aplay', [
-//     '-r', '22050',
-//     '-f', 'S16_LE',
-//     '-t', 'raw', '-'
-//   ]);
-// }
+ser.aplayChild = function(){
+  this.aplay = spawn('aplay', [
+    '-r', '24050',
+    '-f', 'S16_LE',
+    '-t', 'raw', '-'
+  ]);
+}
 
-// Ser.piperspeak =  function () {
-//   Ser.piper = spawn('/home/denis/CODE/piper/install/piper', [
-//     '--model', '/home/denis/CODE/piper/models/semaine/en_GB-semaine-medium.onnx',
-//     '--output-raw'
-//   ]);
-// }
+ser.piperChild =  function () {
+  this.piper = spawn(config.piper.exec, [
+    '--model', config.piper.model,
+    '--output-raw'
+  ]);
+}
 
-// Ser.runPiper = function(output){
-//   this.piper.stdin.write(output + "\n");
-// }
+ser.FileStream =  function () {
+  this.wavFileStream = fs.createWriteStream('output.wav');
+}
 
-Ser.handleLlama = function (msg) {
+
+
+ser.runPiper = function(output){
+  if (config.piper.enabled) {
+    this.fullmessage += " " + output;
+    if (this.fullmessage.includes(".") || this.fullmessage.includes(":") || this.fullmessage.includes(";") || this.fullmessage.includes("!") || this.fullmessage.includes("?")) {
+      this.piper.stdin.write(this.fullmessage + "\n");
+      console.log("fullmesd", this.fullmessage);
+      this.fullmessage = "";
+    }
+  }
+    
+}
+
+ser.handleLlama = function (msg) {
   this.buffer += msg.toString("utf-8");
   let lastSpaceIndex = this.buffer.lastIndexOf(" ");
   if (lastSpaceIndex !== -1) {
@@ -193,42 +210,35 @@ Ser.handleLlama = function (msg) {
       clearTimeout(this.streamTimeout);
     }
     this.io.to(this.socketId).emit("output", output);
-    this.fullmessage +=" "+output;
+    this.runPiper(output);
     if (output.includes("\n>")) {
-      console.log(this.fullmessage);
-      // Ser.runPiper(this.fullmessage);
       this.messageQueue.splice(0, 1);
       this.isProcessing = false;
-      // console.timeEnd("processing");
       this.processMessageQueue();
     }
   }
 };
 
-
-
-
-Ser.processMessageQueue = function () {
+ser.processMessageQueue = function () {
   if (this.messageQueue.length === 0) {
     this.isProcessing = false;
     return;
   }
   this.isProcessing = true;
   const message = this.messageQueue[0];
-  this.fullmessage ="";
   const { socketId, input } = message;
   this.socketId = socketId;
   // Send the message to the child process
   this.llamachild.stdin.write(input + "\n");
 };
 
-Ser.handleTimeout = function () {
+ser.handleTimeout = function () {
   console.log("Timeout");
   this.isProcessing = false;
   this.llamachild.kill("SIGINT");
 };
 
-Ser.handleSocketConnection = async function (socket) {
+ser.handleSocketConnection = async function (socket) {
   socket.on("message", async (data) => {
     var input = data.message;
     if (data.embedding) {
@@ -245,7 +255,7 @@ Ser.handleSocketConnection = async function (socket) {
     this.connectedClients.set(socketId, input);
     // Add the incoming message to the queue
     this.messageQueue.push({ socketId, input });
-    this.streamTimeout = setTimeout(this.handleTimeout, this.TIMEOUT_INTERVAL);
+    this.streamTimeout = setTimeout(this.handleTimeout, config.timeout);
     // Process messages if the queue is not being processed currently
     if (!this.isProcessing) {
       this.processMessageQueue();
@@ -259,7 +269,7 @@ Ser.handleSocketConnection = async function (socket) {
   });
 };
 
-Ser.start = function () {
+ser.start = function () {
   this.server.listen(this.serverPort, this.serverIpAddress, () => {
     console.log(
       "Server Running on:",
@@ -268,4 +278,4 @@ Ser.start = function () {
   });
 };
 
-Ser.init();
+ser.init();

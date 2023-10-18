@@ -106,7 +106,6 @@ cui.onNewChart = function(){
 cui.socketInit = function () {
   console.log(`${cui.iphostname}:${cui.port}`);
   this.socket = io(`${cui.iphostname}:${cui.port}`);
-  
   var text = "";
   cui.currentTile = null; // Reference to the current tile element
   this.socket.on("output", (response) => {
