@@ -41,9 +41,13 @@ npm start
 
 ## Login Information
 Default login and password are specified in config file but could be easily integrated with user a database.
+The login is currently set to false. To enable login set login to tru in config file and change password.
 
-user : admin
-password: 12345
+## Piper integration
+As of version 1.15 the llama.cui supports Piper for text to voice processing (tested on Linux only)
+Enable it in config.js, make sure to install piper before running llama.cui 
+
+{enabled: true, exec:"../../piper/install/piper", model:"../../piper/models/semaine/en_GB-semaine-medium.onnx"}
 
 ## Embeddings
 llama.cui supports embeddings from text file (see docs folder) and mongodb (do npm install mongo and make changes to config.js to configure database) 
