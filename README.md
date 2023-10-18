@@ -45,7 +45,7 @@ Default login and password are specified in config file but could be easily inte
 The login is currently set to false. To enable login set login to tru in config file and change password.
 
 ## Piper integration
-As of version 1.15 the llama.cui supports Piper for text to voice processing (tested on Linux only).
+As of version 1.15 the llama.cui supports Piper for text to voice generation.
 Enable it in config.js, make sure to install piper before running llama.cui 
 
 
