@@ -17,7 +17,7 @@ config.params = [
 	  '1.2',
 	  '-t',
 	  '8',
-          '-r', "/n>",
+          //'-r', "/n>", //maybe necessery for some models
 	  //   '-f', "./Alice.txt",
 	  "--log-disable",
           "--no-penalize-nl"
