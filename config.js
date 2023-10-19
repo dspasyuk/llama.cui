@@ -14,7 +14,7 @@ config.params = [
 	  '10',
           '--multiline-input',
 	  '--repeat_penalty',
-	  '1.2',
+	  '1.1',
 	  '-t',
 	  '8',
           //'-r', "/n>", //maybe necessery for some models
