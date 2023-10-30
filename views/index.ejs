@@ -7,10 +7,17 @@
   <link rel="stylesheet" href="css/index.css?v=<%= version %>" />
   <link rel="stylesheet" href="css/fontawesome/css/all.min.css?v=<%= version %>" />
 
-  <link rel="apple-touch-icon" sizes="180x180" href="img/favicon_io/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon_io/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon_io/favicon-16x16.png">
-  <link rel="manifest" href="/site.webmanifest">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png">
+  <link rel="manifest" href="img/site.webmanifest">
+  <link rel="mask-icon" href="img/safari-pinned-tab.svg" color="#5bbad5">
+  <meta name="msapplication-TileColor" content="#da532c">
+  <meta name="theme-color" content="#ffffff">
+  
+  
   <script type="text/javascript" src="/js/socket.io.js"></script>
   <link rel="stylesheet" href="/css/default.min.css">
   <script src="/js/highlight.min.js"></script>
@@ -42,19 +49,13 @@
           <button title="Delete All" onclick ="cui.deleteMessages()" type="button" class="btn theme"><i class="fas fa-trash"></i></button>
       </div>
       <div class="sidebar">
-        <div id="accordion">
+        <button type="button" class="btn collapsible">Chats</button>
+        <div  class="content" id="accordion">
            <!-- CARD One -->
-           <button type="button" class="btn collapsible">Chats</button>
-           <div class="content">
+           
+           <div >
                 <ul class="list-group" id ="savedChats"></ul>
             </div>
-         
-          <!-- <button type="button" class="btn collapsible">Data Channels</button>
-           <div class="content">
-                <ul class="list-group" id ="databases">
-               
-                </ul>
-            </div> -->
           </div>
         </div>
       

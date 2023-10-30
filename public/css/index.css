@@ -8,7 +8,7 @@
 
 body {
   font-family: Arial, sans-serif;
-  background-color: rgb(255, 255, 255);
+  background-color: rgb(230, 247, 252);
 }
 
 .row {
@@ -37,7 +37,7 @@ textarea {
 .chat-container {
   position: relative;
   max-width: 80vw;
-  max-height: calc(76vh - 80px);
+  max-height: calc(75vh - 80px);
   margin: 5px auto;
   /* border: 1px solid #ccc; */
   border-radius: 0px;
@@ -61,9 +61,24 @@ input:focus, button {
 
 .input-container {
   max-height: 20vh;
+  margin: 0 auto; /* Center the container horizontally */
   display: flex;
+  background-color: "#aaa";
 }
 
+@media (max-width: 768px) {
+  /* Apply these styles for screens with a max width of 768px (typical for mobile devices) */
+  .input-container {
+    width: 90%;
+  }
+}
+
+@media (min-width: 769px) {
+  /* Apply these styles for screens with a width greater than or equal to 769px (typical for desktop) */
+  .input-container {
+    width: 60%;
+  }
+}
 .input-container textarea {
   flex-grow: 1;
   padding: 16px;
@@ -142,13 +157,14 @@ ul {
 
 
 .sidebar {
-  max-height: 100%;
+  height: calc(100vh - 110px);
   overflow: scroll;
   background-color: var(--light) !important;
 }
 
-.sidebar::-webkit-scrollbar {
+::-webkit-scrollbar {
   display: none;
+  width: 0;
 }
 
 .stopper {
@@ -185,8 +201,6 @@ ul {
   color: var(--white) !important;
 }
 
-
-
 @media (max-width: 767px) {
   .rightsidebar {
     display: none;
@@ -221,6 +235,8 @@ ul {
 
 .left-sidebar {
   display: none;
+  padding-left: 8px!important;
+  padding-right: 8px!important;
 }
 
 
@@ -269,5 +285,4 @@ ul {
   outline: none;
   background-color:inherit;
   border-radius: 5px;
-
 }

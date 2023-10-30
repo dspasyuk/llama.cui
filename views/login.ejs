@@ -3,9 +3,14 @@
 
 <head>
   <title>Login Llama.cui</title>
-  <link rel="apple-touch-icon" sizes="180x180" href="img/favicon_io/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon_io/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon_io/favicon-16x16.png">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png">
+  <link rel="manifest" href="img/site.webmanifest">
+  <link rel="mask-icon" href="img/safari-pinned-tab.svg" color="#5bbad5">
+  <meta name="msapplication-TileColor" content="#da532c">
+  <meta name="theme-color" content="#ffffff">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="stylesheet" href="./css/bootstrap.min.css" />
   <style>
@@ -19,8 +24,8 @@
     }
 
     .formContent {
-      border-radius: 5px;
-      background-color: #e0f4f7;
+      border-radius: 15px;
+      background-color: #e0f2f7;
       padding-left: 30px;
       padding-right: 30px;
       padding-top: 10px;
@@ -42,7 +47,7 @@
       padding: 10px;
       margin-bottom: 20px;
       border: 1px solid rgb(48, 49, 51);
-      border-radius: 8px;
+      border-radius: 6px;
       font-size: 16px;
     }
 
@@ -53,6 +58,14 @@
     .form-control:focus {
       outline: none;
       border: 1px solid #b0e0e6;
+    }    
+    .imgclass {
+      width: 100%;
+      height:100px;
+
+      background-color: rgb(48, 49, 51);
+      border-radius: 15px;
+      padding: 14px;
     }
 
     .login-button {
@@ -61,7 +74,7 @@
       border: none;
       margin-top:20px;
       padding: 10px 50px;
-      border-radius: 5px;
+      border-radius: 6px;
       font-size: 16px;
       cursor: pointer;
       transition: background-color 0.3s ease;
@@ -74,9 +87,10 @@
 </head>
 
 <body>
+ 
   <div class="formContent">
     <div class="form-title">
-      <h4>Llama.cui</h4>
+      <div class="imgclass"><img style="width:269px; height:62px" src="./img/logot.svg"></img></div>
     </div>
     <form id="loginForm" method="POST" action="/login">
       <div class="form-outline mb-4">

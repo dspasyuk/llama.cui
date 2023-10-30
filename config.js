@@ -1,53 +1,94 @@
 //Copyright Denis Spasyuk
 //License MIT
-var config = {}
+
+var config = {};
+
+//Model Setting
 config.params = [
-	  '--model',
-	  '../../models/dolphin-2.1-mistral-7b.Q8_0.gguf', //best so far for embedding
-	  '--n-gpu-layers',
-	  '25',
-	  '-ins', '-b', '2048',
-	  '--ctx_size',
-	  '2048',
-	  '--temp', '0',
-	  '--top_k',
-	  '10',
-          '--multiline-input',
-	  '--repeat_penalty',
-	  '1.1',
-	  '-t',
-	  '8',
-          '-r', "/n>", //maybe necessery for some models
-	  '-f', "./Alice.txt",
-	  "--log-disable",
-          "--no-penalize-nl"
+  "--model",
+  "../../models/dolphin-2.1-mistral-7b.Q5_0.gguf", //best so far for embedding
+  "--n-gpu-layers",
+  "15",
+  "--keep",
+  "20",
+  "-ins",
+  "-b",
+  "2048",
+  "--ctx_size",
+  "2048",
+  "--temp",
+  "0",
+  "--top_k",
+  "10",
+  "--multiline-input",
+  "--repeat_penalty",
+  "1.2",
+  "-t",
+  "4",
+  "-r",
+  "/n>",
+  "-f",
+  "./Alice.txt",
+  "--cfg-negative-prompt",
+  "Do not include any false information",
+  "--log-disable",
+  "--no-penalize-nl",
 ];
-config.llamacpp="../llama.cpp/main"
-config.PORT = "5000";
-config.IP= "localhost";
-config.login = false;
+
+//Llama.cpp settings
+config.llamacpp = "../llama.cpp/main";
+
+//Llama.cui settings
+config.PORT = { client: "5000", server: "5000" };
+config.IP = { client: "localhost", server: "localhost" };
+config.login = true;
 config.timeout = 50000;
 config.session = {
-	secret: "2C44-4D44-WppQ38S", //change before deployment
-	resave: true,
-	saveUninitialized: true,
-  };
-config.loginTrue = async function(){
-	const hash = require('./hash.js');
-	config.username = "admin"
-    config.password = await hash.cryptPassword("12345");
+  secret: "2C44-4D44-WppQ38S", //change before deployment
+  resave: true,
+  saveUninitialized: true,
+};
+
+config.loginTrue = async function () {
+  const hash = require("./hash.js");
+  config.username = "admin";
+  config.password = await hash.cryptPassword("12345");
+};
+
+if (config.login) {
+  config.loginTrue();
+};
+
+config.dataChannel = new Map();
+config.dataChannel.set("Documents", {
+  datastream: "Documents",
+  datafolder: "./docs",
+  slice: 2000,
+  vectordb: "Documents.js",
+});
+
+config.dataChannel.set("MongoDB", {
+  datastream: "MongoDB",
+  database: "fortknox",
+  collection: "clientlist",
+  url: "MongoDB://localhost:27017/",
+  vectordb: "mongodb.js",
+  slice: 2000,
+});
+
+config.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
+config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
+config.prompt = function(userID, prompt, context){
+  return `User ID: '${userID}'; User Prompt: '${prompt}'; Context:'${context||""}'`;
 }
 
-if (config.login){
-	config.loginTrue();
-}
-config.dataChannel = new Map();
-config.dataChannel.set('Documents', {datastream:'Documents', datafolder:'./docs', slice:2000, vectordb:'Documents.js'});
-config.dataChannel.set('MongoDB', {datastream:'MongoDB', database:'test', collection:"test", url:'MongoDB://localhost:27017/', vectordb:'mongodb.js',  slice:2000});
-config.dataChannel.set('WebSearch', {datastream:'WebSearch',  slice:2000});
-config.embedding = {MongoDB:false, Documents:true, WebSearch:false};
-config.embeddingPrefix= "Using only information provided next:";
-config.piper ={enabled: false, exec:"../../piper/install/piper", model:"../../piper/models/semaine/en_GB-semaine-medium.onnx"}
+//Piper setting
+config.piper = {
+  enabled: false,
+  exec: "/home/denis/CODE/piper/install/piper",
+  model: "/home/denis/CODE/piper/models/semaine/en_GB-semaine-medium.onnx",
+};
+
 try {
   module.exports = exports = config;
 } catch (e) {}
@@ -152,4 +193,3 @@ try {
 //   --log-enable          Enable trace logs
 //   --log-file            Specify a log filename (without extension)
 //                         Log file will be tagged with unique ID and written as "<name>.<ID>.log"
-

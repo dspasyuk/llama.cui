@@ -15,9 +15,8 @@ const path = require("path");
 const vdb = require("./db.js");
 const fs = require('fs');
 
-const version = 0.15;
+const version = 0.17;
 var session = require("express-session");
-// const { parseOutput } = require('langchain/output_parser');
 const config = require("./config.js");
 if (config.login) {
   var hash = require("./hash.js");
@@ -25,14 +24,11 @@ if (config.login) {
 function ser() {}
 
 ser.init = function (error) {
-  // console.time("processing");
   this.connectedClients = new Map();
   this.socketId = null;
   this.messageQueue = []; // Queue to store messages from clients
   this.isProcessing = false; // Flag to track if a message is being proce
-  this.llamachild = spawn(config.llamacpp, config.params, {
-    stdio: ["pipe", "pipe", process.stderr],
-  });
+  this.runLLamaChild();
   console.log(config.llamacpp + " " + config.params.join(" "));
   this.buffer = "";
   if(config.piper.enabled){
@@ -41,21 +37,8 @@ ser.init = function (error) {
     this.aplayChild();
     this.FileStream();
     this.piper.stdout.pipe(this.aplay.stdin);
-    // this.piper.stdout.pipe(this.wavFileStream);
   }
-
-  this.llamachild.stdout.on("data", (msg) => this.handleLlama(msg));
-
   // Listen for the 'exit' event to handle process exit.
-  this.llamachild.on("exit", (code, signal) => {
-    if (code !== null) {
-      console.log(`Child process exited with code ${code}`);
-    } else if (signal !== null) {
-      console.log(`Child process terminated by signal ${signal}`);
-    }
-  });
-  this.serverIpAddress = config.IP;
-  this.serverPort = config.PORT;
 
   this.app = express();
   this.server = http.createServer(this.app);
@@ -67,6 +50,7 @@ ser.init = function (error) {
     cors: {
       origin: "*",
       methods: ["GET", "POST"],
+      credentials: true,
     },
   });
 
@@ -75,15 +59,14 @@ ser.init = function (error) {
   this.app.use(express.urlencoded({ extended: true }));
   this.app.set("views", path.join(__dirname, "views"));
   this.app.set("view engine", "ejs");
-  // Serve static files from the 'public' folder
   this.app.use(express.static(path.join(__dirname, "public")));
   // Define a route to render the EJS view
   this.app.get("/", ser.loggedIn, (req, res, next) => {
     res.render("index", {
-      title: "Chat UI",
+      title: "Llama.cui",
       version: version,
-      hostname: this.serverIpAddress,
-      port: this.serverPort,
+      hostname: config.IP.client,
+      port: config.PORT.client,
       datachannel: JSON.stringify(Object.keys(Object.fromEntries(config.dataChannel))),
     });
   });
@@ -115,7 +98,6 @@ ser.init = function (error) {
       const password = req.body.password;
       try {
         if (!username || !password) {
-          console.log("allgossss");
           res.render("login", { title: "login" });
         } else {
           // Query your database to get user credentials
@@ -134,7 +116,6 @@ ser.init = function (error) {
               req.session.username = username;
               res.redirect("/");
             } else {
-              console.log("allgoodsdfde33");
               res.render("login", { title: "login" });
             }
           }
@@ -149,6 +130,22 @@ ser.init = function (error) {
 
   this.start();
 };
+
+ser.runLLamaChild = function () {
+  this.llamachild = spawn(config.llamacpp, config.params, {
+    stdio: ["pipe", "pipe", process.stderr],
+  });
+  this.llamachild.stdout.on("data", (msg) => this.handleLlama(msg));
+  this.llamachild.on("exit", (code, signal) => {
+    if (code !== null) {
+      console.log(`Child process exited with code ${code}`);
+      this.runLLamaChild();
+    } else if (signal !== null) {
+      console.log(`Child process terminated by signal ${signal}`);
+      this.runLLamaChild();
+    }
+  });
+}
 
 ser.loggedIn = function (req, res, next) {
   if (!config.login) {
@@ -186,7 +183,6 @@ ser.FileStream =  function () {
 }
 
 
-
 ser.runPiper = function(output){
   if (config.piper.enabled) {
     this.fullmessage += " " + output;
@@ -196,7 +192,6 @@ ser.runPiper = function(output){
       this.fullmessage = "";
     }
   }
-    
 }
 
 ser.handleLlama = function (msg) {
@@ -229,32 +224,33 @@ ser.processMessageQueue = function () {
   const { socketId, input } = message;
   this.socketId = socketId;
   // Send the message to the child process
-  this.llamachild.stdin.write(input + "\n");
+  if (config.promptAddUserID){
+     this.llamachild.stdin.write(`${input}` +"\n");
+  }else{
+     this.llamachild.stdin.write(`${input}` +"\n");
+  }
 };
 
 ser.handleTimeout = function () {
   console.log("Timeout");
-  this.isProcessing = false;
-  this.llamachild.kill("SIGINT");
+  ser.isProcessing = false;
+  ser.llamachild.kill("SIGINT");
 };
 
 ser.handleSocketConnection = async function (socket) {
   socket.on("message", async (data) => {
     var input = data.message;
+    var embed = "";
     if (data.embedding) {
       console.log("embedding");
-      var embed = await vdb.init(input);
-      if (embed) {
-        input = embed;
-      }
+      embed = await vdb.init(input);
     }
-    input = input + "\\";
     var socketId = data.socketid;
-    console.log("input", input);
-    // console.time("processing");
+    input = config.prompt(socketId, input, embed);
+    input = input + "\\";
     this.connectedClients.set(socketId, input);
     // Add the incoming message to the queue
-    this.messageQueue.push({ socketId, input });
+    this.messageQueue.push({ socketId, input});
     this.streamTimeout = setTimeout(this.handleTimeout, config.timeout);
     // Process messages if the queue is not being processed currently
     if (!this.isProcessing) {
@@ -270,10 +266,10 @@ ser.handleSocketConnection = async function (socket) {
 };
 
 ser.start = function () {
-  this.server.listen(this.serverPort, this.serverIpAddress, () => {
+  this.server.listen(config.PORT.server, config.IP.server, () => {
     console.log(
       "Server Running on:",
-      this.serverIpAddress + ":" + this.serverPort
+      config.IP.server + ":" + config.PORT.server
     );
   });
 };

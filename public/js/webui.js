@@ -24,14 +24,24 @@ cui.init = function (iphostname, port) {
   cui.isClicked=false;
   cui.collapsible();
   cui.socketInit();
+  // cui.whisperRun ();
   cui.listGenerate();
   cui.currentChat = cui.getcurrentChat();
   cui.returnWatcher();
   cui.sendMessageButton.addEventListener("click", () => {cui.sendMessage()});
 };
 
+// cui.whisperRun = async function(){
+// const transformersModule = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers');
+// let transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
+// let url = 'https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/jfk.wav';
+// // let transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en', {
+// //     revision: 'output_attentions',
+// // });
+// let output = await transcriber(url, { return_timestamps: 'word' });
+// console.log(output);
 
-
+// }
 
 cui.collapsible = function(){
   var coll = document.getElementsByClassName("collapsible");
@@ -271,6 +281,17 @@ cui.setMessage = function(message) {
 cui.deleteChats = function(chat) {
   localStorage.setItem("llcui", JSON.stringify({}))
 }
+
+// cui.collapseChats = function() {
+//     const chats= document.getElementById("accordion");
+//     if (chats) {
+//       if (chats.style.display === "none" || chats.style.display === "") {
+//         chats.style.display = "block"; // Show the element
+//       } else {
+//         chats.style.display = "none"; // Hide the element
+//       }
+//   }
+// }
 
 cui.getMessageTree = function(id) {
   let messages = cui.getAlldata();
