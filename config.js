@@ -85,8 +85,8 @@ config.prompt = function(userID, prompt, context){
 //Piper setting
 config.piper = {
   enabled: false,
-  exec: "/home/denis/CODE/piper/install/piper",
-  model: "/home/denis/CODE/piper/models/semaine/en_GB-semaine-medium.onnx",
+  exec: "../piper/install/piper",
+  model: "../piper/models/semaine/en_GB-semaine-medium.onnx",
 };
 
 try {
