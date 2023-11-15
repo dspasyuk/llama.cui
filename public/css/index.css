@@ -27,7 +27,7 @@ body {
 textarea:focus {
   outline: none!important;
   box-shadow: none!important;
-  border: 1px;
+  border: 1px solid #ccc;
 }
 
 textarea {
@@ -36,17 +36,16 @@ textarea {
 
 .chat-container {
   position: relative;
-  max-width: 80vw;
-  max-height: calc(75vh - 80px);
+  max-width: 85vw;
+  max-height: calc(80vh - 140px);
   margin: 5px auto;
-  /* border: 1px solid #ccc; */
   border-radius: 0px;
 }
 
 .chat-messages {
   position: relative;
-  max-height: calc(75vh - 80px);
-  height: 70vh;
+  max-height: calc(80vh - 140px);
+  height: 80vh;
   overflow-y: scroll;
   padding-top: 10px;
   padding-bottom: 10px;
@@ -60,23 +59,22 @@ input:focus, button {
 }
 
 .input-container {
-  max-height: 20vh;
+  max-height: 15vh;
   margin: 0 auto; /* Center the container horizontally */
   display: flex;
-  background-color: "#aaa";
 }
 
 @media (max-width: 768px) {
   /* Apply these styles for screens with a max width of 768px (typical for mobile devices) */
   .input-container {
-    width: 90%;
+    width: 100%;
   }
 }
 
 @media (min-width: 769px) {
   /* Apply these styles for screens with a width greater than or equal to 769px (typical for desktop) */
   .input-container {
-    width: 60%;
+    width: 70%;
   }
 }
 .input-container textarea {
@@ -91,19 +89,21 @@ input:focus, button {
   border-top-left-radius: 0;
   white-space: normal;
   text-align: justify;
+  background-color:rgb(183, 221, 233);
 }
 
 .user-tile {
-  background-color: rgb(222, 243, 250);
+  background-color: rgb(201, 235, 247);
   border-radius: 10px;
   margin-bottom: 10px;
   padding: 10px;
+  word-wrap: normal;
 }
 
 .bot-tile {
   background-color: rgb(208, 252, 208);
   padding: 10px;
-  padding-left: 100px;
+  padding-left: 50px;
   border-radius: 10px;
   margin-bottom: 10px;
 }
@@ -157,7 +157,7 @@ ul {
 
 
 .sidebar {
-  height: calc(100vh - 110px);
+  height: calc(100vh - 170px);
   overflow: scroll;
   background-color: var(--light) !important;
 }
@@ -167,13 +167,17 @@ ul {
   width: 0;
 }
 
-.stopper {
+.stoppercontainer{
   width: 100%;
   height: 50px;
+  align-content: center;
   margin-bottom: 10px;
+  /* border: 1px solid #CCC; */
+}
+
+.stopper {
   padding: 10px;
   text-align: center;
-  /* border: 1px solid #CCC; */
   z-index: 1000;
   display: none;
 }
@@ -211,7 +215,7 @@ ul {
 }
 
 .embed{
-  padding-top:14px; 
+  padding-top:12px; 
   padding-bottom:14px; 
   padding-left:10px; 
   margin-left: 10px;
@@ -286,3 +290,22 @@ ul {
   background-color:inherit;
   border-radius: 5px;
 }
+
+.bottom-left {
+  border: 1px solid #686868;
+  display: block;
+  overflow: hidden;
+  outline: none;
+  background-color:inherit;
+  border-radius: 5px;
+}
+
+.tester {
+  padding: 8px;
+  display: block;
+  border-radius: 10px !important; 
+}
+.navbar {
+  padding: 0.5rem 0.5rem;
+}
+

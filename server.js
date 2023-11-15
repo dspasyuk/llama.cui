@@ -13,9 +13,9 @@ const socketIO = require("socket.io");
 var cors = require("cors");
 const path = require("path");
 const vdb = require("./db.js");
-const fs = require('fs');
+const fs = require("fs");
 
-const version = 0.17;
+const version = 0.19;
 var session = require("express-session");
 const config = require("./config.js");
 if (config.login) {
@@ -24,14 +24,17 @@ if (config.login) {
 function ser() {}
 
 ser.init = function (error) {
+  console.log(
+    config.llamacpp + " " + Object.entries(config.params).flat().join(" ")
+  );
   this.connectedClients = new Map();
   this.socketId = null;
+  ser.checkModel();
   this.messageQueue = []; // Queue to store messages from clients
-  this.isProcessing = false; // Flag to track if a message is being proce
+  this.isProcessing = false; // Flag to track if a message is being processed
   this.runLLamaChild();
-  console.log(config.llamacpp + " " + config.params.join(" "));
   this.buffer = "";
-  if(config.piper.enabled){
+  if (config.piper.enabled) {
     this.fullmessage = "";
     this.piperChild();
     this.aplayChild();
@@ -42,9 +45,8 @@ ser.init = function (error) {
 
   this.app = express();
   this.server = http.createServer(this.app);
-  this.app.use(
-    session(config.session)
-  );
+  this.sessionStore= session(config.session)
+  this.app.use(this.sessionStore);
   this.app.use(cors());
   this.io = socketIO(this.server, {
     cors: {
@@ -53,7 +55,7 @@ ser.init = function (error) {
       credentials: true,
     },
   });
-
+  this.io.engine.use(this.sessionStore);
   this.io.on("connection", (socket) => this.handleSocketConnection(socket));
   this.app.use(express.json());
   this.app.use(express.urlencoded({ extended: true }));
@@ -67,17 +69,22 @@ ser.init = function (error) {
       version: version,
       hostname: config.IP.client,
       port: config.PORT.client,
-      datachannel: JSON.stringify(Object.keys(Object.fromEntries(config.dataChannel))),
+      datachannel: JSON.stringify(
+        Object.keys(Object.fromEntries(config.dataChannel))
+      ),
     });
   });
 
-  this.app.post("/stopper", async (request, response) => {
+  this.app.post("/stopper",  async (request, response) => {
     console.log("STOPPING");
     ser.llamachild.kill("SIGINT");
+    this.messageQueue.splice(0, 1);
+    this.isProcessing = false;
+    this.processMessageQueue();
     response.send({ message: "stopped" });
   });
 
-  this.app.get("/login", (req, res) => {
+  this.app.get("/login",  (req, res) => {
     if (!config.login) {
       return res.redirect("/");
     } else {
@@ -87,10 +94,10 @@ ser.init = function (error) {
 
   this.app.get("/logout", async (req, res) => {
     req.session.destroy();
-    res.render('logout', {user: config.username });
+    res.render("logout", { user: config.username });
   });
 
-  this.app.post("/login", async (req, res) => {
+  this.app.post("/login",   async (req, res) => {
     if (!config.login) {
       return res.redirect("/");
     } else {
@@ -102,15 +109,13 @@ ser.init = function (error) {
         } else {
           // Query your database to get user credentials
           //const results = await db.find("users", { "username": username });
-          const results = [
-            { username: config.username, password: config.password },
-          ]; //replace this with database query
-          if (results.length === 0) {
+          let users = await config.loginTrue(username); //replace this with database query
+          if (users.length === 0) {
             res.render("login", { title: "login" });
           } else {
             // Compare the provided password with the stored password
 
-            if (await hash.comparePassword(password, results[0].password)) {
+            if (await hash.comparePassword(password, users.password)) {
               // Authentication successful
               req.session.loggedin = true;
               req.session.username = username;
@@ -131,11 +136,38 @@ ser.init = function (error) {
   this.start();
 };
 
+ser.isFileExistsSync = function (filePath) {
+  try {
+    console.log(fs.statSync(filePath).isFile());
+    return fs.statSync(filePath).isFile();
+  } catch (err) {
+    console.log(err);
+    return false;
+  }
+};
+
+ser.checkModel = function () {
+  if (ser.isFileExistsSync(config.params["--model"])) {
+    console.log("Model exists");
+  } else {
+    console.log("Model does not exist");
+    console.log("Please download model", config.params["--model"]);
+    // config.getModel();
+  }
+};
+
 ser.runLLamaChild = function () {
-  this.llamachild = spawn(config.llamacpp, config.params, {
-    stdio: ["pipe", "pipe", process.stderr],
-  });
+  var configParams = Object.entries(config.params).flat();
+  this.llamachild = spawn(
+    config.llamacpp,
+    configParams.filter((item) => item !== ""),
+    {
+      stdio: ["pipe", "pipe", process.stderr],
+    }
+  );
+
   this.llamachild.stdout.on("data", (msg) => this.handleLlama(msg));
+
   this.llamachild.on("exit", (code, signal) => {
     if (code !== null) {
       console.log(`Child process exited with code ${code}`);
@@ -145,7 +177,7 @@ ser.runLLamaChild = function () {
       this.runLLamaChild();
     }
   });
-}
+};
 
 ser.loggedIn = function (req, res, next) {
   if (!config.login) {
@@ -163,36 +195,46 @@ ser.handleLlamaError = function (error) {
   // Handle the error appropriately, e.g., logging, cleanup, etc.
 };
 
-ser.aplayChild = function(){
-  this.aplay = spawn('aplay', [
-    '-r', '24050',
-    '-f', 'S16_LE',
-    '-t', 'raw', '-'
+ser.aplayChild = function () {
+  this.aplay = spawn("aplay", [
+    "-r",
+    config.piper.rate,
+    "-f",
+    config.piper.output_file,
+    "-t",
+    "raw",
+    "-",
   ]);
-}
+};
 
-ser.piperChild =  function () {
+ser.piperChild = function () {
   this.piper = spawn(config.piper.exec, [
-    '--model', config.piper.model,
-    '--output-raw'
+    "--model",
+    config.piper.model,
+    "--output-raw",
   ]);
-}
+};
 
-ser.FileStream =  function () {
-  this.wavFileStream = fs.createWriteStream('output.wav');
-}
+ser.FileStream = function () {
+  this.wavFileStream = fs.createWriteStream("output.wav");
+};
 
-
-ser.runPiper = function(output){
+ser.runPiper = function (output) {
   if (config.piper.enabled) {
     this.fullmessage += " " + output;
-    if (this.fullmessage.includes(".") || this.fullmessage.includes(":") || this.fullmessage.includes(";") || this.fullmessage.includes("!") || this.fullmessage.includes("?")) {
+    if (
+      this.fullmessage.includes(".") ||
+      this.fullmessage.includes(":") ||
+      this.fullmessage.includes(";") ||
+      this.fullmessage.includes("!") ||
+      this.fullmessage.includes("?")
+    ) {
       this.piper.stdin.write(this.fullmessage + "\n");
       console.log("fullmesd", this.fullmessage);
       this.fullmessage = "";
     }
   }
-}
+};
 
 ser.handleLlama = function (msg) {
   this.buffer += msg.toString("utf-8");
@@ -204,6 +246,7 @@ ser.handleLlama = function (msg) {
     if (output) {
       clearTimeout(this.streamTimeout);
     }
+    // console.log(output);
     this.io.to(this.socketId).emit("output", output);
     this.runPiper(output);
     if (output.includes("\n>")) {
@@ -224,10 +267,10 @@ ser.processMessageQueue = function () {
   const { socketId, input } = message;
   this.socketId = socketId;
   // Send the message to the child process
-  if (config.promptAddUserID){
-     this.llamachild.stdin.write(`${input}` +"\n");
-  }else{
-     this.llamachild.stdin.write(`${input}` +"\n");
+  if (config.promptAddUserID) {
+    this.llamachild.stdin.write(`${input}` + "\n");
+  } else {
+    this.llamachild.stdin.write(`${input}` + "\n");
   }
 };
 
@@ -238,31 +281,40 @@ ser.handleTimeout = function () {
 };
 
 ser.handleSocketConnection = async function (socket) {
-  socket.on("message", async (data) => {
-    var input = data.message;
-    var embed = "";
-    if (data.embedding) {
-      console.log("embedding");
-      embed = await vdb.init(input);
-    }
-    var socketId = data.socketid;
-    input = config.prompt(socketId, input, embed);
-    input = input + "\\";
-    this.connectedClients.set(socketId, input);
-    // Add the incoming message to the queue
-    this.messageQueue.push({ socketId, input});
-    this.streamTimeout = setTimeout(this.handleTimeout, config.timeout);
-    // Process messages if the queue is not being processed currently
-    if (!this.isProcessing) {
-      this.processMessageQueue();
-    }
-  });
-  socket.on("error", function () {
-    console.log("Error", error);
-  });
-  socket.on("disconnect", () => {
-    this.connectedClients.delete(socket.id);
-  });
+  if (socket.request.session.loggedin){
+    socket.on("message",  async (data) => {
+      
+      var input = data.message;
+      var embed = "";
+      if (data.embedding) {
+        console.log("embedding");
+        embed = await vdb.init(input);
+      }
+      var socketId = data.socketid;
+      input = config.prompt(socketId, input, embed);
+      input = input + "\\";
+      console.log(input);
+      this.connectedClients.set(socketId, input);
+      // Add the incoming message to the queue
+      this.messageQueue.push({ socketId, input });
+      this.streamTimeout = setTimeout(this.handleTimeout, config.timeout);
+      // Process messages if the queue is not being processed currently
+      if (!this.isProcessing) {
+        this.processMessageQueue();
+      }
+    });
+    socket.on("error", function () {
+      console.log("Error", error);
+    });
+    socket.on("disconnect", () => {
+      this.connectedClients.delete(socket.id);
+    });
+  }    else{
+     console.log("Not Logged In!");
+     socket.emit("redirect-login");
+     // Disconnect the socket
+     socket.disconnect(true);
+  }  
 };
 
 ser.start = function () {

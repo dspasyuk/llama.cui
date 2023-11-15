@@ -28,6 +28,7 @@ cui.init = function (iphostname, port) {
   cui.listGenerate();
   cui.currentChat = cui.getcurrentChat();
   cui.returnWatcher();
+ 
   cui.sendMessageButton.addEventListener("click", () => {cui.sendMessage()});
 };
 
@@ -152,11 +153,17 @@ cui.socketInit = function () {
 
   this.socket.on("disconnect", () => {
     console.log("Connection closed");
-    alert("Connection closed");
+    cui.hideStop();
+    console.error("Connection closed");
   });
 
   this.socket.on("connect_error", (error) => {
     console.error("Connection error:", error);
+    cui.hideStop();
+  });
+  this.socket.on("redirect-login", () => {
+    // Redirect to the login page
+    window.location.href = '/login';
   });
 };
 
@@ -226,6 +233,20 @@ cui.returnWatcher = function () {
     });
   });
 };
+
+cui.defaultTest = function(){
+  const messageInput = document.getElementById("messageInput");
+  messageInput.value = `Can you generate a poem about the beauty of nature? <br>
+  Summarize this article in one sentence: The AI revolution is transforming various industries, including healthcare and finance.<br>
+  What is the square root of 169?<br>
+  Solve y+3y=6y+11 equasion and find y<br>
+  There are two ducks in front of a duck, two ducks behind a duck and a duck in the middle. How many ducks are there?<br>
+  How many days does it take to travel from New York City to London by plane, assuming non-stop flights and average speeds?<br>
+  What is the chemical formula for benzene?<br>
+  Explain the concept of machine learning in simple terms.<br>
+  Translate 'I love you' into 5 different languages, Spanish, French, Russian, Italian, German`;
+  cui.sendMessage();
+}
 
 cui.showStop = function (){
   const stop = document.getElementById("stop");

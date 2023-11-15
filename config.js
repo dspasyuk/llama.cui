@@ -1,44 +1,31 @@
 //Copyright Denis Spasyuk
 //License MIT
-
+const path = require("path");
 var config = {};
 
 //Model Setting
-config.params = [
-  "--model",
-  "../../models/dolphin-2.1-mistral-7b.Q5_0.gguf", //best so far for embedding
-  "--n-gpu-layers",
-  "15",
-  "--keep",
-  "20",
-  "-ins",
-  "-b",
-  "2048",
-  "--ctx_size",
-  "2048",
-  "--temp",
-  "0",
-  "--top_k",
-  "10",
-  "--multiline-input",
-  "--repeat_penalty",
-  "1.2",
-  "-t",
-  "4",
-  "-r",
-  "/n>",
-  "-f",
-  "./Alice.txt",
-  "--cfg-negative-prompt",
-  "Do not include any false information",
-  "--log-disable",
-  "--no-penalize-nl",
-];
+config.params = {
+  "--model": "../../models/dolphin-2.1-mistral-7b.Q5_0.gguf",
+  "--n-gpu-layers": "25",
+  "--keep": "20",
+  "-ins": "",
+  "-b":"2048",
+  "--ctx_size":"2048",
+  "--temp":"0",
+  "--top_k":"10",
+  "--multiline-input":"",
+  "--repeat_penalty": "1.3",
+  "-t": "4",
+  // "-r": "/n>",
+  "-f": "./Alice.txt",
+  "--log-disable":"",
+  "--no-penalize-nl":"",
+}
 
 //Llama.cpp settings
 config.llamacpp = "../llama.cpp/main";
 
-//Llama.cui settings
+//Llama.cui settings//
 config.PORT = { client: "5000", server: "5000" };
 config.IP = { client: "localhost", server: "localhost" };
 config.login = true;
@@ -47,24 +34,27 @@ config.session = {
   secret: "2C44-4D44-WppQ38S", //change before deployment
   resave: true,
   saveUninitialized: true,
+  cookie: {
+    secure: false, // will change to true when deploying to production
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: true,
+  },
 };
 
-config.loginTrue = async function () {
+config.loginTrue = async function (user) {
   const hash = require("./hash.js");
-  config.username = "admin";
-  config.password = await hash.cryptPassword("12345");
-};
-
-if (config.login) {
-  config.loginTrue();
+  const userdb = [{ username:"admin", password: await hash.cryptPassword("12345")}];
+  var theuser = userdb.find(({ username }) => username === user)
+  return theuser;
 };
 
 config.dataChannel = new Map();
 config.dataChannel.set("Documents", {
-  datastream: "Documents",
+  datastream: "Documents", 
   datafolder: "./docs",
   slice: 2000,
-  vectordb: "Documents.js",
+  vectordb: "Documents.js"
 });
 
 config.dataChannel.set("MongoDB", {
@@ -79,15 +69,18 @@ config.dataChannel.set("MongoDB", {
 config.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
 config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
 config.prompt = function(userID, prompt, context){
-  return `User ID: '${userID}'; User Prompt: '${prompt}'; Context:'${context||""}'`;
+  return `User: '${prompt}'; Context:'${context||""}'`;
 }
 
 //Piper setting
 config.piper = {
   enabled: false,
+  rate: '24050',
+  output_file: 'S16_LE',
   exec: "../piper/install/piper",
   model: "../piper/models/semaine/en_GB-semaine-medium.onnx",
 };
+
 
 try {
   module.exports = exports = config;
