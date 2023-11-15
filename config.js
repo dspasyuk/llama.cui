@@ -14,7 +14,7 @@ config.params = {
   "--temp":"0",
   "--top_k":"10",
   "--multiline-input":"",
-  "--repeat_penalty": "1.3",
+  "--repeat_penalty": "1.2",
   "-t": "4",
   // "-r": "/n>",
   "-f": "./Alice.txt",
