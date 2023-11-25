@@ -17,7 +17,7 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
    sed -i 's/-arch=native/-arch=all/g' Makefile
 
-   make clean && LLAMA_CUBLAS=1 make -j   # for GPU version
+   make clean && LLAMA_CUBLAS=1 make -j 4   # for GPU version
 
    or
    
