@@ -15,7 +15,7 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
    cd llama.cpp
 
-   sed -i 's/-arch=native/-arch=all/g' Makefile
+   sed -i 's/-arch=native/-arch=all/g' Makefile # could be skipped if native arch works
 
    make clean && LLAMA_CUBLAS=1 make -j 4   # for GPU version
 
