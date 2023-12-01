@@ -1,6 +1,6 @@
 function cui() {};
 
-cui.init = function (iphostname, port) {
+cui.init = function (iphostname, port, dataChannel, testQs) {
   cui.md = window.markdownit({
     breaks: true,   
     highlight: (str, lang) => {
@@ -20,6 +20,7 @@ cui.init = function (iphostname, port) {
   cui.sendMessageButton = document.getElementById("sendMessage");
   cui.iphostname = iphostname;
   cui.port = port;
+  cui.testQs = testQs;
   cui.messageId = "";
   cui.isClicked=false;
   cui.collapsible();
@@ -64,7 +65,7 @@ cui.listGenerate = function(){
   if (Object.keys(allData).length !== 0){
     var chatList = Object.keys(allData).map((chat) => {
       let theid = Object.keys(allData[chat])[0];
-      return { id: chat, text: allData[chat][theid]["user"].toString().substring(0, 25).replace('"', ''), href: "" };
+      return { id: chat, text: allData[chat][theid]["user"].toString().substring(0, 23).replace('"', ''), href: "" };
     });
     let list = "";
     for (let i = 0; i < chatList.length; i++) {
@@ -115,8 +116,10 @@ cui.onNewChart = function(){
 }
 
 cui.socketInit = function () {
-  console.log(`${cui.iphostname}:${cui.port}`);
-  this.socket = io(`${cui.iphostname}:${cui.port}`);
+  this.socket = io(`${cui.iphostname}:${cui.port}`, {
+    query: { sessionID },
+  });
+
   var text = "";
   cui.currentTile = null; // Reference to the current tile element
   this.socket.on("output", (response) => {
@@ -142,28 +145,25 @@ cui.socketInit = function () {
         
       }
     }
-
+    const chatMessages = document.getElementById("chatMessages");
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
   this.socket.on("connect", () => {
-    socketid = this.socket.id; // Get socket.id after connection is established
-    console.log(socketid);
+    cui.socketid = this.socket.id; // Get socket.id after connection is established
+    console.log(cui.socketid);
   });
 
   this.socket.on("disconnect", () => {
-    console.log("Connection closed");
     cui.hideStop();
     console.error("Connection closed");
   });
 
   this.socket.on("connect_error", (error) => {
     console.error("Connection error:", error);
-    cui.hideStop();
-  });
-  this.socket.on("redirect-login", () => {
-    // Redirect to the login page
     window.location.href = '/login';
+    cui.hideStop();
+    
   });
 };
 
@@ -183,10 +183,42 @@ cui.createUserTile = function (content) {
 
 cui.createTile = function (content, tileClass) {
   const tileElement = document.createElement("div");
+  const tileheader = document.createElement("div");
+  const headerText = document.createElement("p");
+  tileheader.className = "tileheader";
   tileElement.className = tileClass;
-  tileElement.innerHTML = content;
+  // Set the header text based on the tileClass
+  headerText.textContent = tileClass === "user-tile" ? "User" : "AI";
+  headerText.style.margin = "0 auto 0 0"; // Center the text
+  // Append the header text and button to the tileheader
+  tileheader.appendChild(headerText);
+ // Button is appended after the text
+ if (tileClass === "user-tile"){
+  const reload = document.createElement("button");
+  reload.onclick = function() {
+    cui.resubmit(this);
+  };
+  reload.innerHTML = '<i class="fas fa-sync"></i>';
+  reload.className = "btn headerbutton";
+  tileheader.appendChild(reload); 
+} 
+  const copytext = document.createElement("button");
+  copytext.onclick = function() {
+    cui.copyText(this);
+  };
+  copytext.innerHTML = '<i class="fas fa-copy"></i>';
+  copytext.className = "btn headerbutton";
+  tileheader.appendChild(copytext); 
+  // Append the tileheader to the tileElement
+  tileElement.appendChild(tileheader);
+  // Create a content element and append it to tileElement
+  const contentElement = document.createElement("div");
+  contentElement.className = "tilebody";
+  contentElement.innerHTML = content;
+  tileElement.appendChild(contentElement);
+  // Append the tileElement to chatMessages
   chatMessages.appendChild(tileElement);
-  cui.currentTile = tileElement;
+  cui.currentTile = contentElement;
 };
 
 
@@ -209,7 +241,7 @@ cui.sendMessage = function () {
   const input = cui.messageInput.value.trim(); // Get the message content
   const embedcheck = document.getElementById("embed");
   if (input !== "") {
-    cui.socket.emit("message", { message: input, socketid: socketid, embedding:embedcheck.checked });
+    cui.socket.emit("message", { message: input, socketid: cui.socketid, embedding:embedcheck.checked });
     cui.createUserTile(input); // Create a new user tile for the question
     cui.messageId = cui.get_random_id();
     cui.setMessage({id: cui.messageId, user:input, bot:""});
@@ -234,17 +266,24 @@ cui.returnWatcher = function () {
   });
 };
 
+cui.resubmit = function(button){
+  const tilebody = button.parentElement.nextElementSibling;
+  // Access the text content of the tilebody
+  const textFromTileBody = tilebody.textContent.trim();
+  const messageInput = document.getElementById("messageInput");
+  messageInput.value = textFromTileBody;
+}
+
+cui.copyText = function(button){
+  const tilebody = button.parentElement.nextElementSibling;
+  // Access the text content of the tilebody
+  const textFromTileBody = tilebody.textContent.trim();
+  navigator.clipboard.writeText(textFromTileBody);
+}
+
 cui.defaultTest = function(){
   const messageInput = document.getElementById("messageInput");
-  messageInput.value = `Can you generate a poem about the beauty of nature? <br>
-  Summarize this article in one sentence: The AI revolution is transforming various industries, including healthcare and finance.<br>
-  What is the square root of 169?<br>
-  Solve y+3y=6y+11 equasion and find y<br>
-  There are two ducks in front of a duck, two ducks behind a duck and a duck in the middle. How many ducks are there?<br>
-  How many days does it take to travel from New York City to London by plane, assuming non-stop flights and average speeds?<br>
-  What is the chemical formula for benzene?<br>
-  Explain the concept of machine learning in simple terms.<br>
-  Translate 'I love you' into 5 different languages, Spanish, French, Russian, Italian, German`;
+  messageInput.value = cui.testQs;
   cui.sendMessage();
 }
 
@@ -286,6 +325,7 @@ cui.getAlldata = function() {
   return JSON.parse(localStorage.getItem("llcui")) || {};
 }
 
+
 // Function to set a new message
 cui.setMessage = function(message) {
   const messages = cui.getAlldata();
@@ -303,16 +343,6 @@ cui.deleteChats = function(chat) {
   localStorage.setItem("llcui", JSON.stringify({}))
 }
 
-// cui.collapseChats = function() {
-//     const chats= document.getElementById("accordion");
-//     if (chats) {
-//       if (chats.style.display === "none" || chats.style.display === "") {
-//         chats.style.display = "block"; // Show the element
-//       } else {
-//         chats.style.display = "none"; // Hide the element
-//       }
-//   }
-// }
 
 cui.getMessageTree = function(id) {
   let messages = cui.getAlldata();

@@ -6,9 +6,10 @@ var config = {};
 //Model Setting
 config.params = {
   "--model": "../../models/dolphin-2.1-mistral-7b.Q5_0.gguf",
-  "--n-gpu-layers": "25",
-  "--keep": "20",
+  "--n-gpu-layers": "24",
+  // "--keep": "-1",
   "-ins": "",
+  "--simple-io":"",
   "-b":"2048",
   "--ctx_size":"2048",
   "--temp":"0",
@@ -16,7 +17,7 @@ config.params = {
   "--multiline-input":"",
   "--repeat_penalty": "1.2",
   "-t": "4",
-  // "-r": "/n>",
+  "-r": "/n>",
   "-f": "./Alice.txt",
   "--log-disable":"",
   "--no-penalize-nl":"",
@@ -34,10 +35,11 @@ config.session = {
   secret: "2C44-4D44-WppQ38S", //change before deployment
   resave: true,
   saveUninitialized: true,
+  store: "",
   cookie: {
     secure: false, // will change to true when deploying to production
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    maxAge: 24 * 60 * 60 * 100000, // 24 hours
     sameSite: true,
   },
 };
@@ -69,18 +71,27 @@ config.dataChannel.set("MongoDB", {
 config.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
 config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
 config.prompt = function(userID, prompt, context){
-  return `User: '${prompt}'; Context:'${context||""}'`;
+  return `<|im_start| User: '${prompt}'; Context:'${context||"no context"}' <|im_end|`;
 }
 
 //Piper setting
 config.piper = {
   enabled: false,
   rate: '24050',
-  output_file: 'S16_LE',
+  output_file: 'piper_out',
   exec: "../piper/install/piper",
   model: "../piper/models/semaine/en_GB-semaine-medium.onnx",
 };
 
+config.testQuestions = `Can you generate a poem about the beauty of nature? <br>
+The day before two days after the day before tomorrow is Saturday. What day is it today?<br>
+What is the square root of 169?<br>
+Solve y+3y=6y+11 equasion and find y<br>
+There are two ducks in front of a duck, two ducks behind a duck and a duck in the middle. How many ducks are there?<br>
+How many days does it take to travel from New York City to London by plane, assuming non-stop flights and average speeds?<br>
+What is the chemical formula for benzene?<br>
+If five cats can catch five mice in five minutes, how long will it take one cat to catch one mouse?<br>
+Translate I love you into 5 different languages, Spanish, French, Russian, Italian, German`
 
 try {
   module.exports = exports = config;

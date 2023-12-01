@@ -15,13 +15,19 @@ const path = require("path");
 const vdb = require("./db.js");
 const fs = require("fs");
 
-const version = 0.19;
+const version = 0.201; //changed public and server and config
 var session = require("express-session");
+const MemoryStore = require('memorystore')(session);
+const memStore = new MemoryStore();
 const config = require("./config.js");
 if (config.login) {
   var hash = require("./hash.js");
 }
 function ser() {}
+ser.parseCookie = function (setCookieHeader) {
+  const match = setCookieHeader[0].match(/connect\.sid=([^;]+)/);
+  return match ? match[1] : null;
+}
 
 ser.init = function (error) {
   console.log(
@@ -45,7 +51,10 @@ ser.init = function (error) {
 
   this.app = express();
   this.server = http.createServer(this.app);
+  
+  config.session.store = memStore;
   this.sessionStore= session(config.session)
+ 
   this.app.use(this.sessionStore);
   this.app.use(cors());
   this.io = socketIO(this.server, {
@@ -56,19 +65,41 @@ ser.init = function (error) {
     },
   });
   this.io.engine.use(this.sessionStore);
+  this.io.use(async (socket, next) => {
+    // Check authentication status here
+    console.log("Session ID", socket.handshake.query.sessionID);
+    const sessionID = socket.handshake.query.sessionID;
+
+    // Check authentication using the session ID
+    const isValid = await ser.isValidSession(sessionID);
+    console.log("Session is valid", isValid);
+    if (isValid) {
+      return next();
+    }else{
+      socket.emit("redirect-login");
+    }
+  
+    // Reject unauthorized connections
+    return next(new Error('Unauthorized'));
+  });
   this.io.on("connection", (socket) => this.handleSocketConnection(socket));
   this.app.use(express.json());
   this.app.use(express.urlencoded({ extended: true }));
   this.app.set("views", path.join(__dirname, "views"));
   this.app.set("view engine", "ejs");
   this.app.use(express.static(path.join(__dirname, "public")));
+
+
   // Define a route to render the EJS view
   this.app.get("/", ser.loggedIn, (req, res, next) => {
+    const sessionID = req.sessionID;
     res.render("index", {
       title: "Llama.cui",
       version: version,
       hostname: config.IP.client,
       port: config.PORT.client,
+      testQs: config.testQuestions,
+      sessionID: sessionID,
       datachannel: JSON.stringify(
         Object.keys(Object.fromEntries(config.dataChannel))
       ),
@@ -96,8 +127,10 @@ ser.init = function (error) {
     req.session.destroy();
     res.render("logout", { user: config.username });
   });
+  
 
   this.app.post("/login",   async (req, res) => {
+    const sessionID = req.sessionID;
     if (!config.login) {
       return res.redirect("/");
     } else {
@@ -107,19 +140,23 @@ ser.init = function (error) {
         if (!username || !password) {
           res.render("login", { title: "login" });
         } else {
-          // Query your database to get user credentials
-          //const results = await db.find("users", { "username": username });
           let users = await config.loginTrue(username); //replace this with database query
           if (users.length === 0) {
             res.render("login", { title: "login" });
           } else {
             // Compare the provided password with the stored password
-
             if (await hash.comparePassword(password, users.password)) {
               // Authentication successful
               req.session.loggedin = true;
-              req.session.username = username;
-              res.redirect("/");
+              req.session.user = { username };
+              if (req.xhr) {
+                // Send JSON response
+                res.json({ success: true, sessionID });
+              } else {
+                // Redirect to the "/" page
+                res.redirect('/');
+              }
+              console.log("Login Successful");
             } else {
               res.render("login", { title: "login" });
             }
@@ -135,6 +172,21 @@ ser.init = function (error) {
 
   this.start();
 };
+
+ser.isValidSession = function(sessionID) {
+    return new Promise((resolve, reject) => {
+      memStore.get(sessionID, (err, session) => {
+        if (err) {
+          console.error('Error validating session:', err);
+          reject(err);
+        } else {
+          // Assuming a session is valid if it exists
+          
+          resolve(!!session);
+        }
+      });
+    });
+}
 
 ser.isFileExistsSync = function (filePath) {
   try {
@@ -163,9 +215,11 @@ ser.runLLamaChild = function () {
     configParams.filter((item) => item !== ""),
     {
       stdio: ["pipe", "pipe", process.stderr],
+      shell:false,
+      detached:true,
     }
   );
-
+  this.llamachild.stdin.setEncoding('utf-8');
   this.llamachild.stdout.on("data", (msg) => this.handleLlama(msg));
 
   this.llamachild.on("exit", (code, signal) => {
@@ -246,7 +300,7 @@ ser.handleLlama = function (msg) {
     if (output) {
       clearTimeout(this.streamTimeout);
     }
-    // console.log(output);
+    // console.log(this.socketId);
     this.io.to(this.socketId).emit("output", output);
     this.runPiper(output);
     if (output.includes("\n>")) {
@@ -267,11 +321,10 @@ ser.processMessageQueue = function () {
   const { socketId, input } = message;
   this.socketId = socketId;
   // Send the message to the child process
-  if (config.promptAddUserID) {
-    this.llamachild.stdin.write(`${input}` + "\n");
-  } else {
-    this.llamachild.stdin.write(`${input}` + "\n");
-  }
+  this.llamachild.stdin.cork();
+  this.llamachild.stdin.write(`${input}`);
+  this.llamachild.stdin.write("\n");
+  this.llamachild.stdin.uncork();
 };
 
 ser.handleTimeout = function () {
@@ -281,9 +334,8 @@ ser.handleTimeout = function () {
 };
 
 ser.handleSocketConnection = async function (socket) {
-  if (socket.request.session.loggedin){
+  if (socket.request.session){
     socket.on("message",  async (data) => {
-      
       var input = data.message;
       var embed = "";
       if (data.embedding) {
@@ -293,7 +345,7 @@ ser.handleSocketConnection = async function (socket) {
       var socketId = data.socketid;
       input = config.prompt(socketId, input, embed);
       input = input + "\\";
-      console.log(input);
+      // console.log(input);
       this.connectedClients.set(socketId, input);
       // Add the incoming message to the queue
       this.messageQueue.push({ socketId, input });
@@ -311,7 +363,7 @@ ser.handleSocketConnection = async function (socket) {
     });
   }    else{
      console.log("Not Logged In!");
-     socket.emit("redirect-login");
+    //  socket.emit("redirect-login");
      // Disconnect the socket
      socket.disconnect(true);
   }  

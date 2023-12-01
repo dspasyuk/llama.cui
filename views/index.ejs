@@ -24,7 +24,7 @@
   <script src="/js/highlight.min.js"></script>
   <script src="/js/markdown-it.min.js"></script>
   <script type="text/javascript" src="js/webui.js?v=<%= version %>"></script>
-  <!-- <script>hljs.highlightAll()</script> -->
+  <script>hljs.highlightAll()</script>
   <title>
     <%= title %>
   </title>
@@ -36,9 +36,9 @@
 </style>
 
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark theme justify-content-between flex-nowrap flex-row">
+  <nav class="navbar navbar-expand-lg themenav navbar-dark justify-content-between flex-nowrap flex-row">
     <div class="footerbar nav navbar-nav flex-row float-right">
-      <button id="sidebar-toggle" class="btn theme sidebar-toggle float-left"> <i class="fas fa-bars theme"></i>
+      <button id="sidebar-toggle" class="btn theme sidebar-toggle float-left"> <i class="fas fa-bars"></i>
       </button>
     </div>
     <div class="footerbar nav navbar-nav flex-row float-right">
@@ -49,12 +49,12 @@
   <div class="container-fluid">
     <div class="row">
       <!-- Left Sidebar -->
-      <div class="col-md-3 rightsidebar left-sidebar theme" id="left-sidebar">
+      <div class="col-md-3 rightsidebar left-sidebar" id="left-sidebar">
         <div class="toolbar">
           <button title="New Chart" onclick="cui.onNewChart()" style="width:220px" class="btn theme"> <i
               class="fas fa-file"></i></button>
           <button title="Delete All" onclick="cui.deleteMessages()" type="button" class="btn theme"><i
-              class="fas fa-trash"></i></button>
+              class="fas fa-trash "></i></button>
         </div>
         <div class="sidebar">
           <button type="button" class="btn collapsible">Chats</button>
@@ -68,8 +68,14 @@
          
         </div>
         <div class="bottom-left">
-          <div class="tester" id="tester"><button id="testgenerator" onclick="cui.defaultTest()" type="button"
-          class="btn btn-outline-secondary">Run Exam</button></div>  
+          <div class="tester" id="wiki">  <div class="embed btn-outline-secondary">
+            <input class="embed-check" id="embed" type="checkbox" name="embedding" value="">
+            <span class="embed-icon" title="Enable Database Search"> <i class="fas fa-server"></i></span>
+          </div>
+          <div class="" id="tester"><button id="testgenerator" onclick="cui.defaultTest()" type="button"
+            class="btn btn-outline-secondary">Exam</button></div>  
+        </div>  
+         
       </div>
       </div>
   
@@ -84,29 +90,31 @@
           </div>
         </div>
 
-        <div class="input-container">
-          <div class="embed">
-            <input class="embed-check" id="embed" type="checkbox" name="embedding" value="">
-            <span class="embed-icon" title="Enable Database Search"> <i class="fas fa-server theme"></i></span>
-          </div>
-
-          <textarea id="messageInput" tabindex="0" rows="1" placeholder="Ask a question"
-            class="form-control"></textarea>
-          <button style="width:65px" id="sendMessage" type="button" class="btn theme">Send</button>
-        </div>
+        <div class="input-container" data-max-height="100">
+          <textarea id="messageInput" placeholder="Ask a question" class="form-control grow-wrap" onInput="autoResize(this)"></textarea>
+          <button style="width: 65px" id="sendMessage" type="button" class="btn theme sendmessage">Send</button>
+      </div>
+      
       </div>
     </div>
-  </div>
+     </div>
       <script>
- let iphostname =<%- JSON.stringify(hostname) %>;
+      let iphostname =<%- JSON.stringify(hostname) %>;
       let port = <%- JSON.stringify(port) %>;
       let datachanels = <%- JSON.stringify(datachannel) %>;
-      console.log(datachanels);
-      cui.init(iphostname, port, datachanels);
+      let testQs = <%- JSON.stringify(testQs) %>;
+      console.log(testQs);
+      let sessionID = <%- JSON.stringify(sessionID) %>;
+      cui.init(iphostname, port, datachanels, testQs);
       const sidebarToggle = document.getElementById('sidebar-toggle');
       const leftSidebar = document.getElementById('left-sidebar');
       const chatContainer = document.querySelector('.chat-container');
-
+      function autoResize(textarea) {
+        var maxHeight = parseInt(textarea.parentNode.getAttribute('data-max-height')) || 120;
+        textarea.style.height = 'auto';
+        console.log(maxHeight, Math.min(textarea.scrollHeight, maxHeight));
+        textarea.style.height = Math.min(textarea.scrollHeight-20, maxHeight) + 'px';
+      }
       sidebarToggle.addEventListener('click', () => {
         leftSidebar.classList.toggle('open');
         chatContainer.classList.toggle('open');
