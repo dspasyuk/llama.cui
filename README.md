@@ -56,4 +56,5 @@ Enable it in config.js, make sure to install piper before running llama.cui
 ## Embeddings
 llama.cui supports embeddings from text file (see docs folder) and mongodb (do npm install mongo and make changes to config.js to configure database) 
 ![Screenshot](https://github.com/deonis1/llcui/blob/main/Screenshot.png)
+![Screenshot](https://github.com/deonis1/llcui/blob/main/Code_highlight.png)
 
