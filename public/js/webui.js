@@ -70,7 +70,7 @@ cui.listGenerate = function(){
     let list = "";
     for (let i = 0; i < chatList.length; i++) {
       const item = chatList[i];
-      list += `<li class="dark"  > <div style="width:100%" class="list-group-item-container"><div id=${item.id} style="width:78%" onclick="cui.loadMessage(this.id)" class="list-group-item">${item.text}</div><button title="Delete Chat" id="${item.id}_del" onclick="cui.deleteButtons(this.id)" class="btn theme"> <i class="fas fa-trash"></i></button></div></li>`;
+      list += `<li class="dark"  > <div style="width:100%" class="list-group-item-container"><div id=${item.id} style="width:78%" onclick="cui.loadMessage(this.id)" class="list-group-item">${item.text}</div><button title="Delete Chat" id="${item.id}_del" onclick="cui.deleteButtons(this.id)" class="btn theme dims"> <i class="fas fa-trash"></i></button></div></li>`;
     }
     document.getElementById("savedChats").innerHTML = list; 
   }
@@ -182,6 +182,7 @@ cui.createUserTile = function (content) {
 };
 
 cui.createTile = function (content, tileClass) {
+  document.getElementsByClassName('chat-container')[0].style.backgroundImage = 'none';
   const tileElement = document.createElement("div");
   const tileheader = document.createElement("div");
   const headerText = document.createElement("p");
@@ -288,12 +289,12 @@ cui.defaultTest = function(){
 }
 
 cui.showStop = function (){
-  const stop = document.getElementById("stop");
+  const stop = document.getElementById("stopgenerator");
   stop.style.display = "block";
 }
 
 cui.hideStop = function (){
-  const stop = document.getElementById("stop");
+  const stop = document.getElementById("stopgenerator");
   stop.style.display = "none";
 }
 

@@ -1,9 +1,10 @@
 :root {
   --brown: #1f2230;
   --white: #ffffff;
-  --light: #141414;
+  --dark-main: #090c14;
   --dark: #1b1b1b;
-  --btn-outline: #76787e;
+  --btn-outline: #9199bb;
+  --btn-stop: #9199bb;
   --btn-send: #2c3552;
 }
 
@@ -18,11 +19,12 @@ body {
 
 .toolbar {
   /* border-bottom: 1px solid #686868; */
-  width: 100%;
+  width: 96%;
   margin-bottom: 7px;
   margin-top: 10px;
   display: flex;
   justify-content: space-between;
+  margin-right: 200px;
 }
 
 textarea:focus {
@@ -34,15 +36,18 @@ textarea:focus {
 .chat-container {
   position: relative;
   max-width: 85vw;
-  max-height: calc(80vh - 140px);
+  max-height: calc(100vh - 140px);
   margin: 5px auto;
   border-radius: 0px;
+  background-image: url("../img/bg.png");
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 .chat-messages {
   position: relative;
-  max-height: calc(80vh - 140px);
-  height: 80vh;
+  max-height: calc(85vh - 140px);
+  height: 100vh;
   overflow-y: scroll;
   padding-top: 10px;
   padding-bottom: 10px;
@@ -78,6 +83,8 @@ button {
   max-height: 15vh;
   margin: 0 auto;
   display: flex;
+  align-items: stretch;
+  justify-content: center;
 }
 
 .input-container textarea {
@@ -136,7 +143,13 @@ button {
   border-top-right-radius: 10px;
   border-bottom-right-radius: 10px;
   border: none !important;
-  background-color: var(--btn-send) !important;
+  color: var(--white) !important;
+  background-color: var(--dark-main) !important;
+  align-self:stretch;
+  text-align: center;
+}
+.sendmessage:hover {
+  background-color: var(--btn-outline) !important;
 }
   
 ul {
@@ -144,38 +157,41 @@ ul {
 }
 
 .list-group {
-  background-color: var(--light) !important;
+  background-color: var(--dark-main) !important;
 }
 
 .list-group-item {
-  background-color: var(--light) !important;
+  background-color: var(--dark-main) !important;
   color: var(--white);
   border: none;
   padding: 7px;
-  text-wrap: none;
-  /* margin-bottom:0;
-  margin-left: 2px; */
+  word-wrap: unset;
+  overflow: hidden;
+  white-space: nowrap;
   border-radius: 4px !important;
+  position: relative;
 }
+
+
 .list-group-item:hover {
   cursor: pointer;
   background-color: var(--btn-outline) !important;
   border-radius: 4px !important;
-  color: var(--light);
+  color: var(--white);
 }
 
 .list-group-item-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--light) !important;
+  background-color: var(--dark-main) !important;
   /* border-radius: 5px !important; */
   margin-bottom: 5px;
   height: 50px;
 }
 
 .rightsidebar {
-  background-color: var(--light) !important;
+  background-color: var(--dark-main) !important;
   max-width: 300px;
   height: calc(100vh - 54px);
 }
@@ -183,7 +199,7 @@ ul {
 .sidebar {
   height: calc(100vh - 175px);
   overflow: scroll;
-  background-color: var(--light) !important;
+  background-color: var(--dark-main) !important;
 }
 
 ::-webkit-scrollbar {
@@ -191,18 +207,25 @@ ul {
   width: 0;
 }
 
-.stoppercontainer {
-  width: 100%;
-  height: 50px;
-  align-content: center;
-  margin-bottom: 10px;
-  /* border: 1px solid #CCC; */
-}
+/* .stoppercontainer {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+  border: none !important;
+  color: var(--white) !important;
+  background-color: var(--dark-main) !important;
+} */
 
 .stopper {
-  padding: 10px;
+  margin-right: 10px;
+  width: 40px;
+  height: 40px;
+  align-self: center;
   text-align: center;
-  z-index: 1000;
+  margin-left:-50px;
+  border: 1px solid var(--btn-stop) !important;
+  color: var(--btn-stop);
   display: none;
 }
 
@@ -245,7 +268,7 @@ ul {
   height: 38px;
   display: flex;
   color: var(--white);
-  background-color: var(--light);
+  background-color: var(--dark-main);
   border:1px solid var(--btn-outline);
   border-radius: 5px;
 }
@@ -281,16 +304,22 @@ ul {
 }
 
 .themenav {
-  background-color: var(--light);
+  background-color: var(--dark-main);
   color: var(--btn-outline);
 }
 .theme:hover {
   background-color: var(--btn-outline);
-  color:var(--white);
+  color:var(--white)!important;
 }
 
 .btn {
   border: 1px solid var(--btn-outline);
+
+}
+.dims{
+  padding: .200rem .50rem !important;
+  font-size: 14px !important;
+  color: #9b9b9b;
 }
 
 .collapsible {
@@ -298,7 +327,7 @@ ul {
   color: white;
   cursor: pointer;
   padding: 7px;
-  width: 100%;
+  width: 96%;
   border: 1px solid var(--btn-outline);
   text-align: left;
   font-size: 16px;
@@ -321,7 +350,7 @@ ul {
 }
 
 .bottom-left {
-  border: 1px solid #686868;
+  border: 1px solid var(--btn-outline);
   display: block;
   overflow: hidden;
   outline: none;
