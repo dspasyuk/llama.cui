@@ -86,7 +86,7 @@ config.piper = {
 config.testQuestions = `Can you generate a poem about the beauty of nature? <br>
 The day before two days after the day before tomorrow is Saturday. What day is it today?<br>
 What is the square root of 169?<br>
-Solve y+3y=6y+11 equasion and find y<br>
+Solve y+3y=6y+11 equation and find y<br>
 There are two ducks in front of a duck, two ducks behind a duck and a duck in the middle. How many ducks are there?<br>
 How many days does it take to travel from New York City to London by plane, assuming non-stop flights and average speeds?<br>
 What is the chemical formula for benzene?<br>
