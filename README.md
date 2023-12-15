@@ -1,5 +1,5 @@
 # Llama.cui is a small llama.cpp chat application for Node.js 
-
+![logo](https://github.com/dspasyuk/llama.cui/blob/main/logo.png?)
 
 **Note: This project is a work in progress.**
 
