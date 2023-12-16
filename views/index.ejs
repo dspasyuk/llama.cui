@@ -51,13 +51,13 @@
       <!-- Left Sidebar -->
       <div class="col-md-3 rightsidebar left-sidebar" id="left-sidebar">
         <div class="toolbar">
-          <button title="New Chart" onclick="cui.onNewChart()" style="width:220px" class="btn theme dims"> <i
+          <button title="New Chart" onclick="cui.onNewChart()" style="width:220px" class="btn theme"> <i
               class="fas fa-file"></i></button>
-          <button title="Delete All" onclick="cui.deleteMessages()" type="button" class="btn theme dims"><i
+          <button title="Delete All" onclick="cui.deleteMessages()" type="button" class="btn theme "><i
               class="fas fa-trash "></i></button>
         </div>
         <div class="sidebar">
-          <button type="button" class="btn collapsible dims">Chats</button>
+          <button type="button" class="btn collapsible theme">Chats</button>
           <div class="content" id="accordion">
             <!-- CARD One -->
 
@@ -68,12 +68,12 @@
          
         </div>
         <div class="bottom-left">
-          <div class="tester" id="wiki">  <div class="embed btn-outline-secondary theme">
+          <div class="tester" id="wiki">  <div class="embed theme">
             <input class="embed-check" id="embed" type="checkbox" name="embedding" value="">
             <span class="embed-icon" title="Enable Database Search"> <i class="fas fa-server"></i></span>
           </div>
           <div class="" id="tester"><button id="testgenerator" onclick="cui.defaultTest()" type="button"
-            class="btn btn-outline-secondary theme">Exam</button></div>  
+            class="btn theme">Exam</button></div>  
         </div>  
          
       </div>
@@ -88,7 +88,7 @@
           <textarea id="messageInput" placeholder="Ask a question" class="form-control grow-wrap" onInput="autoResize(this)"></textarea>
             <!-- <div class="stopper" id="stop"> -->
               <button id="stopgenerator" onclick="cui.stopGenerating()" type="button" class="btn btn-outline-secondary stopper"><i class="fas fa-stop"></i></button>
-              <button style="width: 65px" id="sendMessage" type="button" class="btn theme sendmessage">Send</button>
+              <button style="width: 65px" id="sendMessage" type="button" class="btn sendmessage"><i class="fas fa-play"></i></button>
             <!-- </div> -->
           </div>
       </div>

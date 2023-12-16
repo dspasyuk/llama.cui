@@ -24,10 +24,10 @@ if (config.login) {
   var hash = require("./hash.js");
 }
 function ser() {}
-ser.parseCookie = function (setCookieHeader) {
-  const match = setCookieHeader[0].match(/connect\.sid=([^;]+)/);
-  return match ? match[1] : null;
-}
+// ser.parseCookie = function (setCookieHeader) {
+//   const match = setCookieHeader[0].match(/connect\.sid=([^;]+)/);
+//   return match ? match[1] : null;
+// }
 
 ser.init = function (error) {
   console.log(
@@ -125,7 +125,8 @@ ser.init = function (error) {
 
   this.app.get("/logout", async (req, res) => {
     req.session.destroy();
-    res.render("logout", { user: config.username });
+    // res.render("logout", { user: config.username });
+    return res.redirect("/login");
   });
   
 
@@ -215,8 +216,6 @@ ser.runLLamaChild = function () {
     configParams.filter((item) => item !== ""),
     {
       stdio: ["pipe", "pipe", process.stderr],
-      shell:false,
-      detached:true,
     }
   );
   this.llamachild.stdin.setEncoding('utf-8');
@@ -345,7 +344,7 @@ ser.handleSocketConnection = async function (socket) {
       var socketId = data.socketid;
       input = config.prompt(socketId, input, embed);
       input = input + "\\";
-      // console.log(input);
+      console.log(input);
       this.connectedClients.set(socketId, input);
       // Add the incoming message to the queue
       this.messageQueue.push({ socketId, input });

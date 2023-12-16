@@ -1,11 +1,12 @@
 :root {
   --brown: #1f2230;
   --white: #ffffff;
-  --dark-main: #090c14;
+  --dark-main: #0f0f0f;
   --dark: #1b1b1b;
-  --btn-outline: #9199bb;
+  --btn-outline: #4d4c4c;
   --btn-stop: #9199bb;
-  --btn-send: #2c3552;
+  --textarea: rgb(183, 221, 233);
+  --btn-send: var(--textarea);
 }
 
 body {
@@ -30,7 +31,8 @@ body {
 textarea:focus {
   outline: none !important;
   box-shadow: none !important;
-  border: 1px solid #ccc;
+  border: none !important;
+  background-color: (--textarea) !important;
 }
 
 .chat-container {
@@ -54,7 +56,13 @@ textarea:focus {
   margin-top: 10px;
   margin-bottom: 50px;
   padding-right: 5px;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
 
+.chat-messages::-webkit-scrollbar {
+  display: none;
+  width: 0;
 }
 
 input:focus,
@@ -62,7 +70,6 @@ button {
   outline: none !important;
   box-shadow: none !important;
 }
-
 
 @media (max-width: 768px) {
   /* Apply these styles for screens with a max width of 768px (typical for mobile devices) */
@@ -78,7 +85,6 @@ button {
   }
 }
 
-
 .input-container {
   max-height: 15vh;
   margin: 0 auto;
@@ -92,11 +98,13 @@ button {
   height: 60px;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
-  border-bottom-left-radius: 10px;
-  border-top-left-radius: 10px;
+  border-bottom-left-radius: 30px;
+  border-top-left-radius: 30px;
   text-align: justify;
-  background-color: rgb(183, 221, 233);
-  resize: none; /* Disable textarea resizing by user */
+  border: none !important;
+  background-color: var(--textarea) !important;
+  resize: none;
+  /* Disable textarea resizing by user */
 }
 
 .tileheader {
@@ -107,7 +115,8 @@ button {
   padding-top: 5px;
   font-weight: bold;
   display: flex;
-  align-items: center; /* Center items vertically within the flex container */
+  align-items: center;
+  /* Center items vertically within the flex container */
 }
 
 .headerbutton {
@@ -138,31 +147,30 @@ button {
 }
 
 .sendmessage {
+  height: 60px;
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
-  border-top-right-radius: 10px;
-  border-bottom-right-radius: 10px;
+  border-top-right-radius: 30px;
+  border-bottom-right-radius: 30px;
   border: none !important;
-  color: var(--white) !important;
-  background-color: var(--dark-main) !important;
-  align-self:stretch;
+  outline: none !important;
+  color: var(--btn-stop) !important;
+  background-color: var(--btn-send) !important;
+  align-self: stretch;
   text-align: center;
 }
+
 .sendmessage:hover {
-  background-color: var(--btn-outline) !important;
+  background-color: var(--btn-send) !important;
 }
-  
+
 ul {
   list-style: none;
 }
 
-.list-group {
-  background-color: var(--dark-main) !important;
-}
-
 .list-group-item {
-  background-color: var(--dark-main) !important;
-  color: var(--white);
+  background-color: inherit !important;
+  color: var(--btn-outline);
   border: none;
   padding: 7px;
   word-wrap: unset;
@@ -172,10 +180,9 @@ ul {
   position: relative;
 }
 
-
 .list-group-item:hover {
   cursor: pointer;
-  background-color: var(--btn-outline) !important;
+  background-color: var( --btn-outline) !important;
   border-radius: 4px !important;
   color: var(--white);
 }
@@ -184,22 +191,26 @@ ul {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--dark-main) !important;
+  /* background-color: var(--dark-main) !important; */
   /* border-radius: 5px !important; */
-  margin-bottom: 5px;
-  height: 50px;
+  margin-bottom: 1px;
+  height: 40px;
+}
+.delete-button {
+  background-color: transparent;
+  border: none !important;
 }
 
 .rightsidebar {
   background-color: var(--dark-main) !important;
   max-width: 300px;
   height: calc(100vh - 54px);
+  /* background-image: linear-gradient(270deg, #141414 0%,     rgba(255, 255, 255, 0) 2%); */
 }
 
 .sidebar {
   height: calc(100vh - 175px);
   overflow: scroll;
-  background-color: var(--dark-main) !important;
 }
 
 ::-webkit-scrollbar {
@@ -223,7 +234,7 @@ ul {
   height: 40px;
   align-self: center;
   text-align: center;
-  margin-left:-50px;
+  margin-left: -50px;
   border: 1px solid var(--btn-stop) !important;
   color: var(--btn-stop);
   display: none;
@@ -256,8 +267,10 @@ ul {
   .rightsidebar {
     display: none;
   }
+
   .chat-container {
-    width: 100%; /* Expand the main chat container on small screens */
+    width: 100%;
+    /* Expand the main chat container on small screens */
   }
 }
 
@@ -269,12 +282,15 @@ ul {
   display: flex;
   color: var(--white);
   background-color: var(--dark-main);
-  border:1px solid var(--btn-outline);
+  border: 1px solid var(--btn-outline);
   border-radius: 5px;
 }
+
 .embed-check {
   padding: 8px;
+  cursor: pointer;
 }
+
 .embed-icon {
   padding-left: 15px;
 }
@@ -287,56 +303,58 @@ ul {
 
 .left-sidebar.open {
   display: block;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
+.left-sidebar ::-webkit-scrollbar {
+  display: none;
+  width: 0;
+}
+
+
 .chat-container.open {
-  max-width: calc(80vw - 300px); /* Adjust the width according to your design */
+  max-width: calc(80vw - 300px);
+  /* Adjust the width according to your design */
 }
 
 .sidebar-toggle.open i::before {
-  content: "\f00d"; /* Change to the close icon you prefer */
+  content: "\f00d";
+  /* Change to the close icon you prefer */
 }
 
 .theme {
   background-color: inherit;
   color: var(--btn-outline);
-  border: 1px solid var(--btn-outline);
+  /* background-image: linear-gradient(290deg,  rgba(140, 175, 175, 0) 0%,  var(--dark-main)   100%); */
+  border: 1px solid var( --btn-outline);
+}
+
+.theme:hover {
+  background-color: var(--btn-outline);
+  color: var(--white) !important;
 }
 
 .themenav {
   background-color: var(--dark-main);
   color: var(--btn-outline);
 }
-.theme:hover {
-  background-color: var(--btn-outline);
-  color:var(--white)!important;
-}
-
-.btn {
-  border: 1px solid var(--btn-outline);
-
-}
-.dims{
-  padding: .200rem .50rem !important;
-  font-size: 14px !important;
-  color: #9b9b9b;
-}
 
 .collapsible {
   background-color: inherit;
-  color: white;
   cursor: pointer;
   padding: 7px;
-  width: 96%;
-  border: 1px solid var(--btn-outline);
-  text-align: left;
+  width: 273px;
+  border: 1px solid var( --btn-outline);
+  /* text-align: left; */
   font-size: 16px;
   margin-bottom: 10px;
 }
 
 .active,
 .collapsible:hover {
-  background-color: var(--btn-outline);
+  background-color: var( --btn-outline);
+  color: var(--white);
   border-radius: 5px;
 }
 
@@ -350,19 +368,22 @@ ul {
 }
 
 .bottom-left {
-  border: 1px solid var(--btn-outline);
+  border-top: 1px solid var( --btn-outline);
   display: block;
   overflow: hidden;
   outline: none;
-  background-color: inherit;
-  border-radius: 5px;
+  /* background-color: inherit; */
+  border-radius: 0px;
 }
 
 .tester {
-  display:flex;
-  padding: 8px;
+  display: flex;
+  justify-content: space-between;
+  padding-right: 8px;
+  padding-top: 8px;
   border-radius: 10px !important;
 }
+
 .navbar {
   padding: 0.5rem 0.5rem;
 }

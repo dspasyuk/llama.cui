@@ -70,7 +70,7 @@ cui.listGenerate = function(){
     let list = "";
     for (let i = 0; i < chatList.length; i++) {
       const item = chatList[i];
-      list += `<li class="dark"  > <div style="width:100%" class="list-group-item-container"><div id=${item.id} style="width:78%" onclick="cui.loadMessage(this.id)" class="list-group-item">${item.text}</div><button title="Delete Chat" id="${item.id}_del" onclick="cui.deleteButtons(this.id)" class="btn theme dims"> <i class="fas fa-trash"></i></button></div></li>`;
+      list += `<li class="dark"  > <div style="width:100%" class="list-group-item-container"><div id=${item.id} style="width:78%" onclick="cui.loadMessage(this.id)" class="list-group-item">${item.text}</div><button title="Delete Chat" id="${item.id}_del" onclick="cui.deleteButtons(this.id)" class="btn theme delete-button "> <i class="fas fa-trash"></i></button></div></li>`;
     }
     document.getElementById("savedChats").innerHTML = list; 
   }

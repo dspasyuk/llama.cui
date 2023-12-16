@@ -5,7 +5,7 @@ const readline = require("readline");
 const path = require('path');
 const util = require('util');
 const hashUtils = require('./hash.js');
-const parser = require('./parser.js');
+// const parser = require('./parser.js');
 const chalk = require('chalk');
 
 
@@ -87,12 +87,12 @@ Cui.parseInput = function(input){
 
 Cui.startUserInput = function () {
   this.rl.question(chalk.blue("U: "), async (input) => {
-    input = await Cui.parseInput(input);
-    // this.socket.emit("message", {
-    //   message: input,
-    //   socketid: Cui.socketid,            /// enable me 
-    //   embedding: false,
-    // });
+    // input = await Cui.parseInput(input);
+    this.socket.emit("message", {
+      message: input,
+      socketid: Cui.socketid,            /// enable me 
+      embedding: false,
+    });
   });
 };
 
