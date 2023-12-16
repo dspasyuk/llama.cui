@@ -25,7 +25,7 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
 4. Clone llama.cui
    
-   git clone https://github.com/deonis1/llama.cui
+   git clone https://github.com/dspasyuk/llama.cui
 
 5. Download LLM model from [hugging face](https://huggingface.co/) in GGUF format, for example:
    a. Dolphin-Mistral 7B:   https://huggingface.co/TheBloke/dolphin-2.1-mistral-7B-GGUF/blob/main/dolphin-2.1-mistral-7b.Q5_0.gguf
@@ -55,6 +55,6 @@ Enable it in config.js, make sure to install piper before running llama.cui
 
 ## Embeddings
 llama.cui supports embeddings from text file (see docs folder) and mongodb (do npm install mongo and make changes to config.js to configure database) 
-![Screenshot](https://github.com/deonis1/llcui/blob/main/Screenshot.png)
-![Screenshot](https://github.com/deonis1/llcui/blob/main/Code_highlight.png)
+![Screenshot](https://github.com/dspasyuk/llcui/blob/main/Screenshot.png)
+![Screenshot](https://github.com/dspasyuk/llcui/blob/main/Code_highlight.png)
 
