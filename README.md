@@ -46,7 +46,7 @@ npm start
 
 ## Login Information
 Default login and password are specified in config file but could be easily integrated with user a database.
-The login is currently set to false. To enable login set login to tru in config file and change password.
+The login is currently set to false. To enable login set login to true in the config file and change password.
 
 ## Piper integration
 As of version 1.15 the llama.cui supports Piper for text to voice generation.
