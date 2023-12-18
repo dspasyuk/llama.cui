@@ -71,7 +71,7 @@ config.dataChannel.set("MongoDB", {
 config.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
 config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
 config.prompt = function(userID, prompt, context){
-  return `User: '${prompt}'; ${context ? `Context: '${context}'` : ""}`;
+   return `<|im_start|> User: '${prompt}'; ${context ? `Context: '${context}'` : ""}<|im_end|>`;
 }
 
 //Piper setting
