@@ -5,13 +5,13 @@ var config = {};
 
 //Model Setting
 config.params = {
-  "--model": "../../models/dolphin-2.1-mistral-7b.Q5_0.gguf",
+  "--model": "../../../models/dolphin-2.1-mistral-7b.Q5_0.gguf",
   "--n-gpu-layers": 25,
   "--keep": -1,
   "-ins": "",
   "--simple-io":"",
-  "-b": 512,
-  "--ctx_size":512,
+  "-b": 1024,
+  "--ctx_size":1024,
   "--temp":0,
   "--top_k":10,
   "--multiline-input":"",
@@ -71,7 +71,7 @@ config.dataChannel.set("MongoDB", {
 config.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
 config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
 config.prompt = function(userID, prompt, context){
-   return `<|im_start|> User: '${prompt}'; ${context ? `Context: '${context}'` : ""}<|im_end|>`;
+   return `User: '${prompt}'; ${context ? `Context: '${context}'` : ""}`;
 }
 
 //Piper setting
