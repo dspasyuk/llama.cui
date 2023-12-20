@@ -5,18 +5,19 @@ var config = {};
 
 //Model Setting
 config.params = {
-  "--model": "../../../models/dolphin-2.1-mistral-7b.Q5_0.gguf",
+  "--model": "../../models/dolphin-2.1-mistral-7b.Q5_0.gguf",
   "--n-gpu-layers": 25,
   "--keep": -1,
   "-ins": "",
   "--simple-io":"",
   "-b": 1024,
   "--ctx_size":1024,
-  "--temp":0,
+  "--temp":0.1,
   "--top_k":10,
+  "--top_p":0.3,
   "--multiline-input":"",
-  "--repeat_penalty": 1.2,
-  "-t": 4,
+  "--repeat_penalty": 1.15,
+  "-t": 6,
   "-r": '"/n>"',
   "-f": "./Alice.txt",
   "--log-disable":"",
@@ -29,7 +30,7 @@ config.llamacpp = "../llama.cpp/main";
 //Llama.cui settings//
 config.PORT = { client: "5000", server: "5000" };
 config.IP = { client: "localhost", server: "localhost" };
-config.login = false;
+config.login = true;
 config.timeout = 50000;
 config.session = {
   secret: "2C44-4D44-WppQ38S", //change before deployment
@@ -71,7 +72,7 @@ config.dataChannel.set("MongoDB", {
 config.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
 config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
 config.prompt = function(userID, prompt, context){
-   return `User: '${prompt}'; ${context ? `Context: '${context}'` : ""}`;
+  return `<|im_start|> user\n'${prompt}'; ${context ? `Context: '${context}'` : ""}<|im_end|>`;
 }
 
 //Piper setting
@@ -84,14 +85,15 @@ config.piper = {
 };
 
 config.testQuestions = config.testQuestions = `
-The day before two days after the day before tomorrow is Saturday. What day is it today?<br>
-What is the square root of 169?<br>
-Solve the equation 3y = 6y + 11 and find y.<br>
-There are two ducks in front of a duck, two ducks behind a duck, and a duck in the middle. How many ducks are there?<br>
-How many days does it take to travel from New York City to London by plane, assuming non-stop flights and average speeds?<br>
-What are the products of the chemical reaction between salicylic acid and acetic anhydride?<br>
-If five cats can catch five mice in five minutes, how long will it take one cat to catch one mouse?<br>
-Translate "I love you" into 5 different languages: Spanish, French, Russian, Italian, German.<br>
+Answer the following questions:
+1. The day before two days after the day before tomorrow is Saturday. What day is it today?<br>
+2. What is the square root of 169?<br>
+3. Solve the equation 3y = 6y + 11 and find y.<br>
+4. There are two ducks in front of a duck, two ducks behind a duck, and a duck in the middle. How many ducks are there?<br>
+5. How many days does it take to travel from New York City to London by plane, assuming non-stop flights and average speeds?<br>
+6. What are the products of the chemical reaction between salicylic acid and acetic anhydride?<br>
+7. If five cats can catch five mice in five minutes, how long will it take one cat to catch one mouse?<br>
+8. Translate "I love you" into 5 different languages: Spanish, French, Russian, Italian, German.<br>
 `
 
 
