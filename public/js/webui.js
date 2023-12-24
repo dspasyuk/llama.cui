@@ -59,18 +59,30 @@ cui.collapsible = function(){
     });
   }
 }
+ cui.showDeleteButton = function(buttonId) {
+  var deleteButton = document.getElementById(buttonId);
+  deleteButton.classList.remove('hidden');
+}
+
+ cui.hideDeleteButton = function(buttonId) {
+  var deleteButton = document.getElementById(buttonId);
+  deleteButton.classList.add('hidden');
+}
 
 cui.listGenerate = function(){
   let allData = cui.getAlldata();
   if (Object.keys(allData).length !== 0){
     var chatList = Object.keys(allData).map((chat) => {
       let theid = Object.keys(allData[chat])[0];
-      return { id: chat, text: allData[chat][theid]["user"].toString().substring(0, 23).replace('"', ''), href: "" };
+      return { id: chat, text: allData[chat][theid]["user"].toString().substring(0, 30).replace('"', ''), href: "" };
     });
     let list = "";
     for (let i = 0; i < chatList.length; i++) {
       const item = chatList[i];
-      list += `<li class="dark"  > <div style="width:100%" class="list-group-item-container"><div id=${item.id} style="width:78%" onclick="cui.loadMessage(this.id)" class="list-group-item">${item.text}</div><button title="Delete Chat" id="${item.id}_del" onclick="cui.deleteButtons(this.id)" class="btn theme delete-button "> <i class="fas fa-trash"></i></button></div></li>`;
+      list += `<li class="dark"> <div style="width:100%" onmouseover="cui.showDeleteButton('${item.id}_del')" onmouseout="cui.hideDeleteButton('${item.id}_del')" class="list-group-item-container">
+      <div id=${item.id} onclick="cui.loadMessage(this.id)"  class="list-group-item">${item.text}</div>
+      <button title="Delete Chat" id="${item.id}_del" onclick="cui.deleteButtons(this.id)"   
+      class="btn theme delete-button hidden"> <i class="fas fa-trash"></i></button></div></li>`;
     }
     document.getElementById("savedChats").innerHTML = list; 
   }
@@ -116,6 +128,7 @@ cui.onNewChart = function(){
 }
 
 cui.socketInit = function () {
+  console.log(`${cui.iphostname}:${cui.port}`);
   this.socket = io(`${cui.iphostname}:${cui.port}`, {
     query: { sessionID },
   });
@@ -205,7 +218,10 @@ cui.createTile = function (content, tileClass) {
 } 
   const copyButton = document.createElement("button");
   copyButton.addEventListener('click', function() {
-    cui.copyText(this);
+    const tilebody = copyButton.parentElement.nextElementSibling;
+    // Access the text content of the tilebody
+    const textFromTileBody = tilebody.textContent.trim();
+    navigator.clipboard.writeText(textFromTileBody);
 });
 
 copyButton.innerHTML = '<i class="fas fa-copy"></i>';
@@ -274,13 +290,6 @@ cui.resubmit = function(button){
   const textFromTileBody = tilebody.textContent.trim();
   const messageInput = document.getElementById("messageInput");
   messageInput.value = textFromTileBody;
-}
-
-cui.copyText = function(button){
-  const tilebody = button.parentElement.nextElementSibling;
-  // Access the text content of the tilebody
-  const textFromTileBody = tilebody.textContent.trim();
-  navigator.clipboard.writeText(textFromTileBody);
 }
 
 cui.defaultTest = function(){

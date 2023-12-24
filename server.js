@@ -14,20 +14,30 @@ var cors = require("cors");
 const path = require("path");
 const vdb = require("./db.js");
 const fs = require("fs");
+const downloadModel = require("./modeldownloader.js");
 
-const version = 0.22; //changed public and server and config
+const version = 0.24; //changed public and server and config
 var session = require("express-session");
-const MemoryStore = require('memorystore')(session);
+const MemoryStore = require("memorystore")(session);
 const memStore = new MemoryStore();
 const config = require("./config.js");
 if (config.login) {
   var hash = require("./hash.js");
 }
 function ser() {}
-// ser.parseCookie = function (setCookieHeader) {
-//   const match = setCookieHeader[0].match(/connect\.sid=([^;]+)/);
-//   return match ? match[1] : null;
-// }
+
+ser.modelinit = async function () {
+  if (fs.existsSync(config.params["--model"])) {
+    console.log("Model exists");
+  } else {
+    console.log("Downloading the model", config.params["--model"]);
+    await downloadModel(
+      config.modelname,
+      config.modeldirectory,
+      config.modelQuantization
+    );
+  }
+};
 
 ser.init = function (error) {
   console.log(
@@ -35,7 +45,6 @@ ser.init = function (error) {
   );
   this.connectedClients = new Map();
   this.socketId = null;
-  ser.checkModel();
   this.messageQueue = []; // Queue to store messages from clients
   this.isProcessing = false; // Flag to track if a message is being processed
   this.runLLamaChild();
@@ -51,12 +60,13 @@ ser.init = function (error) {
 
   this.app = express();
   this.server = http.createServer(this.app);
-  
+
   config.session.store = memStore;
-  this.sessionStore= session(config.session)
- 
+  this.sessionStore = session(config.session);
+
   this.app.use(this.sessionStore);
   this.app.use(cors());
+
   this.io = socketIO(this.server, {
     cors: {
       origin: "*",
@@ -75,12 +85,11 @@ ser.init = function (error) {
     console.log("Session is valid", isValid);
     if (isValid) {
       return next();
-    }else{
+    } else {
       socket.emit("redirect-login");
     }
-  
     // Reject unauthorized connections
-    return next(new Error('Unauthorized'));
+    return next(new Error("Unauthorized"));
   });
   this.io.on("connection", (socket) => this.handleSocketConnection(socket));
   this.app.use(express.json());
@@ -88,7 +97,6 @@ ser.init = function (error) {
   this.app.set("views", path.join(__dirname, "views"));
   this.app.set("view engine", "ejs");
   this.app.use(express.static(path.join(__dirname, "public")));
-
 
   // Define a route to render the EJS view
   this.app.get("/", ser.loggedIn, (req, res, next) => {
@@ -106,7 +114,7 @@ ser.init = function (error) {
     });
   });
 
-  this.app.post("/stopper",  async (request, response) => {
+  this.app.post("/stopper", async (request, response) => {
     console.log("STOPPING");
     ser.llamachild.kill("SIGINT");
     this.messageQueue.splice(0, 1);
@@ -115,7 +123,7 @@ ser.init = function (error) {
     response.send({ message: "stopped" });
   });
 
-  this.app.get("/login",  (req, res) => {
+  this.app.get("/login", (req, res) => {
     if (!config.login) {
       return res.redirect("/");
     } else {
@@ -128,9 +136,8 @@ ser.init = function (error) {
     // res.render("logout", { user: config.username });
     return res.redirect("/login");
   });
-  
 
-  this.app.post("/login",   async (req, res) => {
+  this.app.post("/login", async (req, res) => {
     const sessionID = req.sessionID;
     if (!config.login) {
       return res.redirect("/");
@@ -155,7 +162,7 @@ ser.init = function (error) {
                 res.json({ success: true, sessionID });
               } else {
                 // Redirect to the "/" page
-                res.redirect('/');
+                res.redirect("/");
               }
               console.log("Login Successful");
             } else {
@@ -174,39 +181,19 @@ ser.init = function (error) {
   this.start();
 };
 
-ser.isValidSession = function(sessionID) {
-    return new Promise((resolve, reject) => {
-      memStore.get(sessionID, (err, session) => {
-        if (err) {
-          console.error('Error validating session:', err);
-          reject(err);
-        } else {
-          // Assuming a session is valid if it exists
-          
-          resolve(!!session);
-        }
-      });
+ser.isValidSession = function (sessionID) {
+  return new Promise((resolve, reject) => {
+    memStore.get(sessionID, (err, session) => {
+      if (err) {
+        console.error("Error validating session:", err);
+        reject(err);
+      } else {
+        // Assuming a session is valid if it exists
+
+        resolve(!!session);
+      }
     });
-}
-
-ser.isFileExistsSync = function (filePath) {
-  try {
-    console.log(fs.statSync(filePath).isFile());
-    return fs.statSync(filePath).isFile();
-  } catch (err) {
-    console.log(err);
-    return false;
-  }
-};
-
-ser.checkModel = function () {
-  if (ser.isFileExistsSync(config.params["--model"])) {
-    console.log("Model exists");
-  } else {
-    console.log("Model does not exist");
-    console.log("Please download model", config.params["--model"]);
-    // config.getModel();
-  }
+  });
 };
 
 ser.runLLamaChild = function () {
@@ -218,7 +205,7 @@ ser.runLLamaChild = function () {
       stdio: ["pipe", "pipe", process.stderr],
     }
   );
-  this.llamachild.stdin.setEncoding('utf-8');
+  this.llamachild.stdin.setEncoding("utf-8");
   this.llamachild.stdout.on("data", (msg) => this.handleLlama(msg));
 
   this.llamachild.on("exit", (code, signal) => {
@@ -333,8 +320,8 @@ ser.handleTimeout = function () {
 };
 
 ser.handleSocketConnection = async function (socket) {
-  if (socket.request.session){
-    socket.on("message",  async (data) => {
+  if (socket.request.session) {
+    socket.on("message", async (data) => {
       var input = data.message;
       var embed = "";
       if (data.embedding) {
@@ -360,12 +347,12 @@ ser.handleSocketConnection = async function (socket) {
     socket.on("disconnect", () => {
       this.connectedClients.delete(socket.id);
     });
-  }    else{
-     console.log("Not Logged In!");
+  } else {
+    console.log("Not Logged In!");
     //  socket.emit("redirect-login");
-     // Disconnect the socket
-     socket.disconnect(true);
-  }  
+    // Disconnect the socket
+    socket.disconnect(true);
+  }
 };
 
 ser.start = function () {
@@ -377,4 +364,9 @@ ser.start = function () {
   });
 };
 
-ser.init();
+async function run() {
+  await ser.modelinit();
+  ser.init();
+}
+
+run();

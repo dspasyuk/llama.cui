@@ -3,16 +3,20 @@
 const path = require("path");
 var config = {};
 
+config.modelname = "TheBloke/dolphin-2.1-mistral-7B-GGUF";
+config.modeldirectory = "../../models";
+config.modelQuantization = "Q5_0";
+
 //Model Setting
 config.params = {
-  "--model": "../../models/dolphin-2.1-mistral-7b.Q5_0.gguf",
-  "--n-gpu-layers": 15,
+  "--model": path.join(config.modeldirectory, "dolphin-2.1-mistral-7b.Q5_0.gguf"),
+  "--n-gpu-layers": 5,
   "--keep": -1,
   "-ins": "",
   "--simple-io":"",
   "-b": 4096,
   "--ctx_size":4096,
-  "--temp":0.1,
+  "--temp":0.3,
   "--top_k":10,
   // "--top_p":0,
   "--multiline-input":"",
