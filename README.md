@@ -38,6 +38,9 @@ This project provides a Node.js server for a chat user interface (UI) that inter
    npm install
 
    Open config.js and change hostname, port, path to llama.cpp main file, and the model name/path
+   
+## Install all at once
+git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUBLAS=1 make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js
 
 ## Usage
 To run just type:
