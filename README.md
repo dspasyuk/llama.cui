@@ -9,23 +9,23 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
 1. Clone the repository:
 
-  ` git clone https://github.com/ggerganov/llama.cpp.git `
+   `git clone https://github.com/ggerganov/llama.cpp.git`
 
 2. Build Lllama.cpp with GPU or CPU support
 
-   cd llama.cpp
+   `cd llama.cpp`
 
-   sed -i 's/-arch=native/-arch=all/g' Makefile # could be skipped if native arch works
+   `sed -i 's/-arch=native/-arch=all/g' Makefile` # could be skipped if native arch works
 
-   make clean && LLAMA_CUBLAS=1 make -j 4   # for GPU version
+   `make clean && LLAMA_CUBLAS=1 make -j 4`   # for GPU version
 
    or
    
-   make # for CPU version
+   `make` # for CPU version
 
 4. Clone llama.cui
    
-   git clone https://github.com/dspasyuk/llama.cui
+   `git clone https://github.com/dspasyuk/llama.cui`
 
 5. Download LLM model from [hugging face](https://huggingface.co/) in GGUF format, for example:
    a. Dolphin-Mistral 7B:   https://huggingface.co/TheBloke/dolphin-2.1-mistral-7B-GGUF/blob/main/dolphin-2.1-mistral-7b.Q5_0.gguf
@@ -33,9 +33,9 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
 8. Install the project and set your configuration parameters
   
-   cd llama.cui
+   `cd llama.cui
 
-   npm install
+   npm install`
 
    Open config.js and change hostname, port, path to llama.cpp main file, and the model name/path
    
@@ -43,12 +43,12 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 ## Usage
 To run just type:
 
-npm start
+`npm start`
 
 ## Install all at once
 Starting from version 0.24 model will be downloaded automaticaly. 
 
-git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUBLAS=1 make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js
+`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUBLAS=1 make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
 ## Login Information
 Default login and password are specified in config file but could be easily integrated with user a database.
