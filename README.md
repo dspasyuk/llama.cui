@@ -47,6 +47,7 @@ npm start
 
 ## Install all at once
 Starting from version 0.24 model will be downloaded automaticaly. 
+
 git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUBLAS=1 make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js
 
 ## Login Information
