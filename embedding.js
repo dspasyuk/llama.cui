@@ -7,7 +7,7 @@ function embd(){};
 
 embd.init = async function(query){
   this.docFolder = "./docs"
-  this.rawdocFolder = "./rawdoc"
+  this.rawdocFolder = "./rawdocs"
   index = await embd.readDir(query);
 }
 
