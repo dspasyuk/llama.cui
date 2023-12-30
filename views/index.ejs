@@ -72,7 +72,7 @@
             <input class="embed-check" id="embed" type="checkbox" name="embedding" value="">
             <span class="embed-icon" title="Enable Database Search"> <i class="fas fa-server"></i></span>
           </div>
-          <div class="" id="tester"><button id="testgenerator" onclick="cui.defaultTest()" type="button"
+          <div class="" id="tester"><button id="testgenerator" title="Run default model exam" onclick="cui.defaultTest()" type="button"
             class="btn theme">Exam</button></div>  
         </div>  
          
@@ -101,7 +101,6 @@
       let port = <%- JSON.stringify(port) %>;
       let datachanels = <%- JSON.stringify(datachannel) %>;
       let testQs = <%- JSON.stringify(testQs) %>;
-      console.log(testQs);
       let sessionID = <%- JSON.stringify(sessionID) %>;
       cui.init(iphostname, port, datachanels, testQs);
       const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -111,7 +110,7 @@
         var maxHeight = parseInt(textarea.parentNode.getAttribute('data-max-height')) || 120;
         textarea.style.height = 'auto';
         console.log(maxHeight, Math.min(textarea.scrollHeight, maxHeight));
-        textarea.style.height = Math.min(textarea.scrollHeight-20, maxHeight) + 'px';
+        textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
       }
       sidebarToggle.addEventListener('click', () => {
         leftSidebar.classList.toggle('open');
