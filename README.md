@@ -67,7 +67,7 @@ To use embeddings, you will need to create your vector database using the embedd
 
 `node embedding.js`
 
-You will need to detele existing DB folder to prior to running llama.cui. The new database will be generated on the next request for embedding (select use database in the bottom left corner of the UI interface to generate the databse)  
+You will need to detele existing DB folder prior to running llama.cui. The new database will be generated on the next request for embedding (select use database in the bottom left corner of the UI interface to generate the databse)  
 
 For data format convention, llama.cui uses the anytotext.js library. 
 
