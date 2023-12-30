@@ -60,7 +60,17 @@ Enable it in config.js, make sure to install piper before running llama.cui
 
 
 ## Embeddings
-llama.cui supports embeddings from text file (see docs folder) and mongodb (do npm install mongo and make changes to config.js to configure database) 
+
+llama.cui supports embeddings from a text file (see the docs folder) and MongoDB (do npm install mongo and make changes to config.js to configure the database).
+
+To use embeddings, you will need to create your vector database using the embedding.js script. Simply place any docx, html, xlsx, etc. files in the rawdocs folder and run the embedding.js script using the command below:
+
+`node embedding.js`
+
+For data format convention, llama.cui uses the anytotext.js library. 
+
+## Screenshots
+
 ![Screenshot](https://github.com/dspasyuk/llama.cui/blob/main/Screenshot.png)
 ![Screenshot](https://github.com/dspasyuk/llama.cui/blob/main/Code_highlight.png)
 
