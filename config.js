@@ -3,25 +3,25 @@
 const path = require("path");
 var config = {};
 
-config.modelname = "TheBloke/dolphin-2.1-mistral-7B-GGUF";
+config.modelname = "LoneStriker/Einstein-v4-7B-GGUF";
 config.modeldirectory = "../../models";
-config.modelQuantization = "Q5_0";
+config.modelQuantization = "Q5_K";
 
 //Model Setting
 config.params = {
-  "--model": path.join(config.modeldirectory, "dolphin-2.1-mistral-7b.Q5_0.gguf"),
-  "--n-gpu-layers": 5,
+  "--model": path.join(config.modeldirectory, "Einstein-v4-7B_Q6_K.gguf"),
+  "--n-gpu-layers": 35,
   "--keep": -1,
   "-ins": "",
   "--simple-io":"",
-  "-b": 4096,
-  "--ctx_size":4096,
-  "--temp":0.3,
+  "-b": 2048,
+  "--ctx_size":2048,
+  "--temp":0.1,
   "--top_k":10,
-  // "--top_p":0,
+  "-mg":1,
   "--multiline-input":"",
   "--repeat_penalty": 1.15,
-  "-t": 8,
+  "-t": 4,
   "-r": '"/n>"',
   "-f": "./Alice.txt",
   "--log-disable":"",
@@ -76,7 +76,7 @@ config.dataChannel.set("MongoDB", {
 config.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
 config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
 config.prompt = function(userID, prompt, context){
-  return `<|im_start|> user\n'${prompt}'; ${context ? `Context: '${context}'` : ""}<|im_end|>`;
+  return `user\n'${prompt}';  ${context ? `Context: '${context}'` : ""}`;
 }
 
 //Piper setting
@@ -88,8 +88,8 @@ config.piper = {
   model: "../piper/models/semaine/en_GB-semaine-medium.onnx",
 };
 
-config.testQuestions = config.testQuestions = `
-Answer the following questions:
+config.testQuestions = config.testQuestions = `<br>
+Answer the following questions:<br>
 1. The day before two days after the day before tomorrow is Saturday. What day is it today?<br>
 2. What is the square root of 169?<br>
 3. Solve the equation 3y = 6y + 11 and find y.<br>

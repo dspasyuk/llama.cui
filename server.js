@@ -283,6 +283,7 @@ ser.handleLlama = function (msg) {
     let output = this.buffer.substring(0, lastSpaceIndex);
     this.buffer = this.buffer.substring(lastSpaceIndex + 1);
     // output = parseOutput(output);
+    output = output.replace("<|im_end|>", "");
     if (output) {
       clearTimeout(this.streamTimeout);
     }
