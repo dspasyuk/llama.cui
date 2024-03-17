@@ -83,7 +83,7 @@ config.prompt = function(userID, prompt, context){
 config.piper = {
   enabled: false,
   rate: '24050',
-  output_file: 'piper_out',
+  output_file: 'S16_LE',
   exec: "../piper/install/piper",
   model: "../piper/models/semaine/en_GB-semaine-medium.onnx",
 };
