@@ -269,7 +269,7 @@ ser.runPiper = function (output) {
       this.fullmessage.includes("!") ||
       this.fullmessage.includes("?")
     ) {
-      this.piper.stdin.write(this.fullmessage + "\n");
+      this.piper.stdin.write(this.fullmessage);
       console.log("fullmesd", this.fullmessage);
       this.fullmessage = "";
     }
