@@ -5,11 +5,11 @@ var config = {};
 
 config.modelname = "LoneStriker/Einstein-v4-7B-GGUF";
 config.modeldirectory = "../../models";
-config.modelQuantization = "Q6_K";
+config.modelQuantization = "Q5_K_M";
 
 //Model Setting
 config.params = {
-  "--model": path.join(config.modeldirectory, "Einstein-v4-7B_Q6_K.gguf"),
+  "--model": path.join(config.modeldirectory, "Einstein-v4-7B-Q5_K_M.gguf"),
   "--n-gpu-layers": 35,
   "--keep": -1,
   "-ins": "",
