@@ -16,7 +16,7 @@ config.params = {
   "--simple-io":"",
   "-b": 2048,
   "--ctx_size":2048,
-  "--temp":0.1,
+  "--temp":0.3,
   "--top_k":10,
   "-mg":1,
   "--multiline-input":"",
