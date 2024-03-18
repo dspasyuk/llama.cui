@@ -16,7 +16,7 @@ const vdb = require("./db.js");
 const fs = require("fs");
 const downloadModel = require("./modeldownloader.js");
 
-const version = 0.24; //changed public and server and config
+const version = 0.25; //changed public and server and config
 var session = require("express-session");
 const MemoryStore = require("memorystore")(session);
 const memStore = new MemoryStore();
