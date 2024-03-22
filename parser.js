@@ -1,11 +1,47 @@
 const axios = require('axios');
+const exec = require('child_process').exec;
+const spawn = require('child_process').spawn;
+const cheerio = require('cheerio');
+// const hljs = require('highlight.js');
+// hljs.registerLanguage('javascript', require('highlight.js/lib/languages/javascript'));
 
 function Par() {}
 
+Par.codeeval = async function(code, exe, opt) {
+  const child = spawn(exe, [opt, code]);
+
+  let output = '';
+  let error = '';
+
+  // Capture stdout
+  child.stdout.on('data', (data) => {
+    output += data.toString();
+  });
+
+  // Capture stderr
+  child.stderr.on('data', (data) => {
+    error += data.toString();
+  });
+
+  // Wait for process exit
+  await new Promise((resolve, reject) => {
+    child.on('exit', (code) => {
+      if (code === 0) {
+        resolve(output); // Resolve with output if successful
+      } else {
+        reject(new Error(error)); // Reject with error message if failed
+      }
+    });
+  });
+
+  return output;
+}
+
+
 Par.LinkPahtDetector = function (text) {
-  var urlRegex = /(https?:\/\/[^\s]+)/g;
+  var urlRegex = /(https?:\/\/[^\s]+)/gm;
   // Regular expression to match file paths without ending quotation mark
-  var filePathRegex = /(?:\b\w:|\/)[^\s'"]+(?=['"]?\b)/g;
+  var filePathRegex = /(?:\b\w:|\/)[^\s'"]+(?=['"]?\b)/gm;
   // Find URLs in the text
   var urls = text.match(urlRegex);
   // Find file paths in the text
@@ -20,6 +56,7 @@ Par.getMatchesWithIndices = function (text, regex) {
   var matches = [];
   var match;
   while ((match = regex.exec(text)) !== null) {
+    // console.log(match);
     matches.push({
       codeSnippet: match[0],
       startIndex: match.index,
@@ -29,24 +66,21 @@ Par.getMatchesWithIndices = function (text, regex) {
   return matches;
 };
 
+
 Par.CodeDetector = function (text) {
-  // Regular expression to match C code
-  var cCodeRegex = /\b(int|char|void|if|else|for|while|return)\b/g;
-  // Regular expression to match Python code
-  var pythonCodeRegex = /\b(def|if|else|for|while|return)\b/g;
-  // Regular expression to match JavaScript code
-  var jsCodeRegex = /\b(var|let|const|if|else|for|while|function|return)\b/g;
-  // Find C code snippets in the text
-  var cCodeMatches = Par.getMatchesWithIndices(text, cCodeRegex);
-  // Find Python code snippets in the text
-  var pythonCodeMatches = Par.getMatchesWithIndices(text, pythonCodeRegex);
+ // Regular expression to match JavaScript code
+ // Regex was borowed from highlight.js
+//  var jsCodeRegex = /(\b(function|if|else|while|for|switch|case|return|new|var|let|const|class|import|export|async|await|yield|Infinity|true|false|this|\d+)\b)|([{}\[\]];,:)/gm;
+ var jsCodeRegex =  /```javascrip([\s\S]*?)```/gm;
+ var npmreg =  /```(?!(?:javascript|js)\b)([\s\S]*?)```/gm
   // Find JavaScript code snippets in the text
   var jsCodeMatches = Par.getMatchesWithIndices(text, jsCodeRegex);
+  var npm = Par.getMatchesWithIndices(text, npmreg);
   // Return the results
+  // console.log("JavaScript Code Matches:", jsCodeMatches);
   return {
-    cCode: cCodeMatches || [],
-    pyCode: pythonCodeMatches || [],
-    jsCode: jsCodeMatches || [],
+    js: jsCodeMatches || [],
+    bash: npm || [],
   };
 };
 
@@ -154,12 +188,49 @@ Par.extractTextFromWebpage = async function(url, minWords = 5) {
   }
 }
 
+Par.installPackage = function(package){
+    exec(`npm install ${package}`, async (error, stdout, stderr) => {
+    if(error) {
+      console.log('error is:' , error);
+      throw error;
+    }
+      console.log(stdout);
+});
+}
 
+Par.fixError = async function(message){
+   let errMessage = "Cannot find module";
+   if(message.includes(errMessage)){
+    let index =  message.indexOf(errMessage); 
+    let prefix =  message.slice(errMessage.length+index);
+    let package = prefix.split("\n");
+    package = package[0].replace(/'/g,"");
+    console.log("Package:", package);
+    await Par.installPackage(package);
+  }else{
+    return message;
+  }
+}
 
-Par.test = async function(){
-   let url = "https://www.danword.com/crossword/Another_name_for_annabergite_rbnd"
-  console.log(await Par.extractTextFromWebpage(url));
-  console.log(url);
+Par.runEval = async function(message){
+  var els = Par.CodeDetector(message);
+  // console.log(els);
+  try{
+    if(els.js.length>0){
+      var code = (els.js[0].codeSnippet).replace("```", "").replace("javascript", "").replace("```", "");
+      var result = await Par.codeeval(code, "node", "-e");
+      return result;
+    }else if(els.bash.length>0){
+      var code = (els.bash[0].codeSnippet).replace("```", "").replace("  ", " ").replace("```", "");
+      var result = await Par.codeeval(code, "", "");
+    }
+    else{
+      return false;
+    }
+}  catch(err){
+      return err;
+  return false;
+}
 }
 
 

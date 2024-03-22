@@ -9,14 +9,13 @@ config.modelQuantization = "Q6_K";
 
 //Model Setting
 config.params = {
-  "--model": path.join(config.modeldirectory, "Einstein-v4-7B-Q6_K.gguf"),
+  "--model": path.join(config.modeldirectory, "Einstein-v4-7B_Q6_K.gguf"),
   "--n-gpu-layers": 35,
-  "--keep": -1,
   "-ins": "",
   "--simple-io":"",
   "-b": 2048,
   "--ctx_size":2048,
-  "--temp":0.3,
+  "--temp":0.1,
   "--top_k":10,
   "-mg":1,
   "--multiline-input":"",
@@ -81,11 +80,13 @@ config.prompt = function(userID, prompt, context){
 
 //Piper setting
 config.piper = {
-  enabled: true,
-  rate: '20500',
+  enabled: false,
+  rate: 20500,
+  // rate: 16000,
   output_file: 'S16_LE',
   exec: "../../piper/install/piper",
-  model: "../../piper/models/librits/en_US-libritts_r-medium.onnx", 
+  model: "/home/denis/CODE/piper/models/librits/en_US-libritts_r-medium.onnx", 
+  // model: "/home/denis/CODE/piper/models/spanish/es_ES-mls_9972-low.onnx", 
 };
 
 config.testQuestions = config.testQuestions = `<br>

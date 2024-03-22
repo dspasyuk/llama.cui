@@ -16,7 +16,7 @@ const vdb = require("./db.js");
 const fs = require("fs");
 const downloadModel = require("./modeldownloader.js");
 
-const version = 0.25; //changed public and server and config
+const version = 0.26; //changed public and server and config
 var session = require("express-session");
 const MemoryStore = require("memorystore")(session);
 const memStore = new MemoryStore();
@@ -48,13 +48,14 @@ ser.init = function (error) {
   this.messageQueue = []; // Queue to store messages from clients
   this.isProcessing = false; // Flag to track if a message is being processed
   this.runLLamaChild();
-  this.buffer = "";
+
   if (config.piper.enabled) {
     this.fullmessage = "";
     this.piperChild();
-    this.aplayChild();
-    this.FileStream();
-    this.piper.stdout.pipe(this.aplay.stdin);
+    // this.aplayChild();
+    // this.FileStream();
+
+    // this.piper.stdout.pipe(this.aplay.stdin);
   }
   // Listen for the 'exit' event to handle process exit.
 
@@ -77,7 +78,7 @@ ser.init = function (error) {
   this.io.engine.use(this.sessionStore);
   this.io.use(async (socket, next) => {
     // Check authentication status here
-    console.log("Session ID", socket.handshake.query.sessionID);
+    // console.log("Session ID", socket.handshake.query.sessionID);
     const sessionID = socket.handshake.query.sessionID;
 
     // Check authentication using the session ID
@@ -101,6 +102,7 @@ ser.init = function (error) {
   // Define a route to render the EJS view
   this.app.get("/", ser.loggedIn, (req, res, next) => {
     const sessionID = req.sessionID;
+    // console.log("Session ID", config.piper.rate);
     res.render("index", {
       title: "Llama.cui",
       version: version,
@@ -108,9 +110,7 @@ ser.init = function (error) {
       port: config.PORT.client,
       testQs: config.testQuestions,
       sessionID: sessionID,
-      datachannel: JSON.stringify(
-        Object.keys(Object.fromEntries(config.dataChannel))
-      ),
+      piper: {rate:config.piper.rate, enabled:config.piper.enabled},
     });
   });
 
@@ -189,7 +189,6 @@ ser.isValidSession = function (sessionID) {
         reject(err);
       } else {
         // Assuming a session is valid if it exists
-
         resolve(!!session);
       }
     });
@@ -245,6 +244,7 @@ ser.aplayChild = function () {
     "raw",
     "-",
   ]);
+ 
 };
 
 ser.piperChild = function () {
@@ -252,11 +252,17 @@ ser.piperChild = function () {
     "--model",
     config.piper.model,
     "--output-raw",
-  ]);
-};
-
-ser.FileStream = function () {
-  this.wavFileStream = fs.createWriteStream("output.wav");
+  ], {
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+  this.piper.stdout.on('data', (data) => { 
+    //16-bit mono PCM samples buffers
+    // console.log(data.length);
+    ser.io.to(this.socketId).emit("buffer", data);
+});
+  this.piper.stderr.on("error", (error) => {
+    console.error("An error occurred in the piper child process:", error);
+  });
 };
 
 ser.runPiper = function (output) {
@@ -267,10 +273,11 @@ ser.runPiper = function (output) {
       this.fullmessage.includes(":") ||
       this.fullmessage.includes(";") ||
       this.fullmessage.includes("!") ||
-      this.fullmessage.includes("?")
+      this.fullmessage.includes("?") ||
+      this.fullmessage.includes("\n")
     ) {
       this.piper.stdin.write(this.fullmessage);
-      console.log("fullmesd", this.fullmessage);
+      // console.log("fullmesd", this.fullmessage);
       this.fullmessage = "";
     }
   }
@@ -342,6 +349,22 @@ ser.handleSocketConnection = async function (socket) {
         this.processMessageQueue();
       }
     });
+    
+    socket.on("tosound", async (data) => {
+      if(data.mode==="start"){
+        this.socketId = data.socketid;
+        // console.log("start", data.socketid);
+        this.runPiper(data.message+"\n");
+      }
+      if(data.mode==="stop"){
+        // console.log("stop", data.socketid);
+        this.socketId = data.socketid;
+        this.piper.kill("SIGINT");
+        ser.piperChild();
+
+      }
+    })
+
     socket.on("error", function () {
       console.log("Error", error);
     });

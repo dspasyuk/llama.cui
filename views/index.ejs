@@ -17,7 +17,7 @@
   <link rel="mask-icon" href="img/safari-pinned-tab.svg" color="#5bbad5">
   <meta name="msapplication-TileColor" content="#da532c">
   <meta name="theme-color" content="#ffffff">
-
+  
 
   <script type="text/javascript" src="/js/socket.io.js"></script>
   <link rel="stylesheet" href="/css/default.min.css">
@@ -46,6 +46,7 @@
           class="fa fa-sign-out-alt"></i></button>
     </div>
   </nav>
+  <!-- <audio id="audioElement" controls></audio> -->
   <div class="container-fluid">
     <div class="row">
       <!-- Left Sidebar -->
@@ -99,10 +100,10 @@
       <script>
       let iphostname =<%- JSON.stringify(hostname) %>;
       let port = <%- JSON.stringify(port) %>;
-      let datachanels = <%- JSON.stringify(datachannel) %>;
+      let piper = <%- JSON.stringify(piper) %>;
       let testQs = <%- JSON.stringify(testQs) %>;
       let sessionID = <%- JSON.stringify(sessionID) %>;
-      cui.init(iphostname, port, datachanels, testQs);
+      cui.init(iphostname, port, piper, testQs);
       const sidebarToggle = document.getElementById('sidebar-toggle');
       const leftSidebar = document.getElementById('left-sidebar');
       const chatContainer = document.querySelector('.chat-container');
