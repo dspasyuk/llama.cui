@@ -37,7 +37,7 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
    npm install`
 
-   Open config.js and change hostname, port, path to llama.cpp main file, and the model name/path
+   Open config.js and change the hostname, port, path to llama.cpp main file, and the model name/path
    
 
 ## Usage
@@ -46,29 +46,52 @@ To run just type:
 `npm start`
 
 ## Install all at once
-Starting from version 0.24 model will be downloaded automaticaly. 
+Starting from version 0.24 model will be downloaded automatically. 
 
 `git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUBLAS=1 make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
 ## Login Information
-Default login and password are specified in config file but could be easily integrated with user a database.
+Default login and password are specified in the config file but could be easily integrated with the user database.
 The login is currently set to false. To enable login set login to true in the config file and change password.
 
-## Piper integration
-As of version 1.15 the llama.cui supports Piper for text to voice generation.
-Enable it in config.js, make sure to install piper before running llama.cui 
+## Piper integration https://github.com/rhasspy/piper
+As of version 1.15 the llama.cui supports Piper for a text-to-voice generation.
+Enable it in config.js, make sure to install Piper before running llama.cui 
+
+## Getting Piper 
+   git clone https://github.com/rhasspy/piper.git
+   cd piper  
+   make  
+   That should build Piper and put in "piper/install/"
+   
+## Downloading voice models  
+   Models can be found on Hugging Face:  
+   https://huggingface.co/rhasspy/piper-voices  
+   Default Llama.cui voice model is librits/en_US-libritts_r-medium.onnx"  
+   https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/libritts/high
+   
+## Configure Piper  
+
+config.piper = {
+  enabled: true,
+  rate: 20500, // depends on your model
+  output_file: 'S16_LE', //Piper outputs 16-bit mono PCM buffers so keep this value as is
+  exec: "../../piper/install/piper", // set a path to your piper installation
+  model: "/home/denis/CODE/piper/models/librits/en_US-libritts_r-medium.onnx"  // set a path to your voice models
+};
+
 
 
 ## Embeddings
 ![Screenshot](https://github.com/dspasyuk/llama.cui/blob/main/embedding.png)
 
-llama.cui supports embeddings from a text file (see the docs folder) and MongoDB (do npm install mongo and make changes to config.js to configure the database).
+llama.cui supports embeddings from a text file (see the docs folder) and MongoDB (do npm install Mongo and make changes to config.js to configure the database).
 
 To use embeddings, you will need to create your vector database using the embedding.js script. Simply place any docx, html, xlsx, etc. files in the rawdocs folder and run the embedding.js script using the command below:
 
 `node embedding.js`
 
-You will need to detele existing DB folder prior to running llama.cui. The new database will be generated on the next request for embedding (select use database in the bottom left corner of the UI interface to generate the databse)  
+You will need to detele the existing DB folder before running llama.cui. The new database will be generated on the next request for embedding (select use database in the bottom left corner of the UI interface to generate the database)  
 
 For data format convention, llama.cui uses the anytotext.js library. 
 
