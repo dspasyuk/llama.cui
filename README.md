@@ -58,27 +58,27 @@ The login is currently set to false. To enable login set login to true in the co
 As of version 1.15 the llama.cui supports Piper for a text-to-voice generation.
 Enable it in config.js, make sure to install Piper before running llama.cui 
 
-### Getting Piper 
-   git clone https://github.com/rhasspy/piper.git
-   cd piper  
-   make  
-   That should build Piper and put in "piper/install/"
+   ### Getting Piper 
+      git clone https://github.com/rhasspy/piper.git
+      cd piper  
+      make  
+      That should build Piper and put in "piper/install/"
+      
+   ### Downloading voice models  
+      Models can be found on Hugging Face:  
+      https://huggingface.co/rhasspy/piper-voices  
+      Default Llama.cui voice model is librits/en_US-libritts_r-medium.onnx"  
+      https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/libritts/high
+      
+   ### Configure Piper  
    
-### Downloading voice models  
-   Models can be found on Hugging Face:  
-   https://huggingface.co/rhasspy/piper-voices  
-   Default Llama.cui voice model is librits/en_US-libritts_r-medium.onnx"  
-   https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/libritts/high
-   
-### Configure Piper  
-
-config.piper = {
-  enabled: true,
-  rate: 20500, // depends on your model
-  output_file: 'S16_LE', //Piper outputs 16-bit mono PCM buffers so keep this value as is
-  exec: "../../piper/install/piper", // set a path to your piper installation
-  model: "/home/denis/CODE/piper/models/librits/en_US-libritts_r-medium.onnx"  // set a path to your voice models
-};
+   config.piper = {
+     enabled: true,
+     rate: 20500, // depends on your model
+     output_file: 'S16_LE', //Piper outputs 16-bit mono PCM buffers so keep this value as is
+     exec: "../../piper/install/piper", // set a path to your piper installation
+     model: "/home/denis/CODE/piper/models/librits/en_US-libritts_r-medium.onnx"  // set a path to your voice models
+   };
 
 ## Embeddings
 ![Screenshot](https://github.com/dspasyuk/llama.cui/blob/main/embedding.png)
