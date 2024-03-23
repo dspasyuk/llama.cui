@@ -81,7 +81,8 @@ Enable it in config.js, make sure to install Piper before running llama.cui
    };  
 [![Piper Demo]()](https://github.com/dspasyuk/llama.cui/assets/34203011/1a7d530c-92a3-4d14-9c7d-79a25f73610f)
 ## Embeddings
-![Screenshot](https://github.com/dspasyuk/llama.cui/blob/main/embedding.png)
+![embedding](https://github.com/dspasyuk/llama.cui/assets/34203011/c66a9cd7-f9d9-4b69-9b4a-53e11a14a5bf)
+
 
 llama.cui supports embeddings from a text file (see the docs folder) and MongoDB (do npm install Mongo and make changes to config.js to configure the database).
 
@@ -94,9 +95,10 @@ You will need to detele the existing DB folder before running llama.cui. The new
 For data format convention, llama.cui uses the anytotext.js library. 
 
 ## Screenshots
- 
-![Screenshot](https://github.com/dspasyuk/llama.cui/blob/main/Screenshot.png)  
-![Screenshot](https://github.com/dspasyuk/llama.cui/blob/main/Code_highlight.png)  
+ ![Screenshot](https://github.com/dspasyuk/llama.cui/assets/34203011/c9ca203e-d2d2-4f14-8b24-5cb35f12183b)
+![Code_highlight](https://github.com/dspasyuk/llama.cui/assets/34203011/a07201be-33ac-4201-8a91-09d7bc1c3841)
+
+
 
 
 
