@@ -79,7 +79,7 @@ Enable it in config.js, make sure to install Piper before running llama.cui
      exec: "../../piper/install/piper", // set a path to your piper installation  
      model: "/home/denis/CODE/piper/models/librits/en_US-libritts_r-medium.onnx"  // set a path to your voice models  
    };  
-
+[![Piper Demo]()](https://github.com/dspasyuk/llama.cui/assets/34203011/1a7d530c-92a3-4d14-9c7d-79a25f73610f)
 ## Embeddings
 ![Screenshot](https://github.com/dspasyuk/llama.cui/blob/main/embedding.png)
 
@@ -97,7 +97,7 @@ For data format convention, llama.cui uses the anytotext.js library.
  
 ![Screenshot](https://github.com/dspasyuk/llama.cui/blob/main/Screenshot.png)  
 ![Screenshot](https://github.com/dspasyuk/llama.cui/blob/main/Code_highlight.png)  
-[![Piper Demo]()](https://github.com/dspasyuk/llama.cui/assets/34203011/1a7d530c-92a3-4d14-9c7d-79a25f73610f)
+
 
 
 
