@@ -85,8 +85,7 @@ config.piper = {
   // rate: 16000,
   output_file: 'S16_LE',
   exec: "../../piper/install/piper",
-  model: "/home/denis/CODE/piper/models/librits/en_US-libritts_r-medium.onnx", 
-  // model: "/home/denis/CODE/piper/models/spanish/es_ES-mls_9972-low.onnx", 
+  model: "../../piper/models/librits/en_US-libritts_r-medium.onnx", 
 };
 
 config.testQuestions = config.testQuestions = `<br>
