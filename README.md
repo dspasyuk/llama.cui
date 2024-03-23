@@ -72,13 +72,13 @@ Enable it in config.js, make sure to install Piper before running llama.cui
       
    ### Configure Piper  
    
-   config.piper = {  
-     enabled: true,  
-     rate: 20500, // depends on your model  
-     output_file: 'S16_LE', //Piper outputs 16-bit mono PCM buffers so keep this value as is  
-     exec: "../../piper/install/piper", // set a path to your piper installation  
-     model: "/home/denis/CODE/piper/models/librits/en_US-libritts_r-medium.onnx"  // set a path to your voice models  
-   };  
+      config.piper = {  
+        enabled: true,  
+        rate: 20500, // depends on your model  
+        output_file: 'S16_LE', //Piper outputs 16-bit mono PCM buffers so keep this value as is  
+        exec: "../../piper/install/piper", // set a path to your piper installation  
+        model: "/home/denis/CODE/piper/models/librits/en_US-libritts_r-medium.onnx"  // set a path to your voice models  
+      };  
 [![Piper Demo]()](https://github.com/dspasyuk/llama.cui/assets/34203011/1a7d530c-92a3-4d14-9c7d-79a25f73610f)
 ## Embeddings
 ![embedding](https://github.com/dspasyuk/llama.cui/assets/34203011/c66a9cd7-f9d9-4b69-9b4a-53e11a14a5bf)
