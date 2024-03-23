@@ -138,13 +138,13 @@ cui.socketInit = function () {
   this.socket = io(`${cui.iphostname}:${cui.port}`, {
     query: { sessionID },
   });
+  userScrolledManually = false;
   const chatMessages = document.getElementById("chatMessages");
   chatMessages.addEventListener("scroll", (event) => {
     userScrolledManually = chatMessages.scrollTop !== (chatMessages.scrollHeight - chatMessages.clientHeight);
     //set userScrolledManually to false if user has scrolled to the end of chatmessages
 
   });
-
   var text = "";
   cui.currentTile = null; // Reference to the current tile element
   this.socket.on("output", (response) => {
@@ -167,21 +167,22 @@ cui.socketInit = function () {
         cui.currentTile.innerHTML = cui.md.render(text);
       }
     }
-      if (!userScrolledManually) {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
+    if (!userScrolledManually) {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
   });
+  
 
-  if (cui.piperenabled) {
-    this.socket.on("buffer", (hexData) => {
-      // Push the received buffer to the queue
-      // console.log("hexData", hexData);
-      cui.bufferQueue.push(hexData);
-      // If audio is not playing, start playback
-      if (!cui.isPlaying) {
-        cui.playNextBuffer();
-      }
-    });
+  if(cui.piperenabled){
+      this.socket.on("buffer", (hexData) => {
+        // Push the received buffer to the queue
+        // console.log("hexData", hexData);
+        cui.bufferQueue.push(hexData);
+        // If audio is not playing, start playback
+        if (!cui.isPlaying) {
+          cui.playNextBuffer();
+        }
+      });
   }
   this.socket.on("connect", () => {
     cui.socketid = this.socket.id; // Get socket.id after connection is established
@@ -239,6 +240,8 @@ cui.playNextBuffer = function () {
     cui.playNextBuffer();
   };
 };
+
+
 
 cui.speakIt = function (text) {
   let utterThis = new SpeechSynthesisUtterance();
@@ -307,12 +310,12 @@ cui.createTile = function (content, tileClass) {
     navigator.clipboard.writeText(textFromTileBody);
   });
 
-  if (cui.piperenabled) {
+  if(cui.piperenabled){
     const vocalize = document.createElement("button");
     vocalize.addEventListener("click", function () {
       const tilebody = vocalize.parentElement.nextElementSibling;
       const textFromTileBody = tilebody.textContent.trim();
-      vocalize.innerHTML = '<i class="fas fa-stop"></i>';
+      vocalize.innerHTML = '<i class="fas fa-stop"></i>';  
       cui.sendTextToSpeech(textFromTileBody);
     });
     vocalize.innerHTML = '<i class="fas fa-music"></i>';
@@ -326,12 +329,12 @@ cui.createTile = function (content, tileClass) {
         // Voice is not playing, change button icon to "music" icon
         vocalize.innerHTML = '<i class="fas fa-music"></i>';
       }
-    }, 50); // Check every 100 milliseconds, adjust as needed
+    }, 500); // Check every 100 milliseconds, adjust as needed
   }
   copyButton.innerHTML = '<i class="fas fa-copy"></i>';
-
+  
   copyButton.className = "btn headerbutton";
-
+  
   tileheader.appendChild(copyButton);
   // Append the tileheader to the tileElement
   tileElement.appendChild(tileheader);
@@ -376,8 +379,6 @@ cui.sendMessage = function () {
     cui.showStop();
     cui.messageInput.value = "";
   }
-  const chatMessages = document.getElementById("chatMessages");
-  chatMessages.scrollTop = chatMessages.scrollHeight;
 };
 
 // Function to watch for enter press
