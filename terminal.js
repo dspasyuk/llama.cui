@@ -55,6 +55,7 @@ Cui.sendMessage = async function (message) {
     message: message,
     socketid: Cui.socketid,            /// enable me 
     embedding: false,
+    piper: false,
   })
 } 
 
@@ -72,28 +73,36 @@ Cui.parseMessage = async function(message){
 }
 
 Cui.processMessage = function (response){
+ 
   if (response.includes("\n>")) {
+      console.clear();
       this.response += " "+response.replace("\n>", "");
       console.log(rgbit("AI:", "red") + rgbit(this.response, "green"));
-      // Cui.parseMessage(this.response); AGI test
-      //this.response = "";
       Cui.startUserInput();
   } else {
       this.response += " " + response;
+      console.clear();
       console.log(rgbit("AI:", "red") + rgbit(this.response, "green"));
   }
 }
+
+// Cui.delLine = function() {
+//   process.stdout.write('\u001b[1A');
+//   // Clear the current line
+//   process.stdout.clearLine();
+//   // Move the cursor to the beginning of the line
+//   process.stdout.write('\u001b[0G');
+// }
+
 
 Cui.connectAndInteract = function (sessionID) {
   this.socket = io(`http://${config.IP.server}:${config.PORT.server}`, {
     query: { sessionID },
   });
-
   this.socketid = "";
-
   this.socket.on("output", (response) => {
     // this.accumulatedResponse += response.replace(">", "") + " ";
-    console.clear();
+  
     if(response){
        Cui.processMessage(response);
     }
@@ -117,14 +126,14 @@ Cui.connectAndInteract = function (sessionID) {
 
 Cui.parseInput = function(input){
   const {links, paths} = parser.LinkPahtDetector(input); 
-  console.log("paths", links, paths);
   return input;
 }
 
+
 Cui.startUserInput = function () {
   this.rl.question(rgbit("U: ", "blue"), async (input) => {
-    input = await Cui.parseInput(input) + "<|im_start|>system \n If asked for code create code only in nodejs. Wrap the code in ```javascript  ``` So write all code in one block do not use eval function <|im_end|>";
-    this.response =+ input;
+    input = await Cui.parseInput(input); //+ "<|im_start|>system \n If asked for code create code only in nodejs. Wrap the code in ```javascript  ``` So write all code in one block do not use eval function <|im_end|>";
+    // console.log(input);
     Cui.sendMessage(input);
   });
 };

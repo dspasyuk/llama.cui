@@ -69,13 +69,18 @@
          
         </div>
         <div class="bottom-left">
-          <div class="tester" id="wiki">  <div class="embed theme">
+          <div class="tester" id="wiki">  
+            <div class="embed theme">
             <input class="embed-check" id="embed" type="checkbox" name="embedding" value="">
             <span class="embed-icon" title="Enable Database Search"> <i class="fas fa-server"></i></span>
-          </div>
+          </div>  
+           <div class="embed theme" id="piper-container" style="display:none">
+            <input class="embed-check" id="piper" type="checkbox" name="piper" value="" onclick="cui.piperToggle()">
+            <span class="embed-icon" title="Enable Piper TTS"> <i class="fas fa-music"></i></span>
+          </div>   
           <div class="" id="tester"><button id="testgenerator" title="Run default model exam" onclick="cui.defaultTest()" type="button"
             class="btn theme">Exam</button></div>  
-        </div>  
+        </div> 
          
       </div>
       </div>
@@ -110,7 +115,6 @@
       function autoResize(textarea) {
         var maxHeight = parseInt(textarea.parentNode.getAttribute('data-max-height')) || 120;
         textarea.style.height = 'auto';
-        console.log(maxHeight, Math.min(textarea.scrollHeight, maxHeight));
         textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
       }
       sidebarToggle.addEventListener('click', () => {

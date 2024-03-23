@@ -10,6 +10,7 @@ rgbit = function(text, color) {
     }
   
     // Default to no color
+    
     return text;
   }
   

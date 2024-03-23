@@ -48,7 +48,7 @@ ser.init = function (error) {
   this.messageQueue = []; // Queue to store messages from clients
   this.isProcessing = false; // Flag to track if a message is being processed
   this.runLLamaChild();
-
+  this.piper_client_enabled = true;
   if (config.piper.enabled) {
     this.fullmessage = "";
     this.piperChild();
@@ -276,7 +276,9 @@ ser.runPiper = function (output) {
       this.fullmessage.includes("?") ||
       this.fullmessage.includes("\n")
     ) {
-      this.piper.stdin.write(this.fullmessage);
+      if(this.piper_client_enabled){
+         this.piper.stdin.write(this.fullmessage);
+      } 
       // console.log("fullmesd", this.fullmessage);
       this.fullmessage = "";
     }
@@ -312,8 +314,9 @@ ser.processMessageQueue = function () {
   }
   this.isProcessing = true;
   const message = this.messageQueue[0];
-  const { socketId, input } = message;
+  const { socketId, input, piper } = message;
   this.socketId = socketId;
+  this.piper_client_enabled = piper;
   // Send the message to the child process
   this.llamachild.stdin.cork();
   this.llamachild.stdin.write(`${input}`);
@@ -339,10 +342,10 @@ ser.handleSocketConnection = async function (socket) {
       var socketId = data.socketid;
       input = config.prompt(socketId, input, embed);
       input = input + "\\";
-      console.log(input);
+      let piper = data.piper;
       this.connectedClients.set(socketId, input);
       // Add the incoming message to the queue
-      this.messageQueue.push({ socketId, input });
+      this.messageQueue.push({ socketId, input, piper});
       this.streamTimeout = setTimeout(this.handleTimeout, config.timeout);
       // Process messages if the queue is not being processed currently
       if (!this.isProcessing) {
@@ -353,6 +356,7 @@ ser.handleSocketConnection = async function (socket) {
     socket.on("tosound", async (data) => {
       if(data.mode==="start"){
         this.socketId = data.socketid;
+        this.piper_client_enabled = data.piper;
         // console.log("start", data.socketid);
         this.runPiper(data.message+"\n");
       }

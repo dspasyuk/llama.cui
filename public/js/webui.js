@@ -28,6 +28,9 @@ cui.init = function (iphostname, port, piper, testQs) {
   cui.port = port;
   cui.piperate = piper.rate;
   cui.piperenabled = piper.enabled;
+  if (cui.piperenabled) {
+     document.getElementById("piper-container").style.display = "block";
+  }
   cui.testQs = testQs;
   cui.messageId = "";
 
@@ -43,6 +46,15 @@ cui.init = function (iphostname, port, piper, testQs) {
   cui.sendMessageButton.addEventListener("click", () => {
     cui.sendMessage();
   });
+};
+
+cui.checkPiperEnabled = function () {
+  const piperworks = document.getElementById("piper");
+if (piperworks.checked && cui.piperenabled) {
+    return true;
+  } else {
+    return false;
+  }
 };
 
 cui.collapsible = function () {
@@ -171,10 +183,8 @@ cui.socketInit = function () {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
   });
-  
 
-  if(cui.piperenabled){
-      this.socket.on("buffer", (hexData) => {
+  this.socket.on("buffer", (hexData) => {
         // Push the received buffer to the queue
         // console.log("hexData", hexData);
         cui.bufferQueue.push(hexData);
@@ -183,7 +193,7 @@ cui.socketInit = function () {
           cui.playNextBuffer();
         }
       });
-  }
+  
   this.socket.on("connect", () => {
     cui.socketid = this.socket.id; // Get socket.id after connection is established
     console.log(cui.socketid);
@@ -213,7 +223,6 @@ cui.playNextBuffer = function () {
   for (let i = 0; i < pcmData.length; i++) {
     float32Array[i] = pcmData[i] / 100000; // Convert to range [-1, 1]
   }
-
   const audioBuffer = cui.audioContext.createBuffer(
     1,
     float32Array.length,
@@ -223,7 +232,6 @@ cui.playNextBuffer = function () {
 
   const source = cui.audioContext.createBufferSource();
   source.buffer = audioBuffer;
-
   const gainNode = cui.audioContext.createGain(); // Create GainNode
   source.connect(gainNode); // Connect source to gainNode
   gainNode.connect(cui.audioContext.destination); // Connect gainNode to destination
@@ -257,6 +265,7 @@ cui.sendTextToSpeech = function (textFromTileBody) {
       socketid: cui.socketid,
       embedding: false,
       mode: "start",
+      piper: cui.checkPiperEnabled()
     };
     this.socket.emit("tosound", message);
   } else {
@@ -265,12 +274,14 @@ cui.sendTextToSpeech = function (textFromTileBody) {
       socketid: cui.socketid,
       embedding: false,
       mode: "stop",
+      piper: cui.checkPiperEnabled()
     };
     this.socket.emit("tosound", message);
     cui.isPlaying = false;
     cui.bufferQueue = [];
   }
 };
+
 cui.createBotTile = function (content) {
   this.createTile(content, "bot-tile"); //prettyprint
 };
@@ -278,6 +289,22 @@ cui.createBotTile = function (content) {
 cui.createUserTile = function (content) {
   this.createTile(content, "user-tile");
 };
+
+cui.piperToggle = function(){
+   console.log("piper toggled");
+   let buttons = document.getElementsByName("piperToggle");
+
+      for(let i = 0; i < buttons.length; i++){
+        if (buttons[i].style.display === "none") {
+          buttons[i].style.display = "block";
+      }else{
+        buttons[i].style.display = "none";
+      }
+    }
+   
+   console.log(buttons);  
+}
+
 
 cui.createTile = function (content, tileClass) {
   document.getElementsByClassName("chat-container")[0].style.backgroundImage =
@@ -309,28 +336,26 @@ cui.createTile = function (content, tileClass) {
     const textFromTileBody = tilebody.textContent.trim();
     navigator.clipboard.writeText(textFromTileBody);
   };
+  console.log("Music", cui.checkPiperEnabled());
 
-  if(cui.piperenabled){
     const vocalize = document.createElement("button");
-    vocalize.addEventListener("click", function () {
+    vocalize.name = "piperToggle";
+    vocalize.onclick =function () {
       const tilebody = vocalize.parentElement.nextElementSibling;
       const textFromTileBody = tilebody.textContent.trim();
-      // vocalize.innerHTML = '<i class="fas fa-stop"></i>';  
+      vocalize.innerHTML = '<i class="fas fa-stop"></i>';  
       cui.sendTextToSpeech(textFromTileBody);
-    });
+      let interval = setInterval(function () {if (!cui.isPlaying) {vocalize.innerHTML = '<i class="fas fa-music"></i>'; clearInterval(interval)}}, 500);
+    };
     vocalize.innerHTML = '<i class="fas fa-music"></i>';
     vocalize.className = "btn headerbutton";
     tileheader.appendChild(vocalize);
-    setInterval(function () {
-      if (cui.isPlaying) {
-        // Voice is currently playing, change button icon to "stop" icon
-        vocalize.innerHTML = '<i class="fas fa-stop"></i>';
-      } else {
-        // Voice is not playing, change button icon to "music" icon
-        vocalize.innerHTML = '<i class="fas fa-music"></i>';
-      }
-    }, 500); // Check every 100 milliseconds, adjust as needed
-  }
+    if(cui.checkPiperEnabled()){
+       vocalize.style.display = "block";
+    }else{
+        vocalize.style.display = "none";
+    }
+
   copyButton.innerHTML = '<i class="fas fa-copy"></i>';
   
   copyButton.className = "btn headerbutton";
@@ -370,6 +395,7 @@ cui.sendMessage = function () {
       message: input,
       socketid: cui.socketid,
       embedding: embedcheck.checked,
+      piper: cui.checkPiperEnabled(),
     });
     cui.createUserTile(input); // Create a new user tile for the question
     cui.messageId = cui.get_random_id();
