@@ -97,8 +97,7 @@ For data format convention, llama.cui uses the anytotext.js library.
  
 ![Screenshot](https://github.com/dspasyuk/llama.cui/blob/main/Screenshot.png)  
 ![Screenshot](https://github.com/dspasyuk/llama.cui/blob/main/Code_highlight.png)  
-https://github.com/dspasyuk/llama.cui/assets/34203011/1a7d530c-92a3-4d14-9c7d-79a25f73610f
-
+[![Piper Demo]()](https://github.com/dspasyuk/llama.cui/assets/34203011/1a7d530c-92a3-4d14-9c7d-79a25f73610f)
 
 
 
