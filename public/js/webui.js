@@ -303,19 +303,19 @@ cui.createTile = function (content, tileClass) {
     tileheader.appendChild(reload);
   }
   const copyButton = document.createElement("button");
-  copyButton.addEventListener("click", function () {
+  copyButton.onclick = function () {
     const tilebody = copyButton.parentElement.nextElementSibling;
     // Access the text content of the tilebody
     const textFromTileBody = tilebody.textContent.trim();
     navigator.clipboard.writeText(textFromTileBody);
-  });
+  };
 
   if(cui.piperenabled){
     const vocalize = document.createElement("button");
     vocalize.addEventListener("click", function () {
       const tilebody = vocalize.parentElement.nextElementSibling;
       const textFromTileBody = tilebody.textContent.trim();
-      vocalize.innerHTML = '<i class="fas fa-stop"></i>';  
+      // vocalize.innerHTML = '<i class="fas fa-stop"></i>';  
       cui.sendTextToSpeech(textFromTileBody);
     });
     vocalize.innerHTML = '<i class="fas fa-music"></i>';
