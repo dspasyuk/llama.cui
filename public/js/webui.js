@@ -1,507 +1,400 @@
-function cui() {}
+//Installation
+// git clone https://github.com/ggerganov/llama.cpp.git
+// cd llama.cpp
+// sed -i 's/-arch=native/-arch=all/g' Makefile
+// make clean && LLAMA_CUBLAS=1 make  -j
+//Copyright Denis Spasyuk
+//License MIT
 
-cui.init = function (iphostname, port, piper, testQs) {
-  cui.md = window.markdownit({
-    breaks: true,
-    highlight: (str, lang) => {
-      // console.log(lang, hljs.getLanguage(lang));
-      if (lang && hljs.getLanguage(lang)) {
-        try {
-          return `<pre class="hljs"><code>${
-            hljs.highlight(lang, str, true).value
-          }</code></pre>`;
-        } catch (__) {}
-      }
-      return `<pre class="hljs"><code>${cui.md.utils.escapeHtml(
-        str
-      )}</code></pre>`;
+const express = require("express");
+const { spawn } = require("child_process");
+const http = require("http");
+const socketIO = require("socket.io");
+var cors = require("cors");
+const path = require("path");
+const vdb = require("./db.js");
+const fs = require("fs");
+const downloadModel = require("./modeldownloader.js");
+
+const version = 0.26; //changed public and server and config
+var session = require("express-session");
+const MemoryStore = require("memorystore")(session);
+const memStore = new MemoryStore();
+const config = require("./config.js");
+if (config.login) {
+  var hash = require("./hash.js");
+}
+function ser() {}
+
+ser.modelinit = async function () {
+  if (fs.existsSync(config.params["--model"])) {
+    console.log("Model exists");
+  } else {
+    console.log("Downloading the model", config.params["--model"]);
+    await downloadModel(
+      config.modelname,
+      config.modeldirectory,
+      config.modelQuantization
+    );
+  }
+};
+
+ser.init = function (error) {
+  console.log(
+    config.llamacpp + " " + Object.entries(config.params).flat().join(" ")
+  );
+  this.connectedClients = new Map();
+  this.socketId = null;
+  this.messageQueue = []; // Queue to store messages from clients
+  this.isProcessing = false; // Flag to track if a message is being processed
+  this.runLLamaChild();
+  this.piper_client_enabled = true;
+  if (config.piper.enabled) {
+    this.fullmessage = "";
+    this.piperChild();
+    // this.aplayChild();
+    // this.FileStream();
+
+    // this.piper.stdout.pipe(this.aplay.stdin);
+  }
+  // Listen for the 'exit' event to handle process exit.
+
+  this.app = express();
+  this.server = http.createServer(this.app);
+
+  config.session.store = memStore;
+  this.sessionStore = session(config.session);
+
+  this.app.use(this.sessionStore);
+  this.app.use(cors());
+
+  this.io = socketIO(this.server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"],
+      credentials: true,
     },
   });
-  // cui.isPlaying = false; //
-  cui.audioContext = new AudioContext();
-  cui.bufferQueue = []; // Queue to hold incoming buffers while audio is playing
-  cui.crossfadeDuration = 0.1;
-  cui.messageInput = document.getElementById("messageInput");
-  this.synth = window.speechSynthesis;
-  cui.sendMessageButton = document.getElementById("sendMessage");
-  cui.iphostname = iphostname;
-  cui.port = port;
-  cui.piperate = piper.rate;
-  cui.piperenabled = piper.enabled;
-  if (cui.piperenabled) {
-     document.getElementById("piper-container").style.display = "block";
-  }
-  cui.testQs = testQs;
-  cui.messageId = "";
+  this.io.engine.use(this.sessionStore);
+  this.io.use(async (socket, next) => {
+    // Check authentication status here
+    // console.log("Session ID", socket.handshake.query.sessionID);
+    const sessionID = socket.handshake.query.sessionID;
 
-  cui.isClicked = false;
-  cui.collapsible();
-  cui.socketid = "";
-  cui.socketInit();
-  // cui.whisperRun ();
-  cui.listGenerate();
-  cui.currentChat = cui.getcurrentChat();
-  cui.returnWatcher();
-
-  cui.sendMessageButton.addEventListener("click", () => {
-    cui.sendMessage();
-  });
-};
-
-cui.checkPiperEnabled = function () {
-  const piperworks = document.getElementById("piper");
-if (piperworks.checked && cui.piperenabled) {
-    return true;
-  } else {
-    return false;
-  }
-};
-
-cui.collapsible = function () {
-  var coll = document.getElementsByClassName("collapsible");
-  for (var i = 0; i < coll.length; i++) {
-    coll[i].addEventListener("click", function () {
-      this.classList.toggle("active");
-      var content = this.nextElementSibling;
-      if (content.style.display === "block") {
-        content.style.display = "none";
-      } else {
-        content.style.display = "block";
-      }
-    });
-  }
-};
-cui.showDeleteButton = function (buttonId) {
-  var deleteButton = document.getElementById(buttonId);
-  deleteButton.classList.remove("hidden");
-};
-
-cui.hideDeleteButton = function (buttonId) {
-  var deleteButton = document.getElementById(buttonId);
-  deleteButton.classList.add("hidden");
-};
-
-cui.listGenerate = function () {
-  let allData = cui.getAlldata();
-  if (Object.keys(allData).length !== 0) {
-    var chatList = Object.keys(allData).map((chat) => {
-      let theid = Object.keys(allData[chat])[0];
-      return {
-        id: chat,
-        text: allData[chat][theid]["user"]
-          .toString()
-          .substring(0, 30)
-          .replace('"', ""),
-        href: "",
-      };
-    });
-    let list = "";
-    for (let i = 0; i < chatList.length; i++) {
-      const item = chatList[i];
-      item.text = item.text.replace("<br>", "");
-      list += `<li class="dark"> <div style="width:100%" onmouseover="cui.showDeleteButton('${item.id}_del')" onmouseout="cui.hideDeleteButton('${item.id}_del')" class="list-group-item-container">
-      <div id=${item.id} onclick="cui.loadMessage(this.id)"  class="list-group-item">${item.text}</div>
-      <button title="Delete Chat" id="${item.id}_del" onclick="cui.deleteButtons(this.id)"   
-      class="btn theme delete-button hidden"> <i class="fas fa-trash"></i></button></div></li>`;
-    }
-    document.getElementById("savedChats").innerHTML = list;
-  }
-};
-
-cui.deleteButtons = function (theid) {
-  if (cui.isClicked) {
-    clearTimeout(timer);
-    cui.isClicked = false;
-    var container = document.getElementById(theid).parentNode;
-    container.parentNode.removeChild(container);
-    cui.removeMessageTree(theid.replace("_del", ""));
-  } else {
-    cui.isClicked = true;
-    document.getElementById(theid).classList.add("remove");
-    timer = setTimeout(() => {
-      cui.isClicked = false;
-      document.getElementById(theid).classList.remove("remove");
-    }, 2000);
-  }
-};
-
-cui.loadMessage = function (chat) {
-  let messages = Object.values(cui.getMessageTree(chat));
-  // console.log("adsdas", chat);
-  cui.currentChat = chat;
-  const chatMessages = document.getElementById("chatMessages");
-  chatMessages.innerHTML = "";
-  for (let m = 0; m < messages.length; m++) {
-    cui.createUserTile(messages[m].user);
-    cui.createBotTile(messages[m].bot);
-  }
-};
-
-cui.onNewChart = function () {
-  cui.currentTile = null;
-  cui.messageId = "";
-  cui.currentChat = cui.getcurrentChat();
-  const chatMessages = document.getElementById("chatMessages");
-  chatMessages.innerHTML = "";
-};
-
-cui.socketInit = function () {
-  console.log(`${cui.iphostname}:${cui.port}`);
-  this.socket = io(`${cui.iphostname}:${cui.port}`, {
-    query: { sessionID },
-  });
-  userScrolledManually = false;
-  const chatMessages = document.getElementById("chatMessages");
-  chatMessages.addEventListener("scroll", (event) => {
-    userScrolledManually = chatMessages.scrollTop !== (chatMessages.scrollHeight - chatMessages.clientHeight);
-    //set userScrolledManually to false if user has scrolled to the end of chatmessages
-
-  });
-  var text = "";
-  cui.currentTile = null; // Reference to the current tile element
-  this.socket.on("output", (response) => {
-    if (response.includes("\n>")) {
-      cui.currentTile.textContent += " " + response.replace("\n>", "");
-      text += " " + response;
-      cui.currentTile.innerHTML = cui.md.render(text);
-      message = cui.getMessageById(cui.messageId);
-      message.bot = cui.md.render(text.replace("\n\n", "\n"));
-      cui.setMessage(message);
-      cui.speakIt(text.replace("\n>", ""));
-      text = "";
-      cui.hideStop();
+    // Check authentication using the session ID
+    const isValid = await ser.isValidSession(sessionID);
+    // console.log("Session is valid", isValid);
+    if (isValid) {
+      return next();
     } else {
-      if (!cui.currentTile || cui.currentTile.classList.contains("user-tile")) {
-        cui.createBotTile(response);
-      } else {
-        cui.currentTile.textContent += " " + response;
-        text += " " + response;
-        cui.currentTile.innerHTML = cui.md.render(text);
+      socket.emit("redirect-login");
+    }
+    // Reject unauthorized connections
+    return next(new Error("Unauthorized"));
+  });
+  this.io.on("connection", (socket) => this.handleSocketConnection(socket));
+  this.app.use(express.json());
+  this.app.use(express.urlencoded({ extended: true }));
+  this.app.set("views", path.join(__dirname, "views"));
+  this.app.set("view engine", "ejs");
+  this.app.use(express.static(path.join(__dirname, "public")));
+
+  // Define a route to render the EJS view
+  this.app.get("/", ser.loggedIn, (req, res, next) => {
+    const sessionID = req.sessionID;
+    // console.log("Session ID", config.piper.rate);
+    res.render("index", {
+      title: "Llama.cui",
+      version: version,
+      hostname: config.IP.client,
+      port: config.PORT.client,
+      testQs: config.testQuestions,
+      sessionID: sessionID,
+      piper: {rate:config.piper.rate, enabled:config.piper.enabled},
+    });
+  });
+
+  this.app.post("/stopper", async (request, response) => {
+    console.log("STOPPING");
+    ser.llamachild.kill("SIGINT");
+    this.messageQueue.splice(0, 1);
+    this.isProcessing = false;
+    this.processMessageQueue();
+    response.send({ message: "stopped" });
+  });
+
+  this.app.get("/login", (req, res) => {
+    if (!config.login) {
+      return res.redirect("/");
+    } else {
+      res.render("login", { title: "login" });
+    }
+  });
+
+  this.app.get("/logout", async (req, res) => {
+    req.session.destroy();
+    // res.render("logout", { user: config.username });
+    return res.redirect("/login");
+  });
+
+  this.app.post("/login", async (req, res) => {
+    const sessionID = req.sessionID;
+    if (!config.login) {
+      return res.redirect("/");
+    } else {
+      const username = req.body.username;
+      const password = req.body.password;
+      try {
+        if (!username || !password) {
+          res.render("login", { title: "login" });
+        } else {
+          let users = await config.loginTrue(username); //replace this with database query
+          if (users.length === 0) {
+            res.render("login", { title: "login" });
+          } else {
+            // Compare the provided password with the stored password
+            if (await hash.comparePassword(password, users.password)) {
+              // Authentication successful
+              req.session.loggedin = true;
+              req.session.user = { username };
+              if (req.xhr) {
+                // Send JSON response
+                res.json({ success: true, sessionID });
+              } else {
+                // Redirect to the "/" page
+                res.redirect("/");
+              }
+              console.log("Login Successful");
+            } else {
+              res.render("login", { title: "login" });
+            }
+          }
+        }
+      } catch (error) {
+        // Handle errors gracefully
+        console.error("Error during login:", error);
+        res.status(500).send("Internal Server Error");
       }
     }
-    if (!userScrolledManually) {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
   });
 
-  this.socket.on("buffer", (hexData) => {
-        // Push the received buffer to the queue
-        // console.log("hexData", hexData);
-        cui.bufferQueue.push(hexData);
-        // If audio is not playing, start playback
-        if (!cui.isPlaying) {
-          cui.playNextBuffer();
-        }
-      });
-  
-  this.socket.on("connect", () => {
-    cui.socketid = this.socket.id; // Get socket.id after connection is established
-    console.log(cui.socketid);
-  });
+  this.start();
+};
 
-  this.socket.on("disconnect", () => {
-    cui.hideStop();
-    console.error("Connection closed");
-  });
-
-  this.socket.on("connect_error", (error) => {
-    console.error("Connection error:", error);
-    window.location.href = "/login";
-    cui.hideStop();
+ser.isValidSession = function (sessionID) {
+  return new Promise((resolve, reject) => {
+    memStore.get(sessionID, (err, session) => {
+      if (err) {
+        console.error("Error validating session:", err);
+        reject(err);
+      } else {
+        // Assuming a session is valid if it exists
+        resolve(!!session);
+      }
+    });
   });
 };
 
-cui.playNextBuffer = function () {
-  if (cui.bufferQueue.length === 0) {
+ser.runLLamaChild = function () {
+  var configParams = Object.entries(config.params).flat();
+  this.llamachild = spawn(
+    config.llamacpp,
+    configParams.filter((item) => item !== ""),
+    {
+      stdio: ["pipe", "pipe", process.stderr],
+    }
+  );
+  this.llamachild.stdin.setEncoding("utf-8");
+  this.llamachild.stdout.on("data", (msg) => this.handleLlama(msg));
+
+  this.llamachild.on("exit", (code, signal) => {
+    if (code !== null) {
+      console.log(`Child process exited with code ${code}`);
+      this.runLLamaChild();
+    } else if (signal !== null) {
+      console.log(`Child process terminated by signal ${signal}`);
+      this.runLLamaChild();
+    }
+  });
+};
+
+ser.loggedIn = function (req, res, next) {
+  if (!config.login) {
+    req.session.loggedin = true;
+  }
+  if (req.session.loggedin) {
+    next();
+  } else {
+    res.redirect("/login");
+  }
+};
+
+ser.handleLlamaError = function (error) {
+  console.error("An error occurred in the llama child process:", error);
+  // Handle the error appropriately, e.g., logging, cleanup, etc.
+};
+
+ser.aplayChild = function () {
+  this.aplay = spawn("aplay", [
+    "-r",
+    config.piper.rate,
+    "-f",
+    config.piper.output_file,
+    "-t",
+    "raw",
+    "-",
+  ]);
+ 
+};
+
+ser.piperChild = function () {
+  this.piper = spawn(config.piper.exec, [
+    "--model",
+    config.piper.model,
+    "--output-raw",
+  ], {
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+  this.piper.stdout.on('data', (data) => { 
+    //16-bit mono PCM samples buffers
+    // console.log(data.length);
+    ser.io.to(this.socketId).emit("buffer", data);
+});
+  this.piper.stderr.on("error", (error) => {
+    console.error("An error occurred in the piper child process:", error);
+  });
+};
+
+ser.runPiper = function (output) {
+  if (config.piper.enabled) {
+    this.fullmessage += " " + output;
+    if (
+      this.fullmessage.includes(".") ||
+      this.fullmessage.includes(":") ||
+      this.fullmessage.includes(";") ||
+      this.fullmessage.includes("!") ||
+      this.fullmessage.includes("?") ||
+      this.fullmessage.includes("\n")
+    ) {
+      if(this.piper_client_enabled){
+         this.piper.stdin.write(this.fullmessage);
+      } 
+      // console.log("fullmesd", this.fullmessage);
+      this.fullmessage = "";
+    }
+  }
+};
+
+ser.handleLlama = function (msg) {
+  this.buffer += msg.toString("utf-8");
+  let lastSpaceIndex = this.buffer.lastIndexOf(" ");
+  if (lastSpaceIndex !== -1) {
+    let output = this.buffer.substring(0, lastSpaceIndex);
+    this.buffer = this.buffer.substring(lastSpaceIndex + 1);
+    // output = parseOutput(output);
+    output = output.replace("<|im_end|>", "");
+    if (output) {
+      clearTimeout(this.streamTimeout);
+    }
+    // console.log(this.socketId);
+    this.io.to(this.socketId).emit("output", output);
+    this.runPiper(output);
+    if (output.includes("\n>")) {
+      this.messageQueue.splice(0, 1);
+      this.isProcessing = false;
+      this.processMessageQueue();
+    }
+  }
+};
+
+ser.processMessageQueue = function () {
+  if (this.messageQueue.length === 0) {
+    this.isProcessing = false;
     return;
   }
-  // console.log(cui.bufferQueue);
-  cui.isPlaying = true;
-  const hexData = cui.bufferQueue.shift();
-  const pcmData = new Int16Array(hexData);
-  const float32Array = new Float32Array(pcmData.length);
-  for (let i = 0; i < pcmData.length; i++) {
-    float32Array[i] = pcmData[i] / 100000; // Convert to range [-1, 1]
-  }
-  const audioBuffer = cui.audioContext.createBuffer(
-    1,
-    float32Array.length,
-    cui.piperate
-  );
-  audioBuffer.copyToChannel(float32Array, 0);
-
-  const source = cui.audioContext.createBufferSource();
-  source.buffer = audioBuffer;
-  const gainNode = cui.audioContext.createGain(); // Create GainNode
-  source.connect(gainNode); // Connect source to gainNode
-  gainNode.connect(cui.audioContext.destination); // Connect gainNode to destination
-
-  // Crossfade
-  const currentTime = cui.audioContext.currentTime;
-  const fadeInTime = currentTime + cui.crossfadeDuration;
-  source.start(currentTime);
-  gainNode.gain.setValueAtTime(0, currentTime); // Set initial gain to 0
-  gainNode.gain.linearRampToValueAtTime(1, fadeInTime); // Ramp up the gain smoothly
-
-  source.onended = function () {
-    cui.isPlaying = false;
-    cui.playNextBuffer();
-  };
+  this.isProcessing = true;
+  const message = this.messageQueue[0];
+  const { socketId, input, piper } = message;
+  this.socketId = socketId;
+  this.piper_client_enabled = piper;
+  // Send the message to the child process
+  this.llamachild.stdin.cork();
+  this.llamachild.stdin.write(`${input}`);
+  this.llamachild.stdin.write("\n");
+  this.llamachild.stdin.uncork();
 };
 
-
-
-cui.speakIt = function (text) {
-  let utterThis = new SpeechSynthesisUtterance();
-  utterThis.text = text;
-  // this.synth.speak(utterThis);
+ser.handleTimeout = function () {
+  console.log("Timeout");
+  ser.isProcessing = false;
+  ser.llamachild.kill("SIGINT");
 };
 
-cui.sendTextToSpeech = function (textFromTileBody) {
-  cui.bufferQueue = [];
-  if (!cui.isPlaying) {
-    var message = {
-      message: textFromTileBody,
-      socketid: cui.socketid,
-      embedding: false,
-      mode: "start",
-      piper: cui.checkPiperEnabled()
-    };
-    this.socket.emit("tosound", message);
+ser.handleSocketConnection = async function (socket) {
+  if (socket.request.session) {
+    socket.on("message", async (data) => {
+      var input = data.message;
+      var embed = "";
+      if (data.embedding) {
+        console.log("embedding");
+        embed = await vdb.init(input);
+      }
+      var socketId = data.socketid;
+      input = config.prompt(socketId, input, embed);
+      input = input + "\\";
+      let piper = data.piper;
+      this.connectedClients.set(socketId, input);
+      // Add the incoming message to the queue
+      this.messageQueue.push({ socketId, input, piper});
+      this.streamTimeout = setTimeout(this.handleTimeout, config.timeout);
+      // Process messages if the queue is not being processed currently
+      if (!this.isProcessing) {
+        this.processMessageQueue();
+      }
+    });
+    
+    socket.on("tosound", async (data) => {
+      if(data.mode==="start"){
+        this.socketId = data.socketid;
+        this.piper_client_enabled = data.piper;
+        // console.log("start", data.socketid);
+        this.runPiper(data.message+"\n");
+      }
+      if(data.mode==="stop"){
+        // console.log("stop", data.socketid);
+        this.socketId = data.socketid;
+        this.piper.kill("SIGINT");
+        ser.piperChild();
+
+      }
+    })
+
+    socket.on("error", function () {
+      console.log("Error", error);
+    });
+    socket.on("disconnect", () => {
+      this.connectedClients.delete(socket.id);
+    });
   } else {
-    var message = {
-      message: "",
-      socketid: cui.socketid,
-      embedding: false,
-      mode: "stop",
-      piper: cui.checkPiperEnabled()
-    };
-    this.socket.emit("tosound", message);
-    cui.isPlaying = false;
-    cui.bufferQueue = [];
+    console.log("Not Logged In!");
+    //  socket.emit("redirect-login");
+    // Disconnect the socket
+    socket.disconnect(true);
   }
 };
 
-cui.createBotTile = function (content) {
-  this.createTile(content, "bot-tile"); //prettyprint
-};
-
-cui.createUserTile = function (content) {
-  this.createTile(content, "user-tile");
-};
-
-cui.piperToggle = function(){
-   console.log("piper toggled");
-   let buttons = document.getElementsByName("piperToggle");
-
-      for(let i = 0; i < buttons.length; i++){
-        if (buttons[i].style.display === "none") {
-          buttons[i].style.display = "block";
-      }else{
-        buttons[i].style.display = "none";
-      }
-    }
-   
-   console.log(buttons);  
-}
-
-
-cui.createTile = function (content, tileClass) {
-  document.getElementsByClassName("chat-container")[0].style.backgroundImage =
-    "none";
-  const tileElement = document.createElement("div");
-  const tileheader = document.createElement("div");
-  const headerText = document.createElement("p");
-  tileheader.className = "tileheader";
-  tileElement.className = tileClass;
-  // Set the header text based on the tileClass
-  headerText.textContent = tileClass === "user-tile" ? "User" : "AI";
-  headerText.style.margin = "0 auto 0 0"; // Center the text
-  // Append the header text and button to the tileheader
-  tileheader.appendChild(headerText);
-  // Button is appended after the text
-  if (tileClass === "user-tile") {
-    const reload = document.createElement("button");
-    reload.onclick = function () {
-      cui.resubmit(this);
-    };
-    reload.innerHTML = '<i class="fas fa-sync"></i>';
-    reload.className = "btn headerbutton";
-    tileheader.appendChild(reload);
-  }
-  const copyButton = document.createElement("button");
-  copyButton.onclick = function () {
-    const tilebody = copyButton.parentElement.nextElementSibling;
-    // Access the text content of the tilebody
-    const textFromTileBody = tilebody.textContent.trim();
-    navigator.clipboard.writeText(textFromTileBody);
-  };
-  console.log("Music", cui.checkPiperEnabled());
-
-    const vocalize = document.createElement("button");
-    vocalize.name = "piperToggle";
-    vocalize.onclick =function () {
-      const tilebody = vocalize.parentElement.nextElementSibling;
-      const textFromTileBody = tilebody.textContent.trim();
-      vocalize.innerHTML = '<i class="fas fa-stop"></i>';  
-      cui.sendTextToSpeech(textFromTileBody);
-      let interval = setInterval(function () {if (!cui.isPlaying) {vocalize.innerHTML = '<i class="fas fa-music"></i>'; clearInterval(interval)}}, 500);
-    };
-    vocalize.innerHTML = '<i class="fas fa-music"></i>';
-    vocalize.className = "btn headerbutton";
-    tileheader.appendChild(vocalize);
-    if(cui.checkPiperEnabled()){
-       vocalize.style.display = "block";
-    }else{
-        vocalize.style.display = "none";
-    }
-
-  copyButton.innerHTML = '<i class="fas fa-copy"></i>';
-  
-  copyButton.className = "btn headerbutton";
-  
-  tileheader.appendChild(copyButton);
-  // Append the tileheader to the tileElement
-  tileElement.appendChild(tileheader);
-  // Create a content element and append it to tileElement
-  const contentElement = document.createElement("div");
-  contentElement.className = "tilebody";
-  contentElement.innerHTML = content;
-  tileElement.appendChild(contentElement);
-  // Append the tileElement to chatMessages
-  chatMessages.appendChild(tileElement);
-  cui.currentTile = contentElement;
-};
-
-cui.get_random_id = function () {
-  return (
-    "id" +
-    [...Array(5)].map(() => (~~(Math.random() * 36)).toString(36)).join("")
-  );
-};
-
-cui.deleteMessages = function () {
-  if (window.confirm("Do you really want to delete the chats?")) {
-    localStorage.clear();
-    document.getElementById("savedChats").innerHTML = "";
-  }
-};
-
-cui.sendMessage = function () {
-  const input = cui.messageInput.value.trim(); // Get the message content
-  const embedcheck = document.getElementById("embed");
-  if (input !== "") {
-    cui.socket.emit("message", {
-      message: input,
-      socketid: cui.socketid,
-      embedding: embedcheck.checked,
-      piper: cui.checkPiperEnabled(),
-    });
-    cui.createUserTile(input); // Create a new user tile for the question
-    cui.messageId = cui.get_random_id();
-    cui.setMessage({ id: cui.messageId, user: input, bot: "" });
-    cui.createBotTile("");
-    cui.listGenerate();
-    cui.showStop();
-    cui.messageInput.value = "";
-  }
-};
-
-// Function to watch for enter press
-cui.returnWatcher = function () {
-  document.addEventListener("DOMContentLoaded", function () {
-    const messageInput = document.getElementById("messageInput");
-    messageInput.addEventListener("keydown", function (event) {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault(); // Prevent the default Enter key behavior (newline)
-        cui.sendMessage(); // Call the function to send the message
-      }
-    });
+ser.start = function () {
+  this.server.listen(config.PORT.server, config.IP.server, () => {
+    console.log(
+      "Server Running on:",
+      config.IP.server + ":" + config.PORT.server
+    );
   });
 };
 
-cui.resubmit = function (button) {
-  const tilebody = button.parentElement.nextElementSibling;
-  // Access the text content of the tilebody
-  const textFromTileBody = tilebody.textContent.trim();
-  const messageInput = document.getElementById("messageInput");
-  messageInput.value = textFromTileBody;
-};
+async function run() {
+  await ser.modelinit();
+  ser.init();
+}
 
-cui.defaultTest = function () {
-  const messageInput = document.getElementById("messageInput");
-  messageInput.value = cui.testQs;
-  cui.sendMessage();
-};
-
-cui.showStop = function () {
-  const stop = document.getElementById("stopgenerator");
-  stop.style.display = "block";
-};
-
-cui.hideStop = function () {
-  const stop = document.getElementById("stopgenerator");
-  stop.style.display = "none";
-};
-
-cui.stopGenerating = function () {
-  console.log("STOPPING");
-  fetch("/stopper", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ message: "stop" }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      console.log("Server response:", data);
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-    });
-};
-
-cui.getcurrentChat = function () {
-  // var tN = Object.keys(cui.getAlldata()).length;
-  var tN = cui.get_random_id();
-  return `C${tN}` || [];
-};
-
-cui.getAlldata = function () {
-  return JSON.parse(localStorage.getItem("llcui")) || {};
-};
-
-// Function to set a new message
-cui.setMessage = function (message) {
-  const messages = cui.getAlldata();
-  if (messages[cui.currentChat] !== undefined) {
-    messages[cui.currentChat][cui.messageId] = message;
-  } else {
-    messages[cui.currentChat] = {};
-    messages[cui.currentChat][cui.messageId] = message;
-  }
-  localStorage.setItem("llcui", JSON.stringify(messages));
-};
-
-// Function to delete a message by its ID
-cui.deleteChats = function (chat) {
-  localStorage.setItem("llcui", JSON.stringify({}));
-};
-
-cui.getMessageTree = function (id) {
-  let messages = cui.getAlldata();
-  return messages[id] || {};
-};
-
-cui.removeMessageTree = function (id) {
-  let messages = cui.getAlldata();
-  delete messages[id];
-  localStorage.setItem("llcui", JSON.stringify(messages));
-};
-
-cui.getMessageById = function (id) {
-  const chats = cui.getAlldata();
-  const message = chats[cui.currentChat][id];
-  return message || {};
-};
+run();
