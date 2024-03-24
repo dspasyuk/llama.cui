@@ -83,7 +83,7 @@ ser.init = function (error) {
 
     // Check authentication using the session ID
     const isValid = await ser.isValidSession(sessionID);
-    console.log("Session is valid", isValid);
+    // console.log("Session is valid", isValid);
     if (isValid) {
       return next();
     } else {
