@@ -300,7 +300,7 @@ ser.handleLlama = function (msg) {
     this.buffer = this.buffer.substring(lastSpaceIndex + 1);
     // output = parseOutput(output);
     output = config.outputFilter(output);
-    console.log(JSON.stringify(output));
+    //console.log(JSON.stringify(output));
     if (output) {
       clearTimeout(this.streamTimeout);
     }
