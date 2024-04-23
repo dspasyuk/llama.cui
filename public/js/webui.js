@@ -17,6 +17,7 @@ cui.init = function (iphostname, port, piper, testQs) {
       )}</code></pre>`;
     },
   });
+
   cui.isPlaying = false; 
   cui.PlayWatcher(); 
   cui.audioContext = new AudioContext();
@@ -69,7 +70,6 @@ cui.piperStopToggle = function(){
 }
 
 }
-
 
 cui.checkPiperEnabled = function () {
   const piperworks = document.getElementById("piper");
@@ -156,7 +156,7 @@ cui.loadMessage = function (chat) {
   const chatMessages = document.getElementById("chatMessages");
   chatMessages.innerHTML = "";
   for (let m = 0; m < messages.length; m++) {
-    cui.createUserTile(messages[m].user);
+    cui.createUserTile(cui.md.render(messages[m].user));
     cui.createBotTile(messages[m].bot);
   }
 };
@@ -193,6 +193,7 @@ cui.socketInit = function () {
       cui.setMessage(message);
       cui.speakIt(text.replace("\n>", ""));
       text = "";
+      cui.createSVG(cui.currentTile);
       cui.hideStop();
     } else {
       if (!cui.currentTile || cui.currentTile.classList.contains("user-tile")) {
@@ -273,8 +274,6 @@ cui.playNextBuffer = function () {
   };
 };
 
-
-
 cui.speakIt = function (text) {
   let utterThis = new SpeechSynthesisUtterance();
   utterThis.text = text;
@@ -327,6 +326,26 @@ cui.piperToggle = function(){
     } 
 }
 
+cui.createSVG = function (ell) {
+  var extractedSvg = svgme.extractSvgFromText(ell.innerText);
+  // console.log(contentElement.innerText);
+  if (extractedSvg) {
+    var htmlSvg = svgme.convertSvgToHtml(ell,extractedSvg);
+  }
+};
+
+cui.createHTML = function (ell) {
+  var html = svgme.extractHTMLFromText(ell.innerText);
+  var body = svgme.extractBodyFromText(html);
+  const can = document.createElement("canvas");
+  can.width = 100;
+  can.height = 100;
+  can.id = "myCanvas";
+  ell.appendChild(can);
+  if (body) {
+    svgme.embedHTML(ell, body);
+  }
+};
 
 
 cui.createTile = function (content, tileClass) {
@@ -359,7 +378,7 @@ cui.createTile = function (content, tileClass) {
     const textFromTileBody = tilebody.textContent.trim();
     navigator.clipboard.writeText(textFromTileBody);
   };
-  console.log("Music", cui.checkPiperEnabled());
+  
 
     const vocalize = document.createElement("button");
     vocalize.name = "piperToggle";
@@ -392,6 +411,13 @@ cui.createTile = function (content, tileClass) {
   // Append the tileElement to chatMessages
   chatMessages.appendChild(tileElement);
   cui.currentTile = contentElement;
+  //SVG INSERT
+  // cui.createSVG(tileElement);
+  if (tileClass === "bot-tile") {
+    cui.createSVG(tileElement);
+    // cui.createHTML(tileElement);
+  }
+
 };
 
 cui.get_random_id = function () {
@@ -418,7 +444,7 @@ cui.sendMessage = function () {
       embedding: embedcheck.checked,
       piper: cui.checkPiperEnabled(),
     });
-    cui.createUserTile(input); // Create a new user tile for the question
+    cui.createUserTile(cui.md.render(input)); // Create a new user tile for the question
     cui.messageId = cui.get_random_id();
     cui.setMessage({ id: cui.messageId, user: input, bot: "" });
     cui.createBotTile("");

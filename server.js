@@ -7,7 +7,7 @@
 //License MIT
 
 const express = require("express");
-const { spawn } = require("child_process");
+const { spawn, exec } = require("child_process");
 const http = require("http");
 const socketIO = require("socket.io");
 var cors = require("cors");
@@ -16,7 +16,7 @@ const vdb = require("./db.js");
 const fs = require("fs");
 const downloadModel = require("./modeldownloader.js");
 
-const version = 0.26; //changed public and server and config
+const version = 0.28; //changed public and server and config
 var session = require("express-session");
 const MemoryStore = require("memorystore")(session);
 const memStore = new MemoryStore();
@@ -179,6 +179,7 @@ ser.init = function (error) {
   });
 
   this.start();
+  ser.open();
 };
 
 ser.isValidSession = function (sessionID) {
@@ -265,6 +266,12 @@ ser.piperChild = function () {
   });
 };
 
+ser.open = function () {
+  var url = "http://"+config.IP.client + ":" + config.PORT.client;
+  var start = (process.platform == 'darwin'? 'open': process.platform == 'win32'? 'start': 'xdg-open');
+  exec(start + ' ' + url);
+};
+
 ser.runPiper = function (output) {
   if (config.piper.enabled) {
     this.fullmessage += " " + output;
@@ -292,7 +299,8 @@ ser.handleLlama = function (msg) {
     let output = this.buffer.substring(0, lastSpaceIndex);
     this.buffer = this.buffer.substring(lastSpaceIndex + 1);
     // output = parseOutput(output);
-    output = output.replace("<|im_end|>", "");
+    output = config.outputFilter(output);
+    console.log(JSON.stringify(output));
     if (output) {
       clearTimeout(this.streamTimeout);
     }

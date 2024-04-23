@@ -9,7 +9,7 @@ config.modelQuantization = "Q6_K";
 
 //Model Setting
 config.params = {
-  "--model": path.join(config.modeldirectory, "Einstein-v4-7B-Q6_K.gguf"),
+  "--model": path.join(config.modeldirectory, "Meta-Llama-3-8B-Instruct.Q5_K_S.gguf"),
   "--n-gpu-layers": 35,
   "-ins": "",
   "--simple-io":"",
@@ -17,9 +17,10 @@ config.params = {
   "--ctx_size":2048,
   "--temp":0.1,
   "--top_k":10,
-  "-mg":1,
+  "-mg":0,
+  // "-sm": "layer",
   "--multiline-input":"",
-  "--repeat_penalty": 1.15,
+  "--repeat_penalty": 1.12,
   "-t": 4,
   "-r": '"/n>"',
   "-f": "./Alice.txt",
@@ -33,7 +34,7 @@ config.llamacpp = "../llama.cpp/main";
 //Llama.cui settings//
 config.PORT = { client: "5000", server: "5000" };
 config.IP = { client: "localhost", server: "localhost" };
-config.login = true;
+config.login = false;
 config.timeout = 50000;
 config.session = {
   secret: "2C44-4D44-WppQ38S", //change before deployment
@@ -77,10 +78,13 @@ config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
 config.prompt = function(userID, prompt, context){
   return `user\n'${prompt}';  ${context ? `Context: '${context}'` : ""}`;
 }
+config.outputFilter = function(output){
+  return output.replace("<|im_end|>", "").replace("Instruction:\n\n", "");
+}
 
 //Piper setting
 config.piper = {
-  enabled: false,
+  enabled: true,
   rate: 20500,
   // rate: 16000,
   output_file: 'S16_LE',
@@ -88,16 +92,16 @@ config.piper = {
   model: "../../piper/models/librits/en_US-libritts_r-medium.onnx", 
 };
 
-config.testQuestions = config.testQuestions = `<br>
-Answer the following questions:<br>
-1. The day before two days after the day before tomorrow is Saturday. What day is it today?<br>
-2. What is the square root of 169?<br>
-3. Solve the equation 3y = 6y + 11 and find y.<br>
-4. There are two ducks in front of a duck, two ducks behind a duck, and a duck in the middle. How many ducks are there?<br>
-5. How many days does it take to travel from New York City to London by plane, assuming non-stop flights and average speeds?<br>
-6. What are the products of the chemical reaction between salicylic acid and acetic anhydride?<br>
-7. If five cats can catch five mice in five minutes, how long will it take one cat to catch one mouse?<br>
-8. Translate "I love you" into 5 different languages: Spanish, French, Russian, Italian, German.<br>
+config.testQuestions = config.testQuestions = `
+Answer the following questions:
+1. The day before two days after the day before tomorrow is Saturday. What day is it today?
+2. What is the square root of 169?
+3. Solve the equation 3y = 6y + 11 and find y.
+4. There are two ducks in front of a duck, two ducks behind a duck, and a duck in the middle. How many ducks are there?
+5. How many days does it take to travel from New York City to London by plane, assuming non-stop flights and average speeds?
+6. What are the products of the chemical reaction between salicylic acid and acetic anhydride?
+7. If five cats can catch five mice in five minutes, how long will it take one cat to catch one mouse?
+8. Translate "I love you" into 5 different languages: Spanish, French, Russian, Italian, German.
 `
 
 

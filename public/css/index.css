@@ -403,3 +403,8 @@ ul {
 .navbar {
   padding: 0.5rem 0.5rem;
 }
+
+.vcenter {
+  width: 100%;
+  margin: 0 40%;
+}
