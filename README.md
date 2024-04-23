@@ -62,7 +62,7 @@ Enable it in config.js, make sure to install Piper before running llama.cui
       git clone https://github.com/rhasspy/piper.git
       cd piper  
       make  
-      That should build Piper and put in "piper/install/"
+      That should build Piper and put it in "piper/install/"
       
    ### Downloading voice models  
       Models can be found on Hugging Face:  
