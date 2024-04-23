@@ -25,7 +25,7 @@ config.params = {
   "-r": '"/n>"',
   "-f": "./Alice.txt",
   "--log-disable":"",
-  "--no-penalize-nl":"",
+ // "--no-penalize-nl":"", //
 }
 
 //Llama.cpp settings
