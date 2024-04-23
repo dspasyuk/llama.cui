@@ -9,7 +9,7 @@ config.modelQuantization = "Q6_K";
 
 //Model Setting
 config.params = {
-  "--model": path.join(config.modeldirectory, "Meta-Llama-3-8B-Instruct.Q5_K_S.gguf"),
+  "--model": path.join(config.modeldirectory, "Einstein-v4-7B-Q6_K.gguf"),
   "--n-gpu-layers": 35,
   "-ins": "",
   "--simple-io":"",
