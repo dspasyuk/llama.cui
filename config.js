@@ -3,29 +3,28 @@
 const path = require("path");
 var config = {};
 
-config.modelname = "LoneStriker/Einstein-v4-7B-GGUF";
+config.modelname = "SanctumAI/Meta-Llama-3-8B-Instruct-GGUF";
 config.modeldirectory = "../../models";
-config.modelQuantization = "Q6_K";
+config.modelQuantization = "Q5_K_S";
 
 //Model Setting
 config.params = {
-  "--model": path.join(config.modeldirectory, "Einstein-v4-7B-Q6_K.gguf"),
+  "--model":  path.join(config.modeldirectory, "Meta-Llama-3-8B-Instruct.Q5_K_S.gguf"),
   "--n-gpu-layers": 35,
   "-ins": "",
+  "--keep": -1,
   "--simple-io":"",
   "-b": 2048,
   "--ctx_size":2048,
-  "--temp":0.1,
+  "--temp":0.5,
   "--top_k":10,
   "-mg":0,
-  // "-sm": "layer",
   "--multiline-input":"",
   "--repeat_penalty": 1.12,
   "-t": 4,
   "-r": '"/n>"',
-  "-f": "./Alice.txt",
-  "--log-disable":"",
- // "--no-penalize-nl":"", //
+  "-p":'"Your name is Alice. You are kind, honest, logical, precise, good at writing and mathematics assistant"',
+  "--log-disable":""
 }
 
 //Llama.cpp settings
@@ -75,16 +74,22 @@ config.dataChannel.set("MongoDB", {
 
 config.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
 config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
-config.prompt = function(userID, prompt, context){
-  return `user\n'${prompt}';  ${context ? `Context: '${context}'` : ""}`;
+config.filter =function(output){
+  return output.replace(/<\|.*?\|>/g, '');
 }
+
+//adjust model prompt
+config.prompt = function(userID, prompt, context){
+  return `<|user|>${prompt}  ${context ? `Context: '${context}'` : ""}<|end|>`;
+}
+//filter any unwanted model outputs or change formating here
 config.outputFilter = function(output){
-  return output.replace("<|im_end|>", "").replace("Instruction:\n\n", "");
+  return config.filter(output);
 }
 
 //Piper setting
 config.piper = {
-  enabled: false,
+  enabled: true,
   rate: 20500,
   // rate: 16000,
   output_file: 'S16_LE',
