@@ -96,7 +96,8 @@ You will need to detele the existing DB folder before running llama.cui. The new
 For data format convention, llama.cui uses the anytotext.js library. 
 
 ## Screenshots
- ![Screenshot](https://github.com/dspasyuk/llama.cui/assets/34203011/c9ca203e-d2d2-4f14-8b24-5cb35f12183b)
+ ![Screenshot](https://github.com/dspasyuk/llama.cui/assets/34203011/820fb710-2fd0-4ed4-9945-01440155d1fe)
+
 ![Code_highlight](https://github.com/dspasyuk/llama.cui/assets/34203011/eb740616-8b5c-40f2-a85d-b42fd8775aba)
 
 
