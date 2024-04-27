@@ -49,7 +49,7 @@ To run just type:
 ## Install all at once
 Starting from version 0.24 model will be downloaded automatically. 
 
-`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUBLAS=1 make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
+`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUDA=1 make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
 ## Login Information
 Default login and password are specified in the config file but could be easily integrated with the user database.
