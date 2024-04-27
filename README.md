@@ -3,7 +3,7 @@
 
 **Note: This project is a work in progress.**
 
-This project provides a Node.js server for a chat user interface (UI) that interacts with the Llama.cpp library. It allows users to communicate with the Llama.cpp @[llama.cpp](https://github.com/ggerganov/llama.cpp.git) application via a web-based chat interface.
+This project provides a Node.js server for a chat user interface (UI) that interacts with the Llama.cpp library. It allows users to communicate with the [llama.cpp](https://github.com/ggerganov/llama.cpp.git) application via a web-based chat interface.
 
 ## Installation
 
