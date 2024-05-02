@@ -93,12 +93,13 @@ Enable it in config.js, make sure to install Piper before running llama.cui
 In addition to the regular Linux instructions on Mac other configuration must be performed to install piper.  
 #### Try piper_install_mac.sh installation script first:
      `bash piper_install_mac.sh`
+     
      ##### Example of usage
    `echo 'Welcome to the world of speech synthesis!' | "$PIPER_ROOT_FOLDER/piper/install/piper" \
     --model "$PIPER_ROOT_FOLDER/models/librits/en_US-libritts-high.onnx" \
     --output-file welcome.wav`
  
-     If it fails at any stage follow the guide below: 
+     If it fails at any stage try the guide below: 
 
 #### First lets install brew if you do not have it yet:  
 `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
