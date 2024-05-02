@@ -99,10 +99,12 @@ In addition to the regular Linux instructions on Mac other configuration must be
   `/opt/homebrew/bin/brew install espeak-ng` 
   You now should have /opt/homebrew/Cellar/espeak-ng/1.51/lib/libespeak-ng.1.dylib  //your version might be different 
   `cd to your piper root folder`  
+#### Install piper-phonemize  
   `git clone https://github.com/rhasspy/piper-phonemize.git`  
   `cd piper-phonemize-master`  
   `make`  
    Once the compilation process is done you should have libpiper_phonemize.1.dylib in ./piper-phonemize-master/install/lib
+#### Setting up environmental variables  
    Now lets create the necessary links to the libraries so that piper can find them:
    Add this lines to your ~/.zprofile file before 'export PATH':
    `PATH="/opt/homebrew/bin:${PATH}"
