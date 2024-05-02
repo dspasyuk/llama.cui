@@ -67,7 +67,7 @@ The login is currently set to false. To enable login set login to true in the co
 ## Piper integration https://github.com/rhasspy/piper
 As of version 1.15 the llama.cui supports Piper for a text-to-voice generation.
 Enable it in config.js, make sure to install Piper before running llama.cui 
-
+### Linux
    ### Getting Piper 
       git clone https://github.com/rhasspy/piper.git
       cd piper  
@@ -81,7 +81,7 @@ Enable it in config.js, make sure to install Piper before running llama.cui
       https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/libritts/high
       
    ### Configure Piper  
-   
+      // The config below is already a default in config.js. You will only need to set "enabled" to true in piper config
       config.piper = {  
         enabled: true,  
         rate: 20500, // depends on your model  
@@ -89,6 +89,31 @@ Enable it in config.js, make sure to install Piper before running llama.cui
         exec: "../../piper/install/piper", // set a path to your piper installation  
         model: "/home/denis/CODE/piper/models/librits/en_US-libritts_r-medium.onnx"  // set a path to your voice models  
       };  
+### MacOS 
+In addition to the regular Linux instructions on Mac other configuration must be performed to install piper. 
+
+#### First lets install brew if you do not have it yet:
+`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+
+#### Install espeak-ng:  
+`/opt/homebrew/bin/brew install espeak-ng` 
+You now should have /opt/homebrew/Cellar/espeak-ng/1.51/lib/libespeak-ng.1.dylib  //your version might be different 
+`cd to your piper root folder`  
+`git clone https://github.com/rhasspy/piper-phonemize.git`  
+`cd piper-phonemize-master`  
+`make`  
+ Once the compilation process is done you should have libpiper_phonemize.1.dylib in ./piper-phonemize-master/install/lib
+ Now lets create the necessary links to the libraries so that piper can find them:
+ Add this lines to your ~/.zprofile file before 'export PATH':
+ `PATH="/opt/homebrew/bin:${PATH}"
+export DYLD_LIBRARY_PATH=/opt/homebrew/Cellar/espeak/1.48.04_1/lib/:$DYLD_LIBRARY_PATH
+export DYLD_LIBRARY_PAT=/PIPER_ROOT_DEER/piper-phonemize-master/lib:$DYLD_LIBRARY_PATH //make sure you provide the correct path to PIPER_ROOT_DEER
+source ~/.zprofile
+ `
+You should now be able to run piper as following, make sure the path to your piper install is correct:
+echo 'Welcome to the world of speech synthesis!' | \ ./piper/install/piper --model ./piper/models/librits/en_US-libritts-high.onnx --output-file welcome.wav
+
+
 [![Piper Demo]()](https://github.com/dspasyuk/llama.cui/assets/34203011/1a7d530c-92a3-4d14-9c7d-79a25f73610f)
 ## Embeddings
 ![embedding](https://github.com/dspasyuk/llama.cui/assets/34203011/c66a9cd7-f9d9-4b69-9b4a-53e11a14a5bf)
