@@ -94,7 +94,7 @@ In addition to the regular Linux instructions on Mac other configuration must be
 #### Try piper_install_mac.sh installation script first:
      `bash piper_install_mac.sh`
      
-     ##### Example of usage
+##### Example of usage
    `echo 'Welcome to the world of speech synthesis!' | "$PIPER_ROOT_FOLDER/piper/install/piper" \
     --model "$PIPER_ROOT_FOLDER/models/librits/en_US-libritts-high.onnx" \
     --output-file welcome.wav`
