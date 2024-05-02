@@ -96,8 +96,8 @@ In addition to the regular Linux instructions on Mac other configuration must be
 `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 
 #### Install espeak-ng:  
-  `/opt/homebrew/bin/brew install espeak-ng` 
-  You now should have /opt/homebrew/Cellar/espeak-ng/1.51/lib/libespeak-ng.1.dylib  //your version might be different 
+  `/opt/homebrew/bin/brew install espeak-ng`   
+  You now should have /opt/homebrew/Cellar/espeak-ng/1.51/lib/libespeak-ng.1.dylib  //your version might be different   
   `cd to your piper root folder`  
 #### Install piper-phonemize  
   `git clone https://github.com/rhasspy/piper-phonemize.git`  
@@ -105,13 +105,19 @@ In addition to the regular Linux instructions on Mac other configuration must be
   `make`  
    Once the compilation process is done you should have libpiper_phonemize.1.dylib in ./piper-phonemize-master/install/lib
 #### Setting up environmental variables  
-   Now lets create the necessary links to the libraries so that piper can find them:
-   Add this lines to your ~/.zprofile file before 'export PATH':
-   `PATH="/opt/homebrew/bin:${PATH}"
-   export DYLD_LIBRARY_PATH=/opt/homebrew/Cellar/espeak/1.48.04_1/lib/:$DYLD_LIBRARY_PATH
-   export DYLD_LIBRARY_PAT=/PIPER_ROOT_DEER/piper-phonemize-master/lib:$DYLD_LIBRARY_PATH //make sure you provide the correct path to PIPER_ROOT_DEER
-   source ~/.zprofile
- `
+   Now lets create the necessary links to the libraries so that piper can find them:   
+   Add this lines to your ~/.zprofile file before 'export PATH':   
+   
+   `PATH="/opt/homebrew/bin:${PATH}"  
+export DYLD_LIBRARY_PATH=/opt/homebrew/Cellar/espeak/1.48.04_1/lib/:$DYLD_LIBRARY_PATH  
+export DYLD_LIBRARY_PAT=/PIPER_ROOT_DEER/piper-phonemize-master/lib:$DYLD_LIBRARY_PATH`
+   
+  make sure you provide the correct path to PIPER_ROOT_DEER   
+
+  Do not forget to source your env file:  
+  
+  source ~/.zprofile   
+  
   You should now be able to run piper as following, make sure the path to your piper install is correct:
   echo 'Welcome to the world of speech synthesis!' | \ ./piper/install/piper --model ./piper/models/librits/en_US-libritts-high.onnx --output-file welcome.wav
 
