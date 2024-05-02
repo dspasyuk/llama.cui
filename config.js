@@ -10,7 +10,7 @@ config.modelQuantization = "Q5_K_S";
 //Model Setting
 config.params = {
   "--model":  path.join(config.modeldirectory, "Meta-Llama-3-8B-Instruct.Q5_K_S.gguf"),
-  "--n-gpu-layers": 35,
+  "--n-gpu-layers": 35, // remove if using CPU !!!!!!!!!!!!!
   "-ins": "",
   "--keep": -1,
   "--simple-io":"",
@@ -18,7 +18,6 @@ config.params = {
   "--ctx_size":2048,
   "--temp":0.5,
   "--top_k":10,
-  "-mg":0,
   "--multiline-input":"",
   "--repeat_penalty": 1.12,
   "-t": 4,
