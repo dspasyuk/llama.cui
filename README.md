@@ -109,6 +109,7 @@ In addition to the regular Linux instructions on Mac other configuration must be
    Add this lines to your ~/.zprofile file before 'export PATH':   
    
    `PATH="/opt/homebrew/bin:${PATH}"  
+   
 export DYLD_LIBRARY_PATH=/opt/homebrew/Cellar/espeak/1.48.04_1/lib/:$DYLD_LIBRARY_PATH  
 export DYLD_LIBRARY_PAT=/PIPER_ROOT_DEER/piper-phonemize-master/lib:$DYLD_LIBRARY_PATH`
    
