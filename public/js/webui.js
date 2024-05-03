@@ -17,11 +17,11 @@ cui.init = function (iphostname, port, piper, testQs) {
       )}</code></pre>`;
     },
   });
-
-  cui.isPlaying = false; 
+  this.player = cui.PCMplayer()
+  cui.isPlaying = cui.player.isPlaying; 
+  cui.notStopped =true;
   cui.PlayWatcher(); 
   cui.audioContext = new AudioContext();
-  cui.bufferQueue = []; // Queue to hold incoming buffers while audio is playing
   cui.crossfadeDuration = 0.1;
   cui.messageInput = document.getElementById("messageInput");
   this.synth = window.speechSynthesis;
@@ -48,12 +48,23 @@ cui.init = function (iphostname, port, piper, testQs) {
   });
 };
 
+cui.PCMplayer = function(){
+  
+  const option = {
+    encoding: '16bitInt',
+    channels: 1,
+    sampleRate: piper.rate,
+    flushingTime: 500
+}
+  return player = new PCMPlayer(option);
+}
+
 cui.PlayWatcher = function () {
-  let previousValue = cui.isPlaying;
+  let previousValue = cui.player.isPlaying;
   setInterval(function () {
-    if (cui.isPlaying !== previousValue) {
+    if (cui.player.isPlaying !== previousValue) {
       cui.piperStopToggle();
-      previousValue = cui.isPlaying;
+      previousValue = cui.player.isPlaying;
     }
   }, 500);
 }
@@ -191,7 +202,6 @@ cui.socketInit = function () {
       message = cui.getMessageById(cui.messageId);
       message.bot = cui.md.render(text.replace("\n\n", "\n"));
       cui.setMessage(message);
-      cui.speakIt(text.replace("\n>", ""));
       text = "";
       cui.createSVG(cui.currentTile);
       cui.hideStop();
@@ -201,22 +211,26 @@ cui.socketInit = function () {
       } else {
         cui.currentTile.textContent += " " + response;
         text += " " + response;
+      
         cui.currentTile.innerHTML = cui.md.render(text);
+        
       }
     }
     if (!userScrolledManually) {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
+   
   });
 
+
   this.socket.on("buffer", (hexData) => {
-        // Push the received buffer to the queue
-        // console.log("hexData", hexData);
-        cui.bufferQueue.push(hexData);
-        // If audio is not playing, start playback
-        if (!cui.isPlaying) {
-          cui.playNextBuffer();
-        }
+          if(hexData && cui.notStopped){
+          cui.player.feed(new Int16Array(hexData));
+          cui.isPlaying = cui.player.isPlaying;
+          }else{
+            cui.isPlaying=false;
+          }
+       
       });
   
   this.socket.on("connect", () => {
@@ -236,53 +250,10 @@ cui.socketInit = function () {
   });
 };
 
-cui.playNextBuffer = function () {
-  if (cui.bufferQueue.length === 0) {
-    return;
-  }
-  // console.log(cui.bufferQueue);
-  cui.isPlaying = true;
-  const hexData = cui.bufferQueue.shift();
-  const pcmData = new Int16Array(hexData);
-  const float32Array = new Float32Array(pcmData.length);
-  for (let i = 0; i < pcmData.length; i++) {
-    float32Array[i] = pcmData[i] / 100000; // Convert to range [-1, 1]
-  }
-  const audioBuffer = cui.audioContext.createBuffer(
-    1,
-    float32Array.length,
-    cui.piperate
-  );
-  audioBuffer.copyToChannel(float32Array, 0);
-
-  const source = cui.audioContext.createBufferSource();
-  source.buffer = audioBuffer;
-  const gainNode = cui.audioContext.createGain(); // Create GainNode
-  source.connect(gainNode); // Connect source to gainNode
-  gainNode.connect(cui.audioContext.destination); // Connect gainNode to destination
-
-  // Crossfade
-  const currentTime = cui.audioContext.currentTime;
-  const fadeInTime = currentTime + cui.crossfadeDuration;
-  source.start(currentTime);
-  gainNode.gain.setValueAtTime(0, currentTime); // Set initial gain to 0
-  gainNode.gain.linearRampToValueAtTime(1, fadeInTime); // Ramp up the gain smoothly
-
-  source.onended = function () {
-    cui.isPlaying = false;
-    cui.playNextBuffer();
-  };
-};
-
-cui.speakIt = function (text) {
-  let utterThis = new SpeechSynthesisUtterance();
-  utterThis.text = text;
-  // this.synth.speak(utterThis);
-};
 
 cui.sendTextToSpeech = function (textFromTileBody) {
-  cui.bufferQueue = [];
-  if (!cui.isPlaying) {
+  if (!cui.player.isPlaying) {
+    console.log("play");
     var message = {
       message: textFromTileBody,
       socketid: cui.socketid,
@@ -290,6 +261,7 @@ cui.sendTextToSpeech = function (textFromTileBody) {
       mode: "start",
       piper: cui.checkPiperEnabled()
     };
+    cui.notStopped =true;
     this.socket.emit("tosound", message);
   } else {
     var message = {
@@ -300,8 +272,10 @@ cui.sendTextToSpeech = function (textFromTileBody) {
       piper: cui.checkPiperEnabled()
     };
     this.socket.emit("tosound", message);
-    cui.isPlaying = false;
-    cui.bufferQueue = [];
+
+    console.log("stop");
+    cui.notStopped = false;
+    cui.player.stop();
   }
 };
 

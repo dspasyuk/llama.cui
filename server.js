@@ -249,6 +249,7 @@ ser.aplayChild = function () {
 };
 
 ser.piperChild = function () {
+  console.log(`${config.piper.exec} --model ${config.piper.model} --output-raw`);
   this.piper = spawn(config.piper.exec, [
     "--model",
     config.piper.model,
@@ -258,7 +259,7 @@ ser.piperChild = function () {
   });
   this.piper.stdout.on('data', (data) => { 
     //16-bit mono PCM samples buffers
-    // console.log(data.length);
+   // console.log(data);
     ser.io.to(this.socketId).emit("buffer", data);
 });
   this.piper.stderr.on("error", (error) => {
@@ -347,6 +348,7 @@ ser.handleSocketConnection = async function (socket) {
         console.log("embedding");
         embed = await vdb.init(input);
       }
+      console.log("input", embed);
       var socketId = data.socketid;
       input = config.prompt(socketId, input, embed);
       input = input + "\\";
