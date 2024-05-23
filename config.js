@@ -3,13 +3,14 @@
 const path = require("path");
 var config = {};
 
-config.modelname = "SanctumAI/Meta-Llama-3-8B-Instruct-GGUF";
+config.modelrepo = "SanctumAI/Meta-Llama-3-8B-Instruct-GGUF";
 config.modeldirectory = "../../models";
-config.modelQuantization = "Q5_K_S";
+config.modelname = "meta-llama-3-8B-instruct";
+config.modelQuantization = "Q5_K_S"; 
 
 //Model Setting
 config.params = {
-  "--model":  path.join(config.modeldirectory, "Meta-Llama-3-8B-Instruct.Q5_K_S.gguf"),
+  "--model":  path.join(config.modeldirectory, config.modelname.toLowerCase()+"_"+config.modelQuantization.toLowerCase()+".gguf"),
   "--n-gpu-layers": 35, // remove if using CPU !!!!!!!!!!!!!
   "-ins": "",
   "--keep": -1,

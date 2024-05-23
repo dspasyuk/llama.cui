@@ -4,9 +4,9 @@ const path = require("path");
 const ProgressBar = require("progress");
 
 async function createDirectories(filePath) {
-const directoryPath = path.dirname(filePath);
+  const directoryPath = path.dirname(filePath);
 
-try {
+  try {
     // Check if the directory exists
     await fs.promises.access(directoryPath);
   } catch (error) {
@@ -15,29 +15,35 @@ try {
   }
 }
 
-async function downloadModel(modelName, outputDirectory, qs) {
+async function downloadModel(repo, modelName, outputDirectory, qs) {
   try {
     // Make a request to the Hugging Face API to get the model files
     const response = await axios.get(
-      `https://huggingface.co/api/models/${modelName}`,
+      `https://huggingface.co/api/models/${repo}`,
       { responseType: "json" }
     );
 
     // Find the file object with rfilename ending with "Q5_K_S"
     const targetFile = response.data.siblings.find((file) =>
-      file.rfilename.endsWith(qs+".gguf")
+      file.rfilename.endsWith(qs + ".gguf")
     );
-
     if (!targetFile) {
       console.error(`File ${targetFile} not found.`);
       return;
     }
 
     // Construct the URL for the specific file
-    const fileUrl = `https://huggingface.co/${modelName}/resolve/main/${targetFile.rfilename}`;
+    const fileUrl = `https://huggingface.co/${repo}/resolve/main/${targetFile.rfilename}?download=true`;
+    console.log(fileUrl);
+    console.log(
+      "https://huggingface.co/SanctumAI/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/meta-llama-3-8b-instruct.Q5_K_S.gguf?download=true"
+    );
 
     // Download the file to the specified outputDirectory
-    const outputFilePath = path.join(outputDirectory, targetFile.rfilename);
+    const outputFilePath = path.join(
+      outputDirectory,
+      modelName.toLowerCase() + "_" + qs.toLowerCase() + ".gguf"
+    );
     await createDirectories(outputFilePath); // Wait for directories to be created
     if (!fs.existsSync(outputFilePath)) {
       const fileResponse = await axios.get(fileUrl, { responseType: "stream" });
@@ -49,36 +55,33 @@ async function downloadModel(modelName, outputDirectory, qs) {
         width: 50,
         total: totalSize,
       });
+      const fileWriteStream = fs.createWriteStream(outputFilePath);
+      // Pipe the data stream to the file and update the progress bar
+      fileResponse.data.on("data", (chunk) => {
+        progressBar.tick(chunk.length);
+        fileWriteStream.write(chunk);
+      });
 
-    // Use fs.createWriteStream to create an empty file
-    
-       const fileWriteStream = fs.createWriteStream(outputFilePath);
-    } else{
-      console.log( outputFilePath, "Model file exist!");
+      // Wait for the file to finish writing
+      await new Promise((resolve, reject) => {
+        fileResponse.data.on("end", () => {
+          fileWriteStream.end();
+          resolve();
+        });
+        fileResponse.data.on("error", (error) => {
+          fileWriteStream.end();
+          reject(error);
+        });
+      });
+
+      console.log(`Downloaded ${targetFile.rfilename} to ${outputFilePath}`);
+      // Use fs.createWriteStream to create an empty file
+    } else {
+      console.log(outputFilePath, "Model file exist!");
     }
-    // Pipe the data stream to the file and update the progress bar
-    fileResponse.data.on("data", (chunk) => {
-      progressBar.tick(chunk.length);
-      fileWriteStream.write(chunk);
-    });
-
-    // Wait for the file to finish writing
-    await new Promise((resolve, reject) => {
-      fileResponse.data.on("end", () => {
-        fileWriteStream.end();
-        resolve();
-      });
-      fileResponse.data.on("error", (error) => {
-        fileWriteStream.end();
-        reject(error);
-      });
-    });
-
-    console.log(`Downloaded ${targetFile.rfilename} to ${outputFilePath}`);
   } catch (error) {
     console.error("Error downloading the model:", error.message);
   }
 }
 
-module.exports =  downloadModel;
-
+module.exports = downloadModel;
