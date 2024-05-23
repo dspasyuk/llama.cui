@@ -101,7 +101,8 @@ In addition to the regular Linux instructions on Mac other configuration must be
  
      If it fails at any stage try the guide below: 
 
-#### First lets install brew if you do not have it yet:  
+#### Manual piper installation.
+First lets install brew if you do not have it yet:  
 `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 
 #### Install espeak-ng:  
