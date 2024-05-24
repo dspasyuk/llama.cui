@@ -32,6 +32,7 @@ ser.modelinit = async function () {
   } else {
     console.log("Downloading the model", config.params["--model"]);
     await downloadModel(
+      config.modelrepo,
       config.modelname,
       config.modeldirectory,
       config.modelQuantization
