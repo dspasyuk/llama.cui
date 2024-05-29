@@ -23,7 +23,7 @@ config.params = {
   "--repeat_penalty": 1.12,
   "-t": 4,
   "-r": '"/n>"',
-  "-p":'"Your name is Alice. You are kind, honest, logical, precise, good at writing and mathematics assistant"',
+  "-p":'Your name is Alice. You are kind, honest, logical, precise, good at writing and mathematics assistant',
   "--log-disable":""
 }
 
