@@ -80,7 +80,7 @@ config.filter =function(output){
 
 //adjust model prompt
 config.prompt = function(userID, prompt, context){
-  return `[INST]${prompt}  ${context ? `Context: '${context}'` : ""}[/INST]`;
+  return `[INST]${prompt}  ${context ? `Context: '${context}'` : ""}[/INST]`; //Llama prompt format; Use: `<|user|>${prompt}  ${context ? `Context: '${context}'` : ""}<|end|>`; // for mistral
 }
 //filter any unwanted model outputs or change formating here
 config.outputFilter = function(output){
