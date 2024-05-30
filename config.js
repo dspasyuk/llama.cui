@@ -80,7 +80,7 @@ config.filter =function(output){
 
 //adjust model prompt
 config.prompt = function(userID, prompt, context){
-  return `<|user|>${prompt}  ${context ? `Context: '${context}'` : ""}<|end|>`;
+  return `[INST]${prompt}  ${context ? `Context: '${context}'` : ""}[/INST]`;
 }
 //filter any unwanted model outputs or change formating here
 config.outputFilter = function(output){
