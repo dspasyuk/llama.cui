@@ -80,7 +80,7 @@ config.filter =function(output){
 
 //adjust model prompt
 config.prompt = function(userID, prompt, context){
-  return `<|user|>${prompt}  ${context ? `Context: '${context}'` : ""}<|end|>`; //Llama prompt format; Use: `<|user|>${prompt}  ${context ? `Context: '${context}'` : ""}<|end|>`; // for mistral
+  return `<|im_start|>user\n ${prompt}  ${context ? `Context: '${context}'` : ""}<|im_end|>`; 
 }
 //filter any unwanted model outputs or change formating here
 config.outputFilter = function(output){
