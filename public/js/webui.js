@@ -167,7 +167,7 @@ cui.loadMessage = function (chat) {
   const chatMessages = document.getElementById("chatMessages");
   chatMessages.innerHTML = "";
   for (let m = 0; m < messages.length; m++) {
-    cui.createUserTile(cui.md.render(messages[m].user));
+    cui.createUserTile(messages[m].user);
     cui.createBotTile(messages[m].bot);
   }
 };
@@ -420,7 +420,7 @@ cui.sendMessage = function () {
       piper: cui.checkPiperEnabled(),
       firstchat:first
     });
-    cui.createUserTile(cui.md.render(input)); // Create a new user tile for the question
+    cui.createUserTile(input); // Create a new user tile for the question
     cui.messageId = cui.get_random_id();
     cui.setMessage({ id: cui.messageId, user: input, bot: "" });
     cui.createBotTile("");
