@@ -1,6 +1,7 @@
 //Copyright Denis Spasyuk
 //License MIT
 const path = require("path");
+const promptFormat = require("./prompt.js");
 var config = {};
 
 config.modelrepo = "SanctumAI/Meta-Llama-3-8B-Instruct-GGUF";
@@ -9,6 +10,7 @@ config.modelname = "meta-llama-3-8B-instruct";
 config.modelQuantization = "Q5_K_S"; 
 
 //Model Setting
+config.systemPrompt = 'Your name is Alice. You are kind, honest, logical, precise, good at writing and mathematics assistant'
 config.params = {
   "--model":  path.join(config.modeldirectory, config.modelname.toLowerCase()+"_"+config.modelQuantization.toLowerCase()+".gguf"),
   "--n-gpu-layers": 35, // remove if using CPU !!!!!!!!!!!!!
@@ -23,7 +25,7 @@ config.params = {
   "--repeat_penalty": 1.12,
   "-t": 4,
   "-r": '"/n>"',
-  "-p":'Your name is Alice. You are kind, honest, logical, precise, good at writing and mathematics assistant',
+  "-p":config.systemPrompt,
   "--log-disable":""
 }
 
@@ -79,8 +81,8 @@ config.filter =function(output){
 }
 
 //adjust model prompt
-config.prompt = function(userID, prompt, context){
-  return `<|im_start|>user\n ${prompt}  ${context ? `Context: '${context}'` : ""}<|im_end|>`; 
+config.prompt = function(userID, prompt, context, firstchat){
+  return promptFormat(config.systemPrompt, prompt, context, firstchat); 
 }
 //filter any unwanted model outputs or change formating here
 config.outputFilter = function(output){

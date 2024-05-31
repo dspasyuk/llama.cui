@@ -171,7 +171,7 @@ cui.loadMessage = function (chat) {
     cui.createBotTile(messages[m].bot);
   }
 };
-
+//new message
 cui.onNewChart = function () {
   cui.currentTile = null;
   cui.messageId = "";
@@ -411,12 +411,14 @@ cui.deleteMessages = function () {
 cui.sendMessage = function () {
   const input = cui.messageInput.value.trim(); // Get the message content
   const embedcheck = document.getElementById("embed");
+  var first = cui.currentTile ? true : false;
   if (input !== "") {
     cui.socket.emit("message", {
       message: input,
       socketid: cui.socketid,
       embedding: embedcheck.checked,
       piper: cui.checkPiperEnabled(),
+      firstchat:first
     });
     cui.createUserTile(cui.md.render(input)); // Create a new user tile for the question
     cui.messageId = cui.get_random_id();
@@ -425,6 +427,7 @@ cui.sendMessage = function () {
     cui.listGenerate();
     cui.showStop();
     cui.messageInput.value = "";
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 };
 

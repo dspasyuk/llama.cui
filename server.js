@@ -351,7 +351,7 @@ ser.handleSocketConnection = async function (socket) {
       }
       console.log("input", embed);
       var socketId = data.socketid;
-      input = config.prompt(socketId, input, embed);
+      input = config.prompt(socketId, input, embed, data.firstchat);
       input = input + "\\";
       let piper = data.piper;
       this.connectedClients.set(socketId, input);
