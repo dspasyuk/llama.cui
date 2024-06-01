@@ -1,4 +1,4 @@
-const fs = require('fs');
+//const fs = require('fs');
 var conversationHistory ="";
 function promptFormat(systemPrompt, userPrompt, context, isFirstMessage = false) {
     let formattedPrompt = '';

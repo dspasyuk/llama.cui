@@ -1,4 +1,31 @@
 function cui() {}
+cui.copyCode = async function (button) {
+  const codeBlock = button.previousElementSibling.querySelector('code');
+  const code = codeBlock.textContent;
+  await navigator.clipboard.writeText(code);
+};
+
+
+cui.mcopyplugin =function(md) {
+const defaultFence = md.renderer.rules.fence || function(tokens, idx, options, env, self) {
+  return self.renderToken(tokens, idx, options);
+};
+
+md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+  const originalResult = defaultFence(tokens, idx, options, env, self);
+
+  // Inject the copy button into the existing container
+  return `
+    <div class="code-block-wrapper" style="position: relative;">
+      ${originalResult}
+      <button class="btn headerbutton" onclick="cui.copyCode(this)" style="
+        position: absolute;
+        top: 5px;
+        right: 5px; margin-right:2%"><i class="fas fa-copy"></i></button>
+    </div>
+  `;
+};
+};
 
 cui.init = function (iphostname, port, piper, testQs) {
   cui.md = window.markdownit({
@@ -8,7 +35,7 @@ cui.init = function (iphostname, port, piper, testQs) {
       if (lang && hljs.getLanguage(lang)) {
         try {
           return `<pre class="hljs"><code>${
-            hljs.highlight(lang, str, true).value
+            hljs.highlightAuto(str).value
           }</code></pre>`;
         } catch (__) {}
       }
@@ -17,14 +44,13 @@ cui.init = function (iphostname, port, piper, testQs) {
       )}</code></pre>`;
     },
   });
+  cui.md.use(cui.mcopyplugin);
   this.player = cui.PCMplayer()
   cui.isPlaying = cui.player.isPlaying; 
   cui.notStopped =true;
   cui.PlayWatcher(); 
   cui.audioContext = new AudioContext();
-  cui.crossfadeDuration = 0.1;
   cui.messageInput = document.getElementById("messageInput");
-  this.synth = window.speechSynthesis;
   cui.sendMessageButton = document.getElementById("sendMessage");
   cui.iphostname = iphostname;
   cui.port = port;
@@ -167,7 +193,7 @@ cui.loadMessage = function (chat) {
   const chatMessages = document.getElementById("chatMessages");
   chatMessages.innerHTML = "";
   for (let m = 0; m < messages.length; m++) {
-    cui.createUserTile(messages[m].user);
+    cui.createUserTile(cui.md.render(messages[m].user));
     cui.createBotTile(messages[m].bot);
   }
 };
@@ -185,13 +211,13 @@ cui.socketInit = function () {
   this.socket = io(`${cui.iphostname}:${cui.port}`, {
     query: { sessionID },
   });
-  userScrolledManually = false;
-  const chatMessages = document.getElementById("chatMessages");
-  chatMessages.addEventListener("scroll", (event) => {
-    userScrolledManually = chatMessages.scrollTop !== (chatMessages.scrollHeight - chatMessages.clientHeight);
-    //set userScrolledManually to false if user has scrolled to the end of chatmessages
+  // userScrolledManually = false;
+  // const chatMessages = document.getElementById("chatMessages");
+  // chatMessages.addEventListener("scroll", (event) => {
+  //   const isUserScrolledManually = event.target.scrollTop !== event.target.scrollHeight - event.target.clientHeight;
+  //   userScrolledManually = isUserScrolledManually;
+  // });
 
-  });
   var text = "";
   cui.currentTile = null; // Reference to the current tile element
   this.socket.on("output", (response) => {
@@ -200,7 +226,7 @@ cui.socketInit = function () {
       text += " " + response;
       cui.currentTile.innerHTML = cui.md.render(text);
       message = cui.getMessageById(cui.messageId);
-      message.bot = cui.md.render(text.replace("\n\n", "\n"));
+      message.bot = cui.md.render(text);
       cui.setMessage(message);
       text = "";
       cui.createSVG(cui.currentTile);
@@ -216,9 +242,11 @@ cui.socketInit = function () {
         
       }
     }
-    if (!userScrolledManually) {
+    // console.log(userScrolledManually);
+    // if (!userScrolledManually) {
       chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
+      // console.log("scroll");
+    // }
    
   });
 
@@ -411,7 +439,8 @@ cui.deleteMessages = function () {
 cui.sendMessage = function () {
   const input = cui.messageInput.value.trim(); // Get the message content
   const embedcheck = document.getElementById("embed");
-  var first = cui.currentTile ? true : false;
+  var first = cui.currentTile ? false : true;
+  console.log(first, cui.currentTile);
   if (input !== "") {
     cui.socket.emit("message", {
       message: input,
@@ -420,7 +449,7 @@ cui.sendMessage = function () {
       piper: cui.checkPiperEnabled(),
       firstchat:first
     });
-    cui.createUserTile(input); // Create a new user tile for the question
+    cui.createUserTile(cui.md.render(input));// Create a new user tile for the question
     cui.messageId = cui.get_random_id();
     cui.setMessage({ id: cui.messageId, user: input, bot: "" });
     cui.createBotTile("");

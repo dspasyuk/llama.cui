@@ -2,6 +2,7 @@
 //License MIT
 const path = require("path");
 const promptFormat = require("./prompt.js");
+const fs = require('fs');
 var config = {};
 
 config.modelrepo = "SanctumAI/Meta-Llama-3-8B-Instruct-GGUF";
@@ -10,7 +11,8 @@ config.modelname = "meta-llama-3-8B-instruct";
 config.modelQuantization = "Q5_K_S"; 
 
 //Model Setting
-config.systemPrompt = 'Your name is Alice. You are kind, honest, logical, precise, good at writing and mathematics assistant'
+let systemPrompt = fs.readFileSync('Alice.txt', 'utf8');
+config.systemPrompt = systemPrompt; 
 config.params = {
   "--model":  path.join(config.modeldirectory, config.modelname.toLowerCase()+"_"+config.modelQuantization.toLowerCase()+".gguf"),
   "--n-gpu-layers": 35, // remove if using CPU !!!!!!!!!!!!!
@@ -76,7 +78,10 @@ config.dataChannel.set("MongoDB", {
 
 config.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
 config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
+var acc =''
 config.filter =function(output){
+  // acc+=output;
+  // console.log("output",acc);
   return output.replace(/<\|.*?\|>/g, '');
 }
 
@@ -108,7 +113,7 @@ Answer the following questions:
 5. How many days does it take to travel from New York City to London by plane, assuming non-stop flights and average speeds?
 6. What are the products of the chemical reaction between salicylic acid and acetic anhydride?
 7. If five cats can catch five mice in five minutes, how long will it take one cat to catch one mouse?
-8. Translate "I love you" into 5 different languages: Spanish, French, Russian, Italian, German.
+8. Create a JS program that prints the first 100 Fibonacci numbers.
 `
 
 
