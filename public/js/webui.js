@@ -2,7 +2,12 @@ function cui() {}
 cui.copyCode = async function (button) {
   const codeBlock = button.previousElementSibling.querySelector('code');
   const code = codeBlock.textContent;
-  await navigator.clipboard.writeText(code);
+  const permissionStatus = await navigator.permissions.query({ name: 'clipboard-write' });
+    if (permissionStatus.state === 'granted' || permissionStatus.state === 'prompt') {
+      await navigator.clipboard.writeText(code);
+    } else {
+      console.error('Permission to "clipboard-write" is denied or its status is unknown');
+    }
 };
 
 
@@ -364,6 +369,8 @@ cui.createHTML = function (ell) {
 };
 
 
+
+
 cui.createTile = function (content, tileClass) {
   document.getElementsByClassName("chat-container")[0].style.backgroundImage =
     "none";
@@ -388,11 +395,17 @@ cui.createTile = function (content, tileClass) {
     tileheader.appendChild(reload);
   }
   const copyButton = document.createElement("button");
-  copyButton.onclick = function () {
+  copyButton.onclick = async function () {
     const tilebody = copyButton.parentElement.nextElementSibling;
     // Access the text content of the tilebody
     const textFromTileBody = tilebody.textContent.trim();
-    navigator.clipboard.writeText(textFromTileBody);
+    const permissionStatus = await navigator.permissions.query({ name: 'clipboard-write' });
+    if (permissionStatus.state === 'granted' || permissionStatus.state === 'prompt') {
+      await navigator.clipboard.writeText(textFromTileBody);
+    } else {
+      console.error('Permission to "clipboard-write" is denied or its status is unknown');
+    }
+
   };
   
 
