@@ -206,6 +206,15 @@ cui.onNewChart = function () {
   chatMessages.innerHTML = "";
 };
 
+cui.isstopButtonVisible = function() {
+  const button = document.getElementById('stopgenerator');
+  if (button) {
+    const style = window.getComputedStyle(button);
+    return style.display !== 'none' && style.visibility !== 'hidden' && button.offsetParent !== null;
+  }
+  return false;
+}
+
 cui.socketInit = function () {
   console.log(`${cui.iphostname}:${cui.port}`);
   this.socket = io(`${cui.iphostname}:${cui.port}`, {
@@ -231,15 +240,20 @@ cui.socketInit = function () {
       text = "";
       cui.createSVG(cui.currentTile);
       cui.hideStop();
+      console.log("RESET");
+      cui.currentTile = null;
     } else {
       if (!cui.currentTile || cui.currentTile.classList.contains("user-tile")) {
         cui.createBotTile(response);
       } else {
         cui.currentTile.textContent += " " + response;
         text += " " + response;
-      
         cui.currentTile.innerHTML = cui.md.render(text);
         
+      }
+      console.log(cui.isstopButtonVisible());
+      if (!cui.isstopButtonVisible()) {
+        cui.showStop();
       }
     }
     // console.log(userScrolledManually);
