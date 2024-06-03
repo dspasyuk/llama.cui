@@ -18,6 +18,7 @@ config.params = {
   "--n-gpu-layers": 35, // remove if using CPU !!!!!!!!!!!!!
   "-ins": "",
   "--keep": -1,
+  "-cml":"",
   "--simple-io":"",
   "-b": 2048,
   "--ctx_size":2048,
