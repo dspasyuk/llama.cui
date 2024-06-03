@@ -2,12 +2,7 @@ function cui() {}
 cui.copyCode = async function (button) {
   const codeBlock = button.previousElementSibling.querySelector('code');
   const code = codeBlock.textContent;
-  const permissionStatus = await navigator.permissions.query({ name: 'clipboard-write' });
-    if (permissionStatus.state === 'granted' || permissionStatus.state === 'prompt') {
-      await navigator.clipboard.writeText(code);
-    } else {
-      console.error('Permission to "clipboard-write" is denied or its status is unknown');
-    }
+  await navigator.clipboard.writeText(code);
 };
 
 
@@ -399,13 +394,7 @@ cui.createTile = function (content, tileClass) {
     const tilebody = copyButton.parentElement.nextElementSibling;
     // Access the text content of the tilebody
     const textFromTileBody = tilebody.textContent.trim();
-    const permissionStatus = await navigator.permissions.query({ name: 'clipboard-write' });
-    if (permissionStatus.state === 'granted' || permissionStatus.state === 'prompt') {
-      await navigator.clipboard.writeText(textFromTileBody);
-    } else {
-      console.error('Permission to "clipboard-write" is denied or its status is unknown');
-    }
-
+    await navigator.clipboard.writeText(textFromTileBody);
   };
   
 
