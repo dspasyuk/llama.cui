@@ -15,18 +15,18 @@ let systemPrompt = fs.readFileSync('Alice.txt', 'utf8');
 config.systemPrompt = systemPrompt; 
 config.params = {
   "--model":  path.join(config.modeldirectory, config.modelname.toLowerCase()+"_"+config.modelQuantization.toLowerCase()+".gguf"),
-  "--n-gpu-layers": 35, // remove if using CPU !!!!!!!!!!!!!
+  "--n-gpu-layers": 30, // remove if using CPU !!!!!!!!!!!!!
   "-ins": "",
   "--keep": -1,
   "-cml":"",
   "--simple-io":"",
-  "-b": 2048,
-  "--ctx_size":2048,
-  "--temp":0.5,
+  "-b": 2048*2,
+  "--ctx_size":2048*2,
+  "--temp":0.9,
   "--top_k":10,
   "--multiline-input":"",
   "--repeat_penalty": 1.12,
-  "-t": 4,
+  "-t": 6,
   "-r": '"/n>"',
   "-p":config.systemPrompt,
   "--log-disable":""
@@ -38,7 +38,7 @@ config.llamacpp = "../llama.cpp/main";
 //Llama.cui settings//
 config.PORT = { client: "5000", server: "5000" };
 config.IP = { client: "localhost", server: "localhost" };
-config.login = false;
+config.login = true;
 config.timeout = 50000;
 config.session = {
   secret: "2C44-4D44-WppQ38S", //change before deployment
@@ -79,9 +79,9 @@ config.dataChannel.set("MongoDB", {
 
 config.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
 config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
-var acc =''
+// var acc =''
 config.filter =function(output){
-  // acc+=output;
+  // acc+=output+" ";
   // console.log("output",acc);
   return output.replace(/<\|.*?\|>/g, '');
 }
@@ -97,7 +97,7 @@ config.outputFilter = function(output){
 
 //Piper setting
 config.piper = {
-  enabled: false,
+  enabled: true,
   rate: 20500,
   // rate: 16000,
   output_file: 'S16_LE',

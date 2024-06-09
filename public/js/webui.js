@@ -6,6 +6,14 @@ cui.copyCode = async function (button) {
 };
 
 
+cui.disableHeaderPlugin = function(md) {
+  md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
+    return '';
+  };
+  
+}
+
+
 cui.mcopyplugin =function(md) {
 const defaultFence = md.renderer.rules.fence || function(tokens, idx, options, env, self) {
   return self.renderToken(tokens, idx, options);
@@ -30,6 +38,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
 cui.init = function (iphostname, port, piper, testQs) {
   cui.md = window.markdownit({
     breaks: true,
+    linkify: true,
     highlight: (str, lang) => {
       // console.log(lang, hljs.getLanguage(lang));
       if (lang && hljs.getLanguage(lang)) {
@@ -45,6 +54,7 @@ cui.init = function (iphostname, port, piper, testQs) {
     },
   });
   cui.md.use(cui.mcopyplugin);
+  cui.md.use(cui.disableHeaderPlugin);
   this.player = cui.PCMplayer()
   cui.isPlaying = cui.player.isPlaying; 
   cui.notStopped =true;

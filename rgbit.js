@@ -7,6 +7,8 @@ rgbit = function(text, color) {
       return '\x1b[33m' + text + '\x1b[0m';
     } else if (color === 'blue') {
       return '\x1b[34m' + text + '\x1b[0m';
+    } else if (color === 'black') {
+      return '\x1b[30m' + text + '\x1b[0m';
     }
   
     // Default to no color

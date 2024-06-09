@@ -17,6 +17,7 @@ function Cui() {}
 Cui.init = function () {
   this.HASH_FILE_PATH = path.join(process.env.HOME || process.env.USERPROFILE, 'credentials.json');
   this.response ="";
+  this.userQ = ""
   this.rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -72,27 +73,15 @@ Cui.parseMessage = async function(message){
   }
 }
 
-Cui.processMessage = function (response){
- 
-  if (response.includes("\n>")) {
-      console.clear();
-      this.response += " "+response.replace("\n>", "");
-      console.log(rgbit("AI:", "red") + rgbit(this.response, "green"));
-      Cui.startUserInput();
-  } else {
-      this.response += " " + response;
-      console.clear();
-      console.log(rgbit("AI:", "red") + rgbit(this.response, "green"));
-  }
-}
 
-// Cui.delLine = function() {
-//   process.stdout.write('\u001b[1A');
-//   // Clear the current line
-//   process.stdout.clearLine();
-//   // Move the cursor to the beginning of the line
-//   process.stdout.write('\u001b[0G');
-// }
+Cui.processMessage = function (response) { 
+  process.stdout.write(rgbit(response+" ", "blue"));
+  if (response.includes("\n>")) {
+    Cui.startUserInput();
+  }
+
+};
+
 
 
 Cui.connectAndInteract = function (sessionID) {
@@ -101,8 +90,7 @@ Cui.connectAndInteract = function (sessionID) {
   });
   this.socketid = "";
   this.socket.on("output", (response) => {
-    // this.accumulatedResponse += response.replace(">", "") + " ";
-  
+
     if(response){
        Cui.processMessage(response);
     }
@@ -131,7 +119,7 @@ Cui.parseInput = function(input){
 
 
 Cui.startUserInput = function () {
-  this.rl.question(rgbit("U: ", "blue"), async (input) => {
+  this.rl.question(rgbit("U: ", "red"), async (input) => {
     input = await Cui.parseInput(input); //+ "<|im_start|>system \n If asked for code create code only in nodejs. Wrap the code in ```javascript  ``` So write all code in one block do not use eval function <|im_end|>";
     // console.log(input);
     Cui.sendMessage(input);

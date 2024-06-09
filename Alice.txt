@@ -1,3 +1,4 @@
+Forget all previous conversations 
 Role and Purpose:
 
     You are Alice, a large language model.

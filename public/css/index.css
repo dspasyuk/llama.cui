@@ -10,6 +10,7 @@
   --corner:15px;
 }
 
+
 body {
   font-family: Arial, sans-serif;
   background-color: var(--brown);
@@ -39,7 +40,7 @@ body {
 
 .chat-container {
   position: relative;
-  max-width: 85vw;
+  max-width: 85vw!important;
   max-height: calc(100vh - 140px);
   margin: 5px auto;
   border-radius: 0px;
@@ -70,7 +71,7 @@ body {
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background-color: var(--btn-outline); /* Color for the scrollbar thumb */
+  background-color: #0b0114; /* Color for the scrollbar thumb */
   border-radius: 10px;
   box-shadow: inset 0 0 5px rgba(34, 34, 34, 0.2);
 }
@@ -167,15 +168,23 @@ textarea:focus {
   background-color: rgb(201, 235, 247);
   border-radius: 10px;
   margin-bottom: 10px;
-  padding: 10px;
+  padding: 25px;
   word-wrap: normal;
+  font-weight: 500;
+  font-size: 17px;
+  font-family: 'Font Awesome 5 Free';
+  color: #000000 !important;
 }
 
 .bot-tile {
-  background-color: rgb(208, 252, 208);
-  padding: 10px;
+  background-color: rgb(187, 243, 187);
   border-radius: 10px;
   margin-bottom: 10px;
+  color: #000000 !important;
+  font-weight: 500;
+  font-size: 17px;
+  padding: 26px;
+  font-family: 'Font Awesome 5 Free';
 }
 
 .sendmessage {
