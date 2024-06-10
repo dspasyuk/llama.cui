@@ -15,19 +15,20 @@ let systemPrompt = fs.readFileSync('Alice.txt', 'utf8');
 config.systemPrompt = systemPrompt; 
 config.params = {
   "--model":  path.join(config.modeldirectory, config.modelname.toLowerCase()+"_"+config.modelQuantization.toLowerCase()+".gguf"),
-  "--n-gpu-layers": 35, // remove if using CPU !!!!!!!!!!!!!
-  "-cnv":"", //note due to recent changes in llama.cpp these two commands are replacing "-ins"
-  "--interactive-first":"",
+  "--n-gpu-layers": 30, // remove if using CPU !!!!!!!!!!!!!
+  "-ins": "",
+  "--keep": -1,
+  "-cml":"",
   "--simple-io":"",
   "-b": 2048,
   "--ctx_size":2048,
-  "--temp":0.3,
+  "--temp":0.5,
   "--top_k":10,
   "--multiline-input":"",
   "--repeat_penalty": 1.12,
-  "-t": 6,
+  "-t": 4,
   "-r": '"/n>"',
-  "-p":`"${config.systemPrompt}"`,
+  "-p":config.systemPrompt,
   "--log-disable":""
 }
 
