@@ -6,7 +6,7 @@ const fs = require('fs');
 var config = {};
 
 config.modelrepo = "SanctumAI/Meta-Llama-3-8B-Instruct-GGUF";
-config.modeldirectory = "../../models";
+config.modeldirectory = "./models";
 config.modelname = "meta-llama-3-8B-instruct";
 config.modelQuantization = "Q5_K_S"; 
 
@@ -15,7 +15,7 @@ let systemPrompt = fs.readFileSync('Alice.txt', 'utf8');
 config.systemPrompt = systemPrompt; 
 config.params = {
   "--model":  path.join(config.modeldirectory, config.modelname.toLowerCase()+"_"+config.modelQuantization.toLowerCase()+".gguf"),
-  "--n-gpu-layers": 30, // remove if using CPU !!!!!!!!!!!!!
+  "--n-gpu-layers": 35, // remove if using CPU !!!!!!!!!!!!!
   "-ins": "",
   "--keep": -1,
   "-cml":"",
@@ -27,14 +27,15 @@ config.params = {
   "--multiline-input":"",
   "--repeat_penalty": 1.12,
   "-t": 4,
-  "-r": '"/n>"',
+  "-r": 'User:',
   "-p":config.systemPrompt,
   "--log-disable":""
 }
 
 
 //Llama.cpp settings
-config.llamacpp = "../llama.cpp/main";
+config.llamacpp = "./llama.cpp-b3077/main";
+
 
 //Llama.cui settings//
 config.PORT = { client: "5000", server: "5000" };
