@@ -10,15 +10,15 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 Starting from version 0.24 model will be downloaded automatically. 
 
 ### Linux Nvidia GPU
-`git clone https://github.com/dspasyuk/llama.cui; unzip llama.cpp.chat.zip; cd llama.cpp.chat; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUDA=1 make -j 4; cd ..; cd llama.cui; npm install; node server.js`
+`git clone https://github.com/dspasyuk/llama.cui llama.cui; unzip llama.cpp-b3077.zip; cd ./llama.cpp-b3077; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUDA=1 make -j 4; cd ..; cd llama.cui; npm install; node server.js`
 
 ### Linux CPU
 
-`git clone https://github.com/dspasyuk/llama.cui; unzip llama.cpp.chat.zip; cd llama.cpp.chat; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && make -j 4; cd ..; cd llama.cui; npm install; node server.js`
+`git clone https://github.com/dspasyuk/llama.cui llama.cui; unzip llama.cpp-b3077.zip; cd ./llama.cpp-b3077; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean; make -j 4; cd ..; cd llama.cui; npm install; node server.js`
 
 ### OSX
 
-`git clone https://github.com/dspasyuk/llama.cui; unzip llama.cpp.chat.zip; cd llama.cpp.chat; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && make -j 4; cd ..; cd llama.cui; npm install; node server.js`
+`git clone https://github.com/dspasyuk/llama.cui llama.cui; unzip llama.cpp-b3077.zip; cd ./llama.cpp-b3077; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean; make -j 4; cd ..; cd llama.cui; npm install; node server.js`
 
 ## Usage
 To run just type:
@@ -29,7 +29,7 @@ To run just type:
 
 1. Clone the repository:
 
-   `git clone https://github.com/ggerganov/llama.cpp.git` or use Llama.cpp included in this project
+   `git clone https://github.com/ggerganov/llama.cpp.git` or use llama.cpp-b3077.zip included in this project
 
 2. Build Lllama.cpp with GPU or CPU support
 
