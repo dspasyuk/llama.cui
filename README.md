@@ -4,12 +4,9 @@
 
 This project provides a Node.js server for a chat user interface (UI) that interacts with the Llama.cpp library. It allows users to communicate with the [llama.cpp](https://github.com/ggerganov/llama.cpp.git) application via a web-based chat interface. 
 
-## Please use Llama.cpp included in this project. 
+### Please use Llama.cpp included in this project. 
 
 ## Installation
-
-## Install all at once
-Starting from version 0.24 model will be downloaded automatically. 
 
 ### Linux Nvidia GPU
 `git clone https://github.com/dspasyuk/llama.cui llama.cui; unzip llama.cpp-b3077.zip; cd ./llama.cpp-b3077; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUDA=1 make -j 4; cd ..; cd llama.cui; npm install; node server.js`
