@@ -9,15 +9,15 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 ## Installation
 
 ### Linux Nvidia GPU
-`git clone https://github.com/dspasyuk/llama.cui llama.cui; cd llama.cui; unzip llama.cpp-b3077.zip; cd ./llama.cpp-b3077; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUDA=1 make -j 4; cd ..; cd llama.cui; npm install; node server.js`
+`git clone https://github.com/dspasyuk/llama.cui llama.cui; cd llama.cui; unzip llama.cpp-b3077.zip; cd ./llama.cpp-b3077; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUDA=1 make -j 4; cd ..; npm install; node server.js`
 
 ### Linux CPU
 
-`git clone https://github.com/dspasyuk/llama.cui llama.cui; cd llama.cui; unzip llama.cpp-b3077.zip; cd ./llama.cpp-b3077; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean; make -j 4; cd ..; cd llama.cui; npm install; node server.js`
+`git clone https://github.com/dspasyuk/llama.cui llama.cui; cd llama.cui; unzip llama.cpp-b3077.zip; cd ./llama.cpp-b3077; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean; make -j 4; cd ..; npm install; node server.js`
 
 ### OSX
 
-`git clone https://github.com/dspasyuk/llama.cui llama.cui; cd llama.cui; unzip llama.cpp-b3077.zip; cd ./llama.cpp-b3077; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean; make -j 4; cd ..; cd llama.cui; npm install; node server.js`
+`git clone https://github.com/dspasyuk/llama.cui llama.cui; cd llama.cui; unzip llama.cpp-b3077.zip; cd ./llama.cpp-b3077; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean; make -j 4; cd ..; npm install; node server.js`
 
 ## Usage
 To run just type:
