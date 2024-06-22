@@ -10,35 +10,33 @@ cui.disableHeaderPlugin = function(md) {
   md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
     return '';
   };
-  
 }
 
-
 cui.mcopyplugin =function(md) {
-const defaultFence = md.renderer.rules.fence || function(tokens, idx, options, env, self) {
-  return self.renderToken(tokens, idx, options);
-};
+  const defaultFence = md.renderer.rules.fence || function(tokens, idx, options, env, self) {
+    return self.renderToken(tokens, idx, options);
+  };
+  md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+    const originalResult = defaultFence(tokens, idx, options, env, self);
 
-md.renderer.rules.fence = (tokens, idx, options, env, self) => {
-  const originalResult = defaultFence(tokens, idx, options, env, self);
-
-  // Inject the copy button into the existing container
-  return `
-    <div class="code-block-wrapper" style="position: relative;">
-      ${originalResult}
-      <button class="btn headerbutton" onclick="cui.copyCode(this)" style="
-        position: absolute;
-        top: 5px;
-        right: 5px; margin-right:2%"><i class="fas fa-copy"></i></button>
-    </div>
-  `;
-};
+    // Inject the copy button into the existing container
+    return `
+      <div class="code-block-wrapper" style="position: relative;">
+        ${originalResult}
+        <button class="btn headerbutton" onclick="cui.copyCode(this)" style="
+          position: absolute;
+          top: 5px;
+          right: 5px; margin-right:2%"><i class="fas fa-copy"></i></button>
+      </div>
+    `;
+  };
 };
 
 cui.init = function (iphostname, port, piper, testQs) {
   cui.md = window.markdownit({
-    breaks: true,
+    breaks: false,
     linkify: true,
+    typographer: true,
     highlight: (str, lang) => {
       // console.log(lang, hljs.getLanguage(lang));
       if (lang && hljs.getLanguage(lang)) {
@@ -230,12 +228,13 @@ cui.socketInit = function () {
   this.socket = io(`${cui.iphostname}:${cui.port}`, {
     query: { sessionID },
   });
-  // userScrolledManually = false;
-  // const chatMessages = document.getElementById("chatMessages");
-  // chatMessages.addEventListener("scroll", (event) => {
-  //   const isUserScrolledManually = event.target.scrollTop !== event.target.scrollHeight - event.target.clientHeight;
-  //   userScrolledManually = isUserScrolledManually;
-  // });
+  userScrolledManually = false;
+  const chatMessages = document.getElementById("chatMessages");
+  chatMessages.addEventListener("scroll", (event) => {
+    const isUserScrolledManually = event.target.scrollTop !== event.target.scrollHeight - event.target.clientHeight;
+    //console.log(isUserScrolledManually, event.target.scrollTop, event.target.scrollHeight-event.target.clientHeight);
+    userScrolledManually = isUserScrolledManually;
+  });
 
   var text = "";
   cui.currentTile = null; // Reference to the current tile element
@@ -252,6 +251,7 @@ cui.socketInit = function () {
       cui.hideStop();
       console.log("RESET");
       cui.currentTile = null;
+      userScrolledManually = false;
     } else {
       if (!cui.currentTile || cui.currentTile.classList.contains("user-tile")) {
         cui.createBotTile(response);
@@ -261,16 +261,16 @@ cui.socketInit = function () {
         cui.currentTile.innerHTML = cui.md.render(text);
         
       }
-      console.log(cui.isstopButtonVisible());
+      //console.log(cui.isstopButtonVisible());
       if (!cui.isstopButtonVisible()) {
         cui.showStop();
       }
     }
     // console.log(userScrolledManually);
-    // if (!userScrolledManually) {
+    if (!userScrolledManually) {
       chatMessages.scrollTop = chatMessages.scrollHeight;
       // console.log("scroll");
-    // }
+     }
    
   });
 

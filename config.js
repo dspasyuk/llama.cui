@@ -1,39 +1,40 @@
 //Copyright Denis Spasyuk
 //License MIT
 const path = require("path");
-const promptFormat = require("./prompt.js");
+const prmt = require("./prompt.js");
 const fs = require('fs');
 var config = {};
 
 config.modelrepo = "SanctumAI/Meta-Llama-3-8B-Instruct-GGUF";
-config.modeldirectory = "../../models";
+config.modeldirectory = "./models";
 config.modelname = "meta-llama-3-8B-instruct";
 config.modelQuantization = "Q5_K_S"; 
 
 //Model Setting
-let systemPrompt = fs.readFileSync('Alice.txt', 'utf8');
-config.systemPrompt = systemPrompt; 
+config.systemPrompt= fs.readFileSync('Alice.txt', 'utf8');
+
 config.params = {
   "--model":  path.join(config.modeldirectory, config.modelname.toLowerCase()+"_"+config.modelQuantization.toLowerCase()+".gguf"),
-  "--n-gpu-layers": 30, // remove if using CPU !!!!!!!!!!!!!
-  "-ins": "",
-  "--keep": -1,
-  "-cml":"",
+  "--n-gpu-layers": 25, // remove if using CPU !!!!!!!!!!!!!
+  "-cnv":"",
+  "--interactive-first":"",
   "--simple-io":"",
-  "-b": 2048*2,
-  "--ctx_size":2048*2,
-  "--temp":0.9,
+  "-b": 512,
+  "-n":"-1",
+  "--ctx_size":0,
+  "--temp":0.3,
   "--top_k":10,
   "--multiline-input":"",
   "--repeat_penalty": 1.12,
   "-t": 6,
-  "-r": '"/n>"',
-  "-p":config.systemPrompt,
-  "--log-disable":""
+  // "--chat-template": "llama3",
+  "-r": '"\n>"',
+  "--log-disable":"",
+  "-p":`'${config.systemPrompt}'`,
 }
 
 //Llama.cpp settings
-config.llamacpp = "../llama.cpp/main";
+config.llamacpp = "../llama.cpp/llama-cli";
 
 //Llama.cui settings//
 config.PORT = { client: "5000", server: "5000" };
@@ -79,16 +80,14 @@ config.dataChannel.set("MongoDB", {
 
 config.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
 config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
-// var acc =''
 config.filter =function(output){
-  // acc+=output+" ";
-  // console.log("output",acc);
   return output.replace(/<\|.*?\|>/g, '');
 }
 
 //adjust model prompt
 config.prompt = function(userID, prompt, context, firstchat){
-  return promptFormat(config.systemPrompt, prompt, context, firstchat); 
+ console.log(prmt.promptFormatCML(config.systemPrompt, prompt, context, firstchat)); 
+  return prmt.promptFormatCML(config.systemPrompt, prompt, context, firstchat); 
 }
 //filter any unwanted model outputs or change formating here
 config.outputFilter = function(output){
