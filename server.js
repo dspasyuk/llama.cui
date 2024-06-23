@@ -16,7 +16,7 @@ const vdb = require("./db.js");
 const fs = require("fs");
 const downloadModel = require("./modeldownloader.js");
 
-const version = 0.308; //changed public and server and config
+const version = 0.30; //changed public and server and config
 var session = require("express-session");
 const MemoryStore = require("memorystore")(session);
 const memStore = new MemoryStore();
@@ -53,6 +53,10 @@ ser.init = function (error) {
   if (config.piper.enabled) {
     this.fullmessage = "";
     this.piperChild();
+    // this.aplayChild();
+    // this.FileStream();
+
+    // this.piper.stdout.pipe(this.aplay.stdin);
   }
   // Listen for the 'exit' event to handle process exit.
 
@@ -246,7 +250,7 @@ ser.aplayChild = function () {
 };
 
 ser.piperChild = function () {
-  // console.log(`${config.piper.exec} --model ${config.piper.model} --output-raw`);
+  console.log(`${config.piper.exec} --model ${config.piper.model} --output-raw`);
   this.piper = spawn(config.piper.exec, [
     "--model",
     config.piper.model,
@@ -345,7 +349,7 @@ ser.handleSocketConnection = async function (socket) {
         console.log("embedding");
         embed = await vdb.init(input);
       }
-      // console.log("input",  data.firstchat);
+      console.log("input", embed);
       var socketId = data.socketid;
       input = config.prompt(socketId, input, embed, data.firstchat);
       input = input + "\\";

@@ -1,45 +1,44 @@
 //Copyright Denis Spasyuk
 //License MIT
 const path = require("path");
-const prmt = require("./prompt.js");
+const promptFormat = require("./prompt.js");
 const fs = require('fs');
 var config = {};
 
 config.modelrepo = "SanctumAI/Meta-Llama-3-8B-Instruct-GGUF";
-config.modeldirectory = "./models";
+config.modeldirectory = "../../models";
 config.modelname = "meta-llama-3-8B-instruct";
 config.modelQuantization = "Q5_K_S"; 
 
 //Model Setting
-config.systemPrompt= fs.readFileSync('Alice.txt', 'utf8');
-
+let systemPrompt = fs.readFileSync('Alice.txt', 'utf8');
+config.systemPrompt = systemPrompt; 
 config.params = {
   "--model":  path.join(config.modeldirectory, config.modelname.toLowerCase()+"_"+config.modelQuantization.toLowerCase()+".gguf"),
-  "--n-gpu-layers": 25, // remove if using CPU !!!!!!!!!!!!!
-  "-cnv":"",
-  "--interactive-first":"",
+  "--n-gpu-layers": 35, // remove if using CPU !!!!!!!!!!!!!
+  "-ins": "",
+  "--keep": -1,
+  "-cml":"",
   "--simple-io":"",
-  "-b": 512,
-  "-n":"-1",
-  "--ctx_size":0,
-  "--temp":0.3,
+  "-b": 2048,
+  "--ctx_size":2048,
+  "--temp":0.5,
   "--top_k":10,
   "--multiline-input":"",
   "--repeat_penalty": 1.12,
-  "-t": 6,
-  // "--chat-template": "llama3",
-  "-r": '"\n>"',
-  "--log-disable":"",
-  "-p":`'${config.systemPrompt}'`,
+  "-t": 4,
+  "-r": '"/n>"',
+  "-p":config.systemPrompt,
+  "--log-disable":""
 }
 
 //Llama.cpp settings
-config.llamacpp = "../llama.cpp/llama-cli";
+config.llamacpp = "../llama.cpp/main";
 
 //Llama.cui settings//
 config.PORT = { client: "5000", server: "5000" };
 config.IP = { client: "localhost", server: "localhost" };
-config.login = true;
+config.login = false;
 config.timeout = 50000;
 config.session = {
   secret: "2C44-4D44-WppQ38S", //change before deployment
@@ -80,14 +79,16 @@ config.dataChannel.set("MongoDB", {
 
 config.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
 config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
+var acc =''
 config.filter =function(output){
+  // acc+=output;
+  // console.log("output",acc);
   return output.replace(/<\|.*?\|>/g, '');
 }
 
 //adjust model prompt
 config.prompt = function(userID, prompt, context, firstchat){
- console.log(prmt.promptFormatCML(config.systemPrompt, prompt, context, firstchat)); 
-  return prmt.promptFormatCML(config.systemPrompt, prompt, context, firstchat); 
+  return promptFormat(config.systemPrompt, prompt, context, firstchat); 
 }
 //filter any unwanted model outputs or change formating here
 config.outputFilter = function(output){
@@ -96,7 +97,7 @@ config.outputFilter = function(output){
 
 //Piper setting
 config.piper = {
-  enabled: true,
+  enabled: false,
   rate: 20500,
   // rate: 16000,
   output_file: 'S16_LE',
