@@ -1,38 +1,53 @@
-//const fs = require('fs');
-var conversationHistory ="";
-function promptFormat(systemPrompt, userPrompt, context, isFirstMessage = false) {
-    let formattedPrompt = '';
-    let embedding = `${context ? `\n Context: '${context}'` : ""}`; 
+function prmt()  {}
+
+prmt.conversationHistory = "";
+prmt.promptFormatLAMA = function(systemPrompt, userPrompt, context, isFirstMessage = false) {
+    let formattedPrompt = "";
+    let embedding = `${context ? `\n Context: '${context}'` : ""}`;
     if (isFirstMessage) {
-        // For the first message, include the system prompt
-        formattedPrompt = `
-        <|im_start|>system
-        ${systemPrompt}<|im_end|>
-        <|im_start|>user
-        ${userPrompt}  ${embedding} <|im_end|>
-        <|im_start|>assistant
-        `;
-        // Initialize conversation history
-        conversationHistory = formattedPrompt;
+    formattedPrompt =`
+    <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+    ${systemPrompt}<|eot_id|>
+    <|start_header_id|>user<|end_header_id|>
+    ${userPrompt}  ${embedding} <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+    `;
+    this.conversationHistory = formattedPrompt;
     } else {
-        // For subsequent messages, append to the conversation history
+    formattedPrompt =`
+    <|begin_of_text|><|start_header_id|>user<|end_header_id|>
+    ${userPrompt} ${embedding} <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+    `;
+    this.conversationHistory += formattedPrompt;
+    }
+    return formattedPrompt;
+}
+
+prmt.promptFormatCML = function (systemPrompt, userPrompt, context, isFirstMessage = false) {
+    let formattedPrompt = "";
+    let embedding = `${this.context ? `\n Context: '${this.context}'` : ""}`;
+    if (isFirstMessage) {
+    formattedPrompt = `
+    <|im_start|>system
+    ${systemPrompt}<|im_end|>
+    <|im_start|>user
+    ${userPrompt}  ${embedding} <|im_end|>
+    <|im_start|>assistant
+    `;
+
+    this.conversationHistory = formattedPrompt;
+    } else {
         formattedPrompt = `
         <|im_start|>user
         ${userPrompt} ${embedding} <|im_end|>
         <|im_start|>assistant
         `;
-        // Update conversation history
-        conversationHistory += formattedPrompt;
+    this.conversationHistory += formattedPrompt;
     }
-    //fs.writeFileSync('conversation_history.txt', conversationHistory, 'utf8');
-    console.log(conversationHistory);
     return formattedPrompt;
 }
 
-// const systemPrompt = "You are a helpful assistant.";
-// const userPrompt = "What is the capital of France?";
-// const context = "";
-// console.log(promptFormat(systemPrompt, userPrompt, context, true))
-try {
-    module.exports = exports = promptFormat;
+  
+  try {
+    module.exports = exports = prmt;
   } catch (e) {}
+  
