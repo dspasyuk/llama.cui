@@ -8,6 +8,7 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 Starting from version 0.24 model will be downloaded automatically. 
 
 ### Linux Nvidia GPU
+
 `git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUDA=1 make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
 ### Linux CPU
