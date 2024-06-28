@@ -21,12 +21,10 @@
   <script src="/js/pcm-player.js"></script>
   <script src="/js/markdown-it.min.js"></script>
   <script type="text/javascript" src="js/webui.js?v=<%= version %>"></script>
-  <script>hljs.highlightAll() </script>
   <title>
     <%= title %>
   </title>
 </head>
-
 
 <body>
   <nav class="navbar navbar-expand-lg themenav navbar-dark justify-content-between flex-nowrap flex-row">
@@ -35,8 +33,7 @@
       </button>
     </div>
     <div class="footerbar nav navbar-nav flex-row float-right">
-      <button class="btn theme" onclick="window.location.href='/logout'" title="Log Out" type="button"><i
-          class="fa fa-sign-out-alt"></i></button>
+      <button class="btn theme" onclick="window.location.href='/logout'" title="Log Out" type="button"><i class="fa fa-sign-out-alt"></i></button>
     </div>
   </nav>
   <!-- <audio id="audioElement" controls></audio> -->
@@ -45,76 +42,83 @@
       <!-- Left Sidebar -->
       <div class="col-md-3 left-sidebar" id="left-sidebar">
         <div class="toolbar">
-          <button title="New Chart" onclick="cui.onNewChart()" style="width:220px" class="btn theme"> <i
-              class="fas fa-file"></i></button>
-          <button title="Delete All" onclick="cui.deleteMessages()" type="button" class="btn theme "><i
-              class="fas fa-trash "></i></button>
+          <button title="New Chart" onclick="cui.onNewChart()" style="width:220px" class="btn theme"> <i class="fas fa-file"></i></button>
+          <button title="Delete All" onclick="cui.deleteMessages()" type="button" class="btn theme "><i class="fas fa-trash "></i></button>
         </div>
         <div class="sidebar">
           <button type="button" class="btn collapsible theme">Chats</button>
           <div class="content" id="accordion">
             <!-- CARD One -->
-
             <div>
               <ul class="list-group" id="savedChats"></ul>
             </div>
           </div>
-         
         </div>
         <div class="bottom-left">
           <div class="tester" id="wiki">  
             <div class="embed theme">
-            <input class="embed-check" id="embed" type="checkbox" name="embedding" value="">
-            <span class="embed-icon" title="Enable Database Search"> <i class="fas fa-server"></i></span>
-          </div>  
-           <div class="embed theme" id="piper-container" style="display:none">
-            <input class="embed-check" id="piper" type="checkbox" name="piper" value="" onclick="cui.piperToggle()">
-            <span class="embed-icon" title="Enable Piper TTS"> <i class="fas fa-music"></i></span>
-          </div>   
-          <div class="" id="tester"><button id="testgenerator" title="Run default model exam" onclick="cui.defaultTest()" type="button"
-            class="btn theme">Exam</button></div>  
-        </div> 
-         
-      </div>
+              <input class="embed-check" id="embed" type="checkbox" name="embedding" value="">
+              <span class="embed-icon" title="Enable Database Search"> <i class="fas fa-server"></i></span>
+            </div>  
+            <div class="embed theme" id="piper-container" style="display:none">
+              <input class="embed-check" id="piper" type="checkbox" name="piper" value="" onclick="cui.piperToggle()">
+              <span class="embed-icon" title="Enable Piper TTS"> <i class="fas fa-music"></i></span>
+            </div>   
+            <div class="" id="tester"><button id="testgenerator" title="Run default model exam" onclick="cui.defaultTest()" type="button" class="btn theme">Exam</button></div>  
+          </div> 
+        </div>
       </div>
   
-
       <!-- Main Chat Container -->
-      <div id="chatcontainer" class="col-md-9 chat-container">
-        <div class="chat-messages" id="chatMessages"></div>
-
-        <div class="input-container" data-max-height="100">
-          <textarea id="messageInput" placeholder="Ask a question" class="form-control grow-wrap" onInput="autoResize(this)"></textarea>
-            <!-- <div class="stopper" id="stop"> -->
-              <button id="stopgenerator" onclick="cui.stopGenerating()" type="button" class="btn btn-outline-secondary stopper"><i class="fas fa-stop"></i></button>
-              <button style="width: 65px" id="sendMessage" type="button" class="btn sendmessage"><i class="fas fa-play"></i></button>
-            <!-- </div> -->
+      <div id="chatcontainer" class="col-md-9 chat-container d-flex flex-column">
+        <div class="chat-messages flex-grow-1" id="chatMessages"></div>
+        <div class="input-wrapper">
+          <div class="input-container" data-max-height="300">
+            <textarea id="messageInput" placeholder="Ask a question" class="form-control grow-wrap" onInput="autoResize(this)"></textarea>
+            <button id="stopgenerator" onclick="cui.stopGenerating()" type="button" class="btn btn-outline-secondary stopper"><i class="fas fa-stop"></i></button>
+            <button style="width: 65px" id="sendMessage" type="button" class="btn sendmessage"><i class="fas fa-play"></i></button>
           </div>
-      </div>
-      
+        </div>
       </div>
     </div>
-     </div>
-      <script>
-      let iphostname =<%- JSON.stringify(hostname) %>;
-      let port = <%- JSON.stringify(port) %>;
-      let piper = <%- JSON.stringify(piper) %>;
-      let testQs = <%- JSON.stringify(testQs) %>;
-      let sessionID = <%- JSON.stringify(sessionID) %>;
-      cui.init(iphostname, port, piper, testQs);
-      const sidebarToggle = document.getElementById('sidebar-toggle');
-      const leftSidebar = document.getElementById('left-sidebar');
-      const chatContainer = document.querySelector('.chat-container');
-      function autoResize(textarea) {
-        var maxHeight = parseInt(textarea.parentNode.getAttribute('data-max-height')) || 120;
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
-      }
-      sidebarToggle.addEventListener('click', () => {
-        leftSidebar.classList.toggle('open');
-        chatContainer.classList.toggle('open');
-      });
-      </script>
-</body>
+  </div>
 
+  <script>
+    let iphostname = <%- JSON.stringify(hostname) %>;
+    let port = <%- JSON.stringify(port) %>;
+    let piper = <%- JSON.stringify(piper) %>;
+    let testQs = <%- JSON.stringify(testQs) %>;
+    let sessionID = <%- JSON.stringify(sessionID) %>;
+    cui.init(iphostname, port, piper, testQs);
+    
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const leftSidebar = document.getElementById('left-sidebar');
+    const chatContainer = document.querySelector('.chat-container');
+    
+    sidebarToggle.addEventListener('click', () => {
+      leftSidebar.classList.toggle('open');
+      chatContainer.classList.toggle('open');
+    });
+
+    function autoResize(textarea) {
+      var maxHeight = parseInt(textarea.parentNode.getAttribute('data-max-height')) || 300;
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
+      adjustChatMessagesHeight();
+    }
+
+    function adjustChatMessagesHeight() {
+      const chatMessages = document.getElementById('chatMessages');
+      const inputContainer = document.querySelector('.input-container');
+      const inputWrapper = document.querySelector('.input-wrapper');
+      const inputHeight = inputWrapper.offsetHeight;
+      chatMessages.style.maxHeight = `calc(100vh - ${inputHeight + 140}px)`;
+    }
+
+    window.addEventListener('resize', adjustChatMessagesHeight);
+    document.getElementById('messageInput').addEventListener('input', adjustChatMessagesHeight);
+
+    adjustChatMessagesHeight(); // Initial adjustment on page load
+  </script>
+</body>
 </html>
