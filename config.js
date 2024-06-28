@@ -14,7 +14,7 @@ config.systemPrompt= fs.readFileSync('Alice.txt', 'utf8');
 
 config.params = {
   "--model":  path.join(config.modeldirectory, config.modelname),
-  "--n-gpu-layers": 28, // remove if using CPU !!!!!!!!!!!!!
+  "--n-gpu-layers": 35, // remove if using CPU !!!!!!!!!!!!!
   "-cnv":"",
   "--interactive":"",
   "--interactive-first":"",
