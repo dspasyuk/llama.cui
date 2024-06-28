@@ -15,7 +15,7 @@ async function createDirectories(filePath) {
   }
 }
 
-async function downloadModel(repo, modelName, outputDirectory, qs) {
+async function downloadModel(repo, modelName, outputDirectory) {
   try {
     // Make a request to the Hugging Face API to get the model files
     const response = await axios.get(
@@ -25,8 +25,10 @@ async function downloadModel(repo, modelName, outputDirectory, qs) {
 
     // Find the file object with rfilename ending with "Q5_K_S"
     const targetFile = response.data.siblings.find((file) =>
-      file.rfilename.endsWith(qs + ".gguf")
-    );
+      {console.log(file.rfilename, modelName.slice(-10));
+      return file.rfilename.endsWith(modelName.slice(-10))
+      });
+    
     if (!targetFile) {
       console.error(`File ${targetFile} not found.`);
       return;
@@ -42,7 +44,7 @@ async function downloadModel(repo, modelName, outputDirectory, qs) {
     // Download the file to the specified outputDirectory
     const outputFilePath = path.join(
       outputDirectory,
-      modelName.toLowerCase() + "_" + qs.toLowerCase() + ".gguf"
+      modelName
     );
     await createDirectories(outputFilePath); // Wait for directories to be created
     if (!fs.existsSync(outputFilePath)) {

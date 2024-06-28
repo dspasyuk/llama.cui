@@ -16,6 +16,7 @@ body {
   line-height: 1.2 !important;
   background: radial-gradient(circle at center, rgba(10,3,17,1) 0%, rgba(11,3,19,1) 20%, rgba(11,4,14,1) 40%, rgba(3,2,2,1) 60%, rgba(0,2,2,1) 80%, rgba(0,1,1,1) 100%);
   overflow: hidden;
+ 
 }
 
 .form-control{
@@ -167,15 +168,42 @@ textarea:focus {
   background-color: rgb(201, 235, 247);
   border-radius: 10px;
   margin-bottom: 10px;
-  padding: 10px;
+  padding: 20px;
   word-wrap: normal;
 }
 
 .bot-tile {
   background-color: rgb(208, 252, 208);
-  padding: 10px;
+  padding: 20px;
   border-radius: 10px;
   margin-bottom: 10px;
+  width: 100%;
+  word-wrap: normal;
+  word-break: break-word;
+  overflow-x: auto;
+}
+.tilebody{
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 10px;
+  padding-right: 5px;
+  word-wrap: normal;
+}
+
+pre{
+  padding-top: 5px;
+  font-size: inherit;
+  font-family: inherit;
+  color: inherit;
+  margin-left: -5px ;
+  display:inherit;
+}
+
+code {
+  word-wrap: normal;
+  text-wrap: auto;
+  font-family: inherit;
+  font-style: normal;
 }
 
 .sendmessage {

@@ -34,9 +34,9 @@ cui.mcopyplugin =function(md) {
 
 cui.init = function (iphostname, port, piper, testQs) {
   cui.md = window.markdownit({
-    breaks: false,
+    breaks: true,
     linkify: true,
-    typographer: true,
+    typographer: false,
     highlight: (str, lang) => {
       // console.log(lang, hljs.getLanguage(lang));
       if (lang && hljs.getLanguage(lang)) {
