@@ -4,7 +4,22 @@
 
 This project provides a Node.js server for a chat user interface (UI) that interacts with the Llama.cpp library. It allows users to communicate with the [llama.cpp](https://github.com/ggerganov/llama.cpp.git) application via a web-based chat interface.
 
-## Installation
+## Install all at once
+Starting from version 0.24 model will be downloaded automatically. 
+
+### Linux Nvidia GPU
+`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUDA=1 make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
+
+### Linux CPU
+
+`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
+
+### OSX
+
+`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
+
+
+## Manual Installation
 
 1. Clone the repository:
 
@@ -28,8 +43,9 @@ This project provides a Node.js server for a chat user interface (UI) that inter
    `git clone https://github.com/dspasyuk/llama.cui`
 
 5. Download LLM model from [hugging face](https://huggingface.co/) in GGUF format, for example:
-   a. Dolphin-Mistral 7B:   https://huggingface.co/TheBloke/dolphin-2.1-mistral-7B-GGUF/blob/main/dolphin-2.1-mistral-7b.Q5_0.gguf  
-   b. Einstein-v4-7B:        https://huggingface.co/LoneStriker/Einstein-v4-7B-GGUF (Default)  
+   a. Meta-Llama-3-8B-Instruct: https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF (default)
+   b. Dolphin-Mistral 7B:       https://huggingface.co/TheBloke/dolphin-2.1-mistral-7B-GGUF/blob/main/dolphin-2.1-mistral-7b.Q5_0.gguf  
+   c. Einstein-v4-7B:           https://huggingface.co/LoneStriker/Einstein-v4-7B-GGUF (Default)
 
 8. Install the project and set your configuration parameters
   
@@ -39,20 +55,6 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
    Open config.js and change the hostname, port, path to llama.cpp main file, and the model name/path
    
-
-## Install all at once
-Starting from version 0.24 model will be downloaded automatically. 
-
-### Linux Nvidia GPU
-`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUDA=1 make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
-
-### Linux CPU
-
-`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
-
-### OSX
-
-`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && make -j 4; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
 ## Usage
 To run just type:
