@@ -19,7 +19,7 @@ Starting from version 0.24 model will be downloaded automatically.
 
 `git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && make -j 6; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
-Change  "--n-gpu-layers" in config.js file depending on the type of architecture used and available VRAM. For the default model (Llama3-instruct) this should equal to 35, for safety it is currently set to 25, you will need at least 6Gb of Vram to run the model, so Nvidia GTX1060 and above is a must.  
+####Change  "--n-gpu-layers" in config.js file depending on the type of architecture used and available VRAM. For the default model (Llama3-instruct) this should equal to 35, for safety it is currently set to 25, you will need at least 6Gb of Vram to run the model, so Nvidia GTX1060 and above is a must.  
 
 ## Manual Installation
 
