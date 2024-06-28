@@ -33,7 +33,7 @@ make
 cd "$PIPER_ROOT_FOLDER" || exit
 
 # Clone piper-phonemize repository
-git clone https://github.com/rhasspy/piper-phonemize.git
+git clone https://github.com/rhasspy/piper-phonemize.git piper-phonemize
 
 # Change directory to piper-phonemize
 cd piper-phonemize || exit
@@ -59,8 +59,8 @@ if ! grep -qxF 'export DYLD_LIBRARY_PATH=/opt/homebrew/Cellar/espeak-ng/1.51/lib
     echo 'export DYLD_LIBRARY_PATH=/opt/homebrew/Cellar/espeak-ng/1.51/lib/:$DYLD_LIBRARY_PATH' >> ~/.zprofile
 fi
 
-if ! grep -qxF "export DYLD_LIBRARY_PATH=$PIPER_ROOT_FOLDER/piper-phonemize-master/install/lib:\$DYLD_LIBRARY_PATH" ~/.zprofile; then
-    echo "export DYLD_LIBRARY_PATH=$PIPER_ROOT_FOLDER/piper-phonemize-master/install/lib:\$DYLD_LIBRARY_PATH" >> ~/.zprofile
+if ! grep -qxF "export DYLD_LIBRARY_PATH=$PIPER_ROOT_FOLDER/piper-phonemize/install/lib:\$DYLD_LIBRARY_PATH" ~/.zprofile; then
+    echo "export DYLD_LIBRARY_PATH=$PIPER_ROOT_FOLDER/piper-phonemize/install/lib:\$DYLD_LIBRARY_PATH" >> ~/.zprofile
 fi
 
 
