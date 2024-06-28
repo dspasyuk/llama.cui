@@ -40,7 +40,7 @@ config.llamacpp = "../llama.cpp/llama-cli";
 //Llama.cui settings//
 config.PORT = { client: "5000", server: "5000" };
 config.IP = { client: "localhost", server: "localhost" };
-config.login = true;
+config.login = false;
 config.timeout = 50000;
 config.session = {
   secret: "2C44-4D44-WppQ38S", //change before deployment
