@@ -1,13 +1,15 @@
 :root {
   --brown: #0d1117;
   --white: #ffffff;
+  --light: #8f8e8e;
   --dark-main: #080808;
   --dark: #2b2a2a;
   --btn-outline: #47334d;
   --btn-stop: #af9fae;
-  --textarea: rgb(211, 192, 230) !important;
+  --textarea: rgb(29, 23, 36) !important;
   --btn-send: var(--textarea);
-  --corner:15px;
+  --border:0px solid #fff;
+  --corner:28px;
 }
 
 body {
@@ -16,7 +18,6 @@ body {
   line-height: 1.2 !important;
   background: radial-gradient(circle at center, rgba(10,3,17,1) 0%, rgba(11,3,19,1) 20%, rgba(11,4,14,1) 40%, rgba(3,2,2,1) 60%, rgba(0,2,2,1) 80%, rgba(0,1,1,1) 100%);
   overflow: hidden;
- 
 }
 
 .form-control{
@@ -28,7 +29,6 @@ body {
 }
 
 .toolbar {
-  /* border-bottom: 1px solid #686868; */
   width: 96%;
   margin-bottom: 7px;
   margin-top: 10px;
@@ -37,29 +37,30 @@ body {
   margin-right: 200px;
 }
 
+.container-fluid{
+  height: calc(100vh - 140px);
+}
 
 .chat-container {
   position: relative;
   max-width: 85vw;
-  max-height: calc(100vh - 140px);
+  border: var(--border);
+  height: calc(100vh -50px);
   margin: 5px auto;
   border-radius: 0px;
-  background-image: url("../img/bg.svg");
-  background-blend-mode:darken;
-  background-size: 20rem;
-  background-repeat: no-repeat;
-  background-position: center;
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-messages {
   position: relative;
-  max-height: calc(85vh - 140px);
-  height: 100vh;
+  border: var(--border);
   overflow-y: scroll;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  height: max-content;
+  padding-top: 0px;
+  padding-bottom: 0px;
   margin-top: 10px;
-  margin-bottom: 50px;
+  margin-bottom: 10px;
   padding-right: 10px;
   scrollbar-width: auto; /* For Firefox */
   scrollbar-color: var(--btn-outline); /* For Firefox */
@@ -80,10 +81,6 @@ body {
   background: rgba(0, 0, 0, 0.1); /* Color for the scrollbar track */
   border-radius: 10px;
 }
-/* ::-webkit-scrollbar {
-  display: none;
-  width: 0;
-} */
 
 input:focus,
 button {
@@ -91,53 +88,72 @@ button {
   box-shadow: none !important;
 }
 
-@media (max-width: 768px) {
-  /* Apply these styles for screens with a max width of 768px (typical for mobile devices) */
-  .input-container {
-    width: 100%;
-  }
-}
-
-@media (min-width: 769px) {
-  /* Apply these styles for screens with a width greater than or equal to 769px (typical for desktop) */
-  .input-container {
-    width: 70%;
-  }
+.input-wrapper {
+  margin-top:20px;
+  position: sticky;
+  bottom: 0;
+  margin: 20px auto;
+  width: 85%;
+  /* background-color: var(--textarea); Adjust based on your design */
+  z-index: 1;
 }
 
 .input-container {
-  max-height: 120px;
+  max-height: 300px;
   min-height: 60px;
-  margin: 0 auto;
   display: flex;
+  width: 80%!important;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background-color: var(--textarea);
+  border-top-right-radius:  var(--corner);
+  border-bottom-right-radius:  var(--corner);
+  border-bottom-left-radius: var(--corner);
+  border-top-left-radius: var(--corner);
 }
-
 
 textarea:focus {
   outline: none !important;
   box-shadow: none !important;
   border: none !important;
-  background-color: (--textarea) !important;
+  background-color: var(--textarea) !important;
+  color:var(--white) !important;
 }
 
 .input-container textarea {
   display: flex;
-  padding-top: 20px !important;
-  min-height: 50px !important;
-  padding-left: 20px !important;
-  padding-bottom: 5px !important;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
+  padding-top: 10px !important;
+  min-height: 60px !important;
+  max-height: 300px !important;
+  padding-left:40px !important;
+  padding-bottom: 10px !important;
   border-bottom-left-radius: var(--corner);
   border-top-left-radius: var(--corner);
   align-items: center;
+  color:var(--light)!important;
   justify-content: center;
   border: none !important;
   background-color: var(--textarea) !important;
   resize: none;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
-  /* Disable textarea resizing by user */
+}
+
+.input-container button {
+  margin-left: 10px;
+  align-self: center;
+}
+
+@media (max-width: 768px) {
+  .input-container {
+    width: 100%;
+  }
+}
+
+@media (min-width: 769px) {
+  .input-container {
+    width: 70%;
+  }
 }
 
 .tileheader {
@@ -221,6 +237,7 @@ code {
 
 .sendmessage:hover {
   background-color: var(--btn-send) !important;
+  color:var(--btn-outline) !important;
 }
 
 ul {
@@ -371,6 +388,10 @@ ul {
   width: 0;
 }
 
+.chat-messages ::-webkit-scrollbar-track {
+  margin-top: 50px;
+  margin-bottom: 50px;
+}
 
 .chat-container.open {
   max-width: calc(80vw - 300px);
