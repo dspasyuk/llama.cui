@@ -15,8 +15,13 @@ const path = require("path");
 const vdb = require("./db.js");
 const fs = require("fs");
 const downloadModel = require("./modeldownloader.js");
+// var os = require('os');
+// console.log(os.cpus());
+// console.log(os.totalmem());
+// console.log(os.freemem())
 
-const version = 0.315; //changed public and server and config
+
+const version = 0.316; //changed public and server and config
 var session = require("express-session");
 const MemoryStore = require("memorystore")(session);
 const memStore = new MemoryStore();
@@ -201,6 +206,7 @@ ser.runLLamaChild = function () {
     }
   );
   this.llamachild.stdin.setEncoding("utf-8");
+  this.llamachild.stdout.setEncoding("utf-8");
   this.llamachild.stdout.on("data", (msg) => this.handleLlama(msg));
 
   this.llamachild.on("exit", (code, signal) => {
@@ -223,11 +229,6 @@ ser.loggedIn = function (req, res, next) {
   } else {
     res.redirect("/login");
   }
-};
-
-ser.handleLlamaError = function (error) {
-  console.error("An error occurred in the llama child process:", error);
-  // Handle the error appropriately, e.g., logging, cleanup, etc.
 };
 
 ser.aplayChild = function () {
@@ -303,7 +304,8 @@ ser.handleLlama = function (msg) {
     // console.log(this.socketId);
     this.io.to(this.socketId).emit("output", output);
     this.runPiper(output);
-    if (output.includes("\n>")) {
+    if (output.includes("\n\n>")) {
+      console.log("Stopped");
       this.messageQueue.splice(0, 1);
       this.isProcessing = false;
       this.processMessageQueue();
