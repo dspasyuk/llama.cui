@@ -20,6 +20,10 @@ body {
   overflow: hidden;
 }
 
+/* .chat-container {
+  filter: invert(0) hue-rotate(30deg)
+} */
+
 .form-control{
   line-height: 1.2 !important;
 }
@@ -122,7 +126,7 @@ textarea:focus {
 
 .input-container textarea {
   display: flex;
-  padding-top: 10px !important;
+  padding-top: 25px !important;
   min-height: 60px !important;
   max-height: 300px !important;
   padding-left:40px !important;
@@ -135,6 +139,8 @@ textarea:focus {
   border: none !important;
   background-color: var(--textarea) !important;
   resize: none;
+  margin: 0 auto;
+  vertical-align: middle;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
@@ -229,7 +235,7 @@ code {
   border-bottom-right-radius: var(--corner);
   border: none !important;
   outline: none !important;
-  color: var(--btn-stop) !important;
+  color: var(--btn-outline) !important;
   background-color: var(--btn-send) !important;
   align-self: stretch;
   text-align: center;
@@ -237,7 +243,7 @@ code {
 
 .sendmessage:hover {
   background-color: var(--btn-send) !important;
-  color:var(--btn-outline) !important;
+  color:var(--btn-stop) !important;
 }
 
 ul {
@@ -295,8 +301,6 @@ ul {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
-
-
 
 .stopper {
   margin-right: 10px;
