@@ -7,7 +7,7 @@ var config = {};
 
 config.modelrepo = "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF";
 config.modeldirectory = "../../models";
-config.modelname = "Meta-Llama-3-8B-Instruct_Q4_K_S.gguf";
+config.modelname = "Meta-Llama-3-8B-Instruct_Q5_K_S.gguf";
 
 //Model Setting
 config.systemPrompt= fs.readFileSync('Alice.txt', 'utf8');
