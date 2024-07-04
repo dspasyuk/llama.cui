@@ -7,7 +7,7 @@ var config = {};
 
 config.modelrepo = "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF";
 config.modeldirectory = "../../models";
-config.modelname = "Meta-Llama-3-8B-Instruct_Q5_K_S.gguf";
+config.modelname = "Meta-Llama-3-8B-Instruct_Q4_K_S.gguf";
 
 //Model Setting
 config.systemPrompt= fs.readFileSync('Alice.txt', 'utf8');
@@ -16,22 +16,15 @@ config.params = {
   "--model":  path.join(config.modeldirectory, config.modelname),
   "--n-gpu-layers": 25, // remove if using CPU !!!!!!!!!!!!!
   "-cnv":"",
-  "--interactive":"",
-  "--interactive-first":"",
   "--simple-io":"",
   "-b": 2048,
-  "-n":"-1",
-  "-e":"",
   "--ctx_size":0,
   "--temp":0.3,
   "--top_k":10,
   "--multiline-input":"",
-  "--repeat_penalty": 1.12,
-  "-t": 6,
-  "-r": '<|start_header_id|>user',
-  //"--log-disable":"",
-  "--no-display-prompt":"",
-  //"-p":`'${config.systemPrompt}'`,
+  "--chat-template":"llama3",
+  "--logdir":"./",
+  "-p":`'${config.systemPrompt}'`
 }
 
 //Llama.cpp settings
@@ -87,8 +80,7 @@ config.filter =function(output){
 
 //adjust model prompt
 config.prompt = function(userID, prompt, context, firstchat){
-  console.log(prmt.promptFormatLAMA3(config.systemPrompt, prompt, context, firstchat)); 
-  return prmt.promptFormatLAMA3(config.systemPrompt, prompt, context, firstchat); 
+   return prmt.promptFormatNONE(config.systemPrompt, prompt, context, firstchat); 
 }
 //filter any unwanted model outputs or change formating here
 config.outputFilter = function(output){

@@ -23,22 +23,39 @@ cui.mcopyplugin =function(md) {
     return `
       <div class="code-block-wrapper" style="position: relative;">
         ${originalResult}
-        <button class="btn headerbutton" onclick="cui.copyCode(this)" style="
-          position: absolute;
-          top: 5px;
-          right: 5px; margin-right:2%"><i class="fas fa-copy"></i></button>
+        <button class="btn headerbutton" onclick="cui.copyCode(this)" title="Copy code" style="position: absolute; top: 5px; right: 5px; margin-right:2%"><i class="fas fa-copy"></i></button>
+        <button class="btn headerbutton" name = "renderhtml" onclick="cui.toggleEscapeHtml(this)" title="Render HTML" style="position: absolute; top: 5px; right: 35px; margin-right:2%"><i class="fas fa-newspaper"></i></button>
       </div>
     `;
   };
 };
 
+// Method to toggle HTML escaping
+cui.toggleEscapeHtml = function (button) {
+  const codeBlock = button.parentElement.querySelector('code');
+  const preBlock = button.parentElement.querySelector('pre');
+  const code = codeBlock.textContent;
+  let scrollableElement = button.parentElement.querySelector('.renderHTML');
+  console.log(scrollableElement);
+  if (!scrollableElement) {
+    scrollableElement = document.createElement('div');
+    scrollableElement.className = 'renderHTML';
+    preBlock.insertAdjacentElement('afterend', scrollableElement);
+  }
+
+  // Update the content of the scrollable element
+  scrollableElement.innerHTML = code;
+};
+
 cui.init = function (iphostname, port, piper, testQs) {
+  // Default to escaping HTML
+  cui.escapeHtml = true;
+
   cui.md = window.markdownit({
     breaks: true,
     linkify: true,
     typographer: false,
     highlight: (str, lang) => {
-      // console.log(lang, hljs.getLanguage(lang));
       if (lang && hljs.getLanguage(lang)) {
         try {
           return `<pre class="hljs"><code>${
@@ -46,14 +63,17 @@ cui.init = function (iphostname, port, piper, testQs) {
           }</code></pre>`;
         } catch (__) {}
       }
-      return `<pre class="hljs"><code>${cui.md.utils.escapeHtml(
-        str
-      )}</code></pre>`;
+      // Use the escapeHtml property to decide whether to escape HTML or not
+      return `<pre class="hljs"><code>${
+        cui.md.utils.escapeHtml(str)}</code></pre>`;
     },
   });
+
+
   cui.md.use(cui.mcopyplugin);
   cui.md.use(cui.disableHeaderPlugin);
-  this.player = cui.PCMplayer()
+  this.player = cui.PCMplayer();
+  cui.terminationTocken = "\n\n>";
   cui.isPlaying = cui.player.isPlaying; 
   cui.notStopped =true;
   cui.PlayWatcher(); 
@@ -239,8 +259,8 @@ cui.socketInit = function () {
   var text = "";
   cui.currentTile = null; // Reference to the current tile element
   this.socket.on("output", (response) => {
-    if (response.includes("\n>")) {
-      cui.currentTile.textContent += " " + response.replace("\n>", "");
+    if (response.includes(cui.terminationTocken)) {
+      cui.currentTile.textContent += " " + response.replace(cui.terminationTocken, "");
       text += " " + response;
       cui.currentTile.innerHTML = cui.md.render(text);
       message = cui.getMessageById(cui.messageId);
@@ -491,6 +511,7 @@ cui.sendMessage = function () {
     cui.showStop();
     cui.messageInput.value = "";
     chatMessages.scrollTop = chatMessages.scrollHeight;
+    autoResize(document.getElementById("messageInput"));
   }
 };
 

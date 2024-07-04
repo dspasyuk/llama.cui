@@ -375,8 +375,7 @@ ul {
   padding-left: 8px !important;
   padding-right: 8px !important;
   background: linear-gradient(circle, #1b0331, #180d0d)  !important;
-  /* border-right: 1px solid; */
-  /* border-image: linear-gradient( rgb(41, 17, 40), rgb(30, 10, 39)) 1!important; */
+  /* border-right: 1px solid rgba(40, 5, 70, 0.3); */
   max-width: 300px;
   height: calc(100vh - 54px);
 }
@@ -460,7 +459,8 @@ ul {
 }
 
 .bottom-left {
-  border-top: 1px solid var( --btn-outline);
+  background: linear-gradient(circle, #1b0331, #180d0d)  !important;
+  border-top: 1px solid rgba(40, 5, 70, 0.3);
   display: block;
   overflow: hidden;
   outline: none;
@@ -483,4 +483,15 @@ ul {
 .vcenter {
   width: 100%;
   margin: 0 40%;
+}
+
+.renderHTML{
+  background: #ffffff;
+  margin-left: 2%;
+  margin-right: 1%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid black;
+  border-radius: 10px;
 }

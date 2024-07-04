@@ -28,9 +28,7 @@ prmt.promptFormatLAMA3 = function (systemPrompt, userPrompt, context, isFirstMes
 prmt.promptFormatNONE= function (systemPrompt, userPrompt, context, isFirstMessage = false) {
     let formattedPrompt = "";
     let embedding = `${context ? `\n Context: '${context}'` : ""}`;
-    formattedPrompt = `
-    ${systemPrompt}
-    ${userPrompt}  ${embedding}`;
+    formattedPrompt = `${userPrompt}  ${embedding}`;
     this.conversationHistory = formattedPrompt;
     return formattedPrompt;
 }
