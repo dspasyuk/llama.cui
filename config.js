@@ -9,7 +9,7 @@ config.modelrepo = "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF";
 config.modeldirectory = "../../models";
 config.modelname = "Meta-Llama-3-8B-Instruct_Q4_K_S.gguf";
 
-//Model Setting
+//Model Setting //Llama.cpp settings
 config.systemPrompt= fs.readFileSync('Alice.txt', 'utf8');
 
 config.params = {
@@ -27,7 +27,6 @@ config.params = {
   "-p":`'${config.systemPrompt}'`
 }
 
-//Llama.cpp settings
 config.llamacpp = "../llama.cpp/llama-cli";
 
 //Llama.cui settings//
