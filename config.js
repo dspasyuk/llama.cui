@@ -23,7 +23,7 @@ config.params = {
   "--top_k":10,
   "--multiline-input":"",
   "--chat-template":"llama3",
-  "--logdir":"./",
+  "--log-disable":"", 
   "-p":`'${config.systemPrompt}'`
 }
 
