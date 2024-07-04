@@ -37,9 +37,6 @@ async function downloadModel(repo, modelName, outputDirectory) {
     // Construct the URL for the specific file
     const fileUrl = `https://huggingface.co/${repo}/resolve/main/${targetFile.rfilename}?download=true`;
     console.log(fileUrl);
-    console.log(
-      "https://huggingface.co/SanctumAI/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/meta-llama-3-8b-instruct.Q5_K_S.gguf?download=true"
-    );
 
     // Download the file to the specified outputDirectory
     const outputFilePath = path.join(
