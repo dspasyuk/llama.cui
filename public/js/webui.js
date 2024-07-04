@@ -282,9 +282,9 @@ cui.socketInit = function () {
         
       }
       //console.log(cui.isstopButtonVisible());
-      if (!cui.isstopButtonVisible()) {
-        cui.showStop();
-      }
+      // if (!cui.isstopButtonVisible()) {
+      //   cui.showStop();
+      // }
     }
     // console.log(userScrolledManually);
     if (!userScrolledManually) {
