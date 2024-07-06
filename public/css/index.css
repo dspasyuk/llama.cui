@@ -4,11 +4,12 @@
   --light: #8f8e8e;
   --dark-main: #080808;
   --dark: #2b2a2a;
-  --btn-outline: #47334d;
+  --btn-outline: #29182e;
   --btn-stop: #af9fae;
   --textarea: rgb(29, 23, 36) !important;
   --btn-send: var(--textarea);
   --border:0px solid #fff;
+  --borderlist:1px solid #1a0725;
   --corner:28px;
 }
 
@@ -16,9 +17,12 @@ body {
   font-family: Arial, sans-serif;
   background-color: var(--brown);
   line-height: 1.2 !important;
-  background: radial-gradient(circle at center, rgba(10,3,17,1) 0%, rgba(11,3,19,1) 20%, rgba(11,4,14,1) 40%, rgba(3,2,2,1) 60%, rgba(0,2,2,1) 80%, rgba(0,1,1,1) 100%);
+  background: radial-gradient(circle at center, rgba(10,3,17,1) 0%, rgba(11,3,19,1) 20%, rgba(11,4,14,1) 30%, rgba(3,2,2,1) 50%, rgba(0,2,2,1) 70%, rgba(0,1,1,1) 100%);
   overflow: hidden;
+  /* filter:  invert(0) hue-rotate(90deg); */
 }
+
+
 
 /* .chat-container {
   filter: invert(0) hue-rotate(30deg)
@@ -235,7 +239,7 @@ code {
   border-bottom-right-radius: var(--corner);
   border: none !important;
   outline: none !important;
-  color: var(--btn-outline) !important;
+  color: var(--brown) !important;
   background-color: var(--btn-send) !important;
   align-self: stretch;
   text-align: center;
@@ -273,9 +277,10 @@ ul {
   justify-content: space-between;
   align-items: center;
   /* background-color: var(--dark-main) !important; */
-  /* border-radius: 5px !important; */
+  /* border-bottom: var(--borderlist); */
+  border-radius: 0px!important;
   margin-bottom: 1px;
-  height: 40px;
+  height: 45px;
 }
 .list-group-item-container:hover {
   cursor: pointer;
@@ -411,9 +416,9 @@ ul {
   background-color: inherit;
   color: var(--btn-outline);
   /* background-image: linear-gradient(290deg,  rgba(140, 175, 175, 0) 0%,  var(--dark-main)   100%); */
-  /* border: 1px solid var( --btn-outline);
-  */
-  background-color: #21162b;
+   border: 1px solid var( --btn-outline);
+  
+  /* background-color: #21162b; */
 }
 
 .theme:hover {

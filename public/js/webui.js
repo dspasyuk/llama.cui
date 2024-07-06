@@ -36,7 +36,7 @@ cui.toggleEscapeHtml = function (button) {
   const preBlock = button.parentElement.querySelector('pre');
   const code = codeBlock.textContent;
   let scrollableElement = button.parentElement.querySelector('.renderHTML');
-  console.log(scrollableElement);
+  
   if (!scrollableElement) {
     scrollableElement = document.createElement('div');
     scrollableElement.className = 'renderHTML';
@@ -45,6 +45,9 @@ cui.toggleEscapeHtml = function (button) {
 
   // Update the content of the scrollable element
   scrollableElement.innerHTML = code;
+  
+  // Scroll the element into view
+  scrollableElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
 cui.init = function (iphostname, port, piper, testQs) {
@@ -72,6 +75,7 @@ cui.init = function (iphostname, port, piper, testQs) {
 
   cui.md.use(cui.mcopyplugin);
   cui.md.use(cui.disableHeaderPlugin);
+  cui.bufferText = "";
   this.player = cui.PCMplayer();
   cui.terminationTocken = "\n\n>";
   cui.isPlaying = cui.player.isPlaying; 
@@ -234,21 +238,12 @@ cui.onNewChart = function () {
   chatMessages.innerHTML = "";
 };
 
-cui.isstopButtonVisible = function() {
-  const button = document.getElementById('stopgenerator');
-  if (button) {
-    const style = window.getComputedStyle(button);
-    return style.display !== 'none' && style.visibility !== 'hidden' && button.offsetParent !== null;
-  }
-  return false;
-}
-
 cui.socketInit = function () {
   console.log(`${cui.iphostname}:${cui.port}`);
   this.socket = io(`${cui.iphostname}:${cui.port}`, {
     query: { sessionID },
   });
-  userScrolledManually = false;
+  var userScrolledManually = false;
   const chatMessages = document.getElementById("chatMessages");
   chatMessages.addEventListener("scroll", (event) => {
     const isUserScrolledManually = event.target.scrollTop !== event.target.scrollHeight - event.target.clientHeight;
@@ -256,40 +251,33 @@ cui.socketInit = function () {
     userScrolledManually = isUserScrolledManually;
   });
 
-  var text = "";
+  
   cui.currentTile = null; // Reference to the current tile element
   this.socket.on("output", (response) => {
     if (response.includes(cui.terminationTocken)) {
       cui.currentTile.textContent += " " + response.replace(cui.terminationTocken, "");
-      text += " " + response;
-      cui.currentTile.innerHTML = cui.md.render(text);
+      cui.bufferText += " " + response;
+      cui.currentTile.innerHTML = cui.md.render(cui.bufferText);
       message = cui.getMessageById(cui.messageId);
-      message.bot = cui.md.render(text);
+      message.bot = cui.md.render(cui.bufferText);
       cui.setMessage(message);
-      text = "";
       cui.createSVG(cui.currentTile);
-      cui.hideStop();
-      console.log("RESET");
       cui.currentTile = null;
       userScrolledManually = false;
+      cui.hideStop();
     } else {
       if (!cui.currentTile || cui.currentTile.classList.contains("user-tile")) {
-        cui.createBotTile(response);
+        cui.bufferText = response;
+        cui.createBotTile(cui.bufferText);
       } else {
         cui.currentTile.textContent += " " + response;
-        text += " " + response;
-        cui.currentTile.innerHTML = cui.md.render(text);
+        cui.bufferText += " " + response;
+        cui.currentTile.innerHTML = cui.md.render(cui.bufferText);
         
       }
-      //console.log(cui.isstopButtonVisible());
-      // if (!cui.isstopButtonVisible()) {
-      //   cui.showStop();
-      // }
     }
-    // console.log(userScrolledManually);
     if (!userScrolledManually) {
       chatMessages.scrollTop = chatMessages.scrollHeight;
-      // console.log("scroll");
      }
    
   });
@@ -376,7 +364,7 @@ cui.createSVG = function (ell) {
   var extractedSvg = svgme.extractSvgFromText(ell.innerText);
   // console.log(contentElement.innerText);
   if (extractedSvg) {
-    var htmlSvg = svgme.convertSvgToHtml(ell,extractedSvg);
+    svgme.convertSvgToHtml(ell,extractedSvg);
   }
 };
 
@@ -426,7 +414,6 @@ cui.createTile = function (content, tileClass) {
     const textFromTileBody = tilebody.textContent.trim();
     await navigator.clipboard.writeText(textFromTileBody);
   };
-  
 
     const vocalize = document.createElement("button");
     vocalize.name = "piperToggle";
@@ -495,6 +482,7 @@ cui.checkisFirst = function () {
 cui.sendMessage = function () {
   const input = cui.messageInput.value.trim(); // Get the message content
   const embedcheck = document.getElementById("embed");
+  cui.currentTile = null;
   if (input !== "") {
     cui.socket.emit("message", {
       message: input,
@@ -507,6 +495,7 @@ cui.sendMessage = function () {
     cui.messageId = cui.get_random_id();
     cui.setMessage({ id: cui.messageId, user: input, bot: "" });
     cui.createBotTile("");
+    cui.bufferText ="";
     cui.listGenerate();
     cui.showStop();
     cui.messageInput.value = "";
@@ -564,6 +553,11 @@ cui.stopGenerating = function () {
     .then((response) => response.json())
     .then((data) => {
       console.log("Server response:", data);
+      if(data.message=="stopped"){
+        cui.hideStop();
+      }else{
+        console.log("not stopped");
+      }
     })
     .catch((error) => {
       console.error("Error:", error);
