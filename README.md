@@ -51,12 +51,13 @@ Starting from version 0.24 model will be downloaded automatically.
 5. Download LLM model from [hugging face](https://huggingface.co/) in GGUF format, for example:
    
    a. Meta-Llama-3-8B-Instruct: https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF  (Default)
+     or https://huggingface.co/dspasyuk/Meta-Llama-3-8B-Instruct-Q5_K_S-GGUF/blob/main/Meta-Llama-3-8B-Instruct-Q5_K_S.gguf
    
    b. Dolphin-Mistral 7B:       https://huggingface.co/TheBloke/dolphin-2.1-mistral-7B-GGUF/blob/main/dolphin-2.1-mistral-7b.Q5_0.gguf
    
    c. Einstein-v4-7B:           https://huggingface.co/LoneStriker/Einstein-v4-7B-GGUF
 
-6. Install the project and set your configuration parameters
+7. Install the project and set your configuration parameters
   
    `cd llama.cui
 
