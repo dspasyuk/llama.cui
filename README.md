@@ -72,7 +72,7 @@ To run just type:
 ## Login Information
 Default login and password are specified in the config file but could be easily integrated with the user database.
 The login is currently set to false. To enable login set login to true in the config file and change password.
-
+</details>
 <details><summary> <H1> Piper integration https://github.com/rhasspy/piper </H1></summary>
 
 As of version 1.15 the llama.cui supports Piper for a text-to-voice generation.
