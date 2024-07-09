@@ -9,15 +9,15 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
 Starting from version 0.24 model will be downloaded automatically. 
 
-### Linux Nvidia GPU
+## Linux Nvidia GPU
 
 `git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUDA=1 make -j 6; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
-### Linux CPU
+## Linux CPU
 
 `git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && make -j 6; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
-### OSX
+## OSX
 
 `git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && make -j 6; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
@@ -73,12 +73,13 @@ To run just type:
 Default login and password are specified in the config file but could be easily integrated with the user database.
 The login is currently set to false. To enable login set login to true in the config file and change password.
 </details>
+
 <details><summary> <H1> Piper integration </H1></summary>
 
 As of version 1.15 the llama.cui supports Piper for a text-to-voice generation.
 Enable it in config.js, make sure to install Piper before running llama.cui 
 
-### Linux
+## Linux
    ### Getting Piper 
       git clone https://github.com/rhasspy/piper.git
       cd piper  
@@ -101,15 +102,15 @@ Enable it in config.js, make sure to install Piper before running llama.cui
         model: "/home/denis/CODE/piper/models/librits/en_US-libritts_r-medium.onnx"  // set a path to your voice models  
       };  
       
-### MacOS 
+## MacOS 
 
 In addition to the regular Linux instructions on Mac other configurations must be performed to install Piper.  
 
-#### Try piper_install_mac.sh installation script first:
+### Try piper_install_mac.sh installation script first:
 
      `bash piper_install_mac.sh`
      
-#### Example of usage
+### Example of usage
 
    `echo 'Welcome to the world of speech synthesis!' | "$PIPER_ROOT_FOLDER/piper/install/piper" \
     --model "$PIPER_ROOT_FOLDER/models/librits/en_US-libritts-high.onnx" \
@@ -117,25 +118,25 @@ In addition to the regular Linux instructions on Mac other configurations must b
  
      If it fails at any stage try the guide below: 
 
-### Manual piper installation.
+## Manual piper installation.
 
 First lets install brew if you do not have it yet:  
 `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 
-#### Install espeak-ng:  
+### Install espeak-ng:  
 
   `/opt/homebrew/bin/brew install espeak-ng`   
   You now should have /opt/homebrew/Cellar/espeak-ng/1.51/lib/libespeak-ng.1.dylib  //your version might be different   
   `cd to your piper root folder`  
   
-#### Install piper-phonemize  
+### Install piper-phonemize  
 
   `git clone https://github.com/rhasspy/piper-phonemize.git`  
   `cd piper-phonemize`  
   `make`  
    Once the compilation process is done you should have libpiper_phonemize.1.dylib in ./piper-phonemize/install/lib
    
-#### Setting up environmental variables  
+### Setting up environmental variables  
 
    Now lets create the necessary links to the libraries so that piper can find them:   
    Add this lines to your ~/.zprofile file before 'export PATH':   
@@ -168,7 +169,7 @@ To use embeddings, you will need to create your vector database using the embedd
 
 `node embedding.js`
 
-You will need to detele the existing DB folder before running llama.cui. The new database will be generated on the next request for embedding (select use database in the bottom left corner of the UI interface to generate the database)  
+You will need to delete the existing DB folder before running llama.cui. The new database will be generated on the next request for embedding (select use database in the bottom left corner of the UI interface to generate the database)  
 
 For data format convention, llama.cui uses the anytotext.js library. 
 </details>
