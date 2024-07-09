@@ -4,7 +4,9 @@
 
 This project provides a Node.js server for a chat user interface (UI) that interacts with the Llama.cpp library. It allows users to communicate with the [llama.cpp](https://github.com/ggerganov/llama.cpp.git) application via a web-based chat interface.
 
-## Install all at once
+<details><summary> <H1> Install all at once </H1></summary>
+
+
 Starting from version 0.24 model will be downloaded automatically. 
 
 ### Linux Nvidia GPU
@@ -20,8 +22,10 @@ Starting from version 0.24 model will be downloaded automatically.
 `git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && make -j 6; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
 #### Change  "--n-gpu-layers" in config.js file depending on the type of architecture used and available VRAM. For the default model (Llama3-instruct) this should be equal to 35, for compatibility it is currently set to 25, you will need at least 6Gb of VRAM to run the model, so Nvidia GTX1060 and above is a must.  
+</details>
 
-## Manual Installation
+
+<details><summary> <H1> Manual Installation </H1></summary>
 
 1. Clone the repository:
 
@@ -57,7 +61,8 @@ Starting from version 0.24 model will be downloaded automatically.
 
    Open config.js and change the hostname, port, path to llama.cpp main file, and the model name/path
    
-
+</details>
+   
 ## Usage
 To run just type:
 
@@ -67,7 +72,8 @@ To run just type:
 Default login and password are specified in the config file but could be easily integrated with the user database.
 The login is currently set to false. To enable login set login to true in the config file and change password.
 
-## Piper integration https://github.com/rhasspy/piper
+<details><summary> <H1> Piper integration https://github.com/rhasspy/piper </H1></summary>
+
 As of version 1.15 the llama.cui supports Piper for a text-to-voice generation.
 Enable it in config.js, make sure to install Piper before running llama.cui 
 ### Linux
@@ -137,7 +143,9 @@ export DYLD_LIBRARY_PAT=/PIPER_ROOT_DEER/piper-phonemize-master/lib:$DYLD_LIBRAR
 
 
 [![Piper Demo]()](https://github.com/dspasyuk/llama.cui/assets/34203011/1a7d530c-92a3-4d14-9c7d-79a25f73610f)
-## Embeddings
+</details>
+<details><summary> <H1> Embeddings </H1></summary>
+
 ![embedding](https://github.com/dspasyuk/llama.cui/assets/34203011/c66a9cd7-f9d9-4b69-9b4a-53e11a14a5bf)
 
 
@@ -150,6 +158,7 @@ To use embeddings, you will need to create your vector database using the embedd
 You will need to detele the existing DB folder before running llama.cui. The new database will be generated on the next request for embedding (select use database in the bottom left corner of the UI interface to generate the database)  
 
 For data format convention, llama.cui uses the anytotext.js library. 
+</details>
 
 ## Screenshots
  ![Screenshot](https://github.com/dspasyuk/llama.cui/assets/34203011/820fb710-2fd0-4ed4-9945-01440155d1fe)
