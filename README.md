@@ -63,7 +63,7 @@ Starting from version 0.24 model will be downloaded automatically.
    
 </details>
    
-## Usage
+# Usage
 To run just type:
 
 `npm start`
