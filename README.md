@@ -63,7 +63,7 @@ Starting from version 0.24 model will be downloaded automatically.
    
 </details>
    
-<details open><summary> <H1> Usage </H1></summary>
+<details><summary> <H1> Usage </H1></summary>
 
 To run just type:
 
