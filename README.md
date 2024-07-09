@@ -73,10 +73,11 @@ To run just type:
 Default login and password are specified in the config file but could be easily integrated with the user database.
 The login is currently set to false. To enable login set login to true in the config file and change password.
 </details>
-<details><summary> <H1> Piper integration https://github.com/rhasspy/piper </H1></summary>
+<details><summary> <H1> Piper integration </H1></summary>
 
 As of version 1.15 the llama.cui supports Piper for a text-to-voice generation.
 Enable it in config.js, make sure to install Piper before running llama.cui 
+
 ### Linux
    ### Getting Piper 
       git clone https://github.com/rhasspy/piper.git
@@ -100,11 +101,12 @@ Enable it in config.js, make sure to install Piper before running llama.cui
         model: "/home/denis/CODE/piper/models/librits/en_US-libritts_r-medium.onnx"  // set a path to your voice models  
       };  
 ### MacOS 
-In addition to the regular Linux instructions on Mac other configuration must be performed to install piper.  
+In addition to the regular Linux instructions on Mac other configurations must be performed to install Piper.  
+
 #### Try piper_install_mac.sh installation script first:
      `bash piper_install_mac.sh`
      
-##### Example of usage
+#### Example of usage
    `echo 'Welcome to the world of speech synthesis!' | "$PIPER_ROOT_FOLDER/piper/install/piper" \
     --model "$PIPER_ROOT_FOLDER/models/librits/en_US-libritts-high.onnx" \
     --output-file welcome.wav`
