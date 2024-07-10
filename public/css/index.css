@@ -4,20 +4,21 @@
   --light: #8f8e8e;
   --dark-main: #080808;
   --dark: #2b2a2a;
-  --btn-outline: #29182e;
+  --btn-outline: #47334d;
   --btn-stop: #af9fae;
   --textarea: rgb(29, 23, 36) !important;
   --btn-send: var(--textarea);
   --border:0px solid #fff;
   --borderlist:1px solid #1a0725;
   --corner:28px;
+  --animation:0.3s;
 }
 
 body {
   font-family: Arial, sans-serif;
   background-color: var(--brown);
   line-height: 1.2 !important;
-  background: radial-gradient(circle at center, rgba(10,3,17,1) 0%, rgba(11,3,19,1) 20%, rgba(11,4,14,1) 30%, rgba(3,2,2,1) 50%, rgba(0,2,2,1) 70%, rgba(0,1,1,1) 100%);
+  background: radial-gradient(circle at center, rgb(6, 1, 10) 0%, rgb(7, 2, 12) 20%, rgb(5, 2, 7) 30%, rgb(3, 2, 3) 50%, rgb(2, 0, 2) 70%, rgba(0,2,2,1) 100%);
   overflow: hidden;
   /* filter:  invert(0) hue-rotate(90deg); */
 }
@@ -37,12 +38,11 @@ body {
 }
 
 .toolbar {
-  width: 96%;
+  width: 97%;
   margin-bottom: 7px;
   margin-top: 10px;
   display: flex;
   justify-content: space-between;
-  margin-right: 200px;
 }
 
 .container-fluid{
@@ -58,6 +58,8 @@ body {
   border-radius: 0px;
   display: flex;
   flex-direction: column;
+  transform: translateX(0);
+  transition: max-width var(--animation) ease, opacity var(--animation) ease, transform var(--animation) ease;
 }
 
 .chat-messages {
@@ -102,7 +104,7 @@ button {
   bottom: 0;
   margin: 20px auto;
   width: 85%;
-  /* background-color: var(--textarea); Adjust based on your design */
+ 
   z-index: 1;
 }
 
@@ -114,6 +116,7 @@ button {
   margin: 0 auto;
   box-sizing: border-box;
   background-color: var(--textarea);
+  box-shadow: 0px 0px 20px 20px #0b0216;
   border-top-right-radius:  var(--corner);
   border-bottom-right-radius:  var(--corner);
   border-bottom-left-radius: var(--corner);
@@ -239,7 +242,7 @@ code {
   border-bottom-right-radius: var(--corner);
   border: none !important;
   outline: none !important;
-  color: var(--brown) !important;
+  color: var(--btn-outline) !important;
   background-color: var(--btn-send) !important;
   align-self: stretch;
   text-align: center;
@@ -300,12 +303,7 @@ ul {
   display: none;
 }
 
-.sidebar {
-  height: calc(100vh - 175px);
-  overflow: scroll;
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
+
 
 .stopper {
   margin-right: 10px;
@@ -375,22 +373,36 @@ ul {
   padding-left: 15px;
 }
 
-.left-sidebar {
-  display: none;
-  padding-left: 8px !important;
-  padding-right: 8px !important;
-  background: linear-gradient(circle, #1b0331, #180d0d)  !important;
-  /* border-right: 1px solid rgba(40, 5, 70, 0.3); */
-  max-width: 300px;
-  height: calc(100vh - 54px);
-}
-
-.left-sidebar.open {
-  display: block;
+.sidebar {
+  height: calc(100vh - 175px);
+  overflow: scroll;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
 
+.left-sidebar {
+  visibility: hidden;
+  padding-left: 15px !important;
+  padding-right: 3px !important;
+  background: linear-gradient(circle, #1b0331, #180d0d) !important;
+  border: 1px solid rgba(54, 18, 85, 0.3);
+  box-shadow: 0px 10px 10px 10px #06010c;
+  max-width: 0;
+  border-radius: 20px;
+  margin: 5px !important;
+  height: calc(100vh - 60px);
+  opacity: 0;
+}
+
+.left-sidebar.open {
+  visibility: visible;
+  max-width: 300px;
+  opacity: 1;
+  transform: translateX(0);
+  transition: max-width var(--animation) ease, opacity var(--animation) ease, transform var(--animation) ease;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
 .left-sidebar ::-webkit-scrollbar {
   display: none;
   width: 0;
@@ -402,8 +414,10 @@ ul {
 }
 
 .chat-container.open {
+  transform: translateX(0);
+  transition: max-width var(--animation) ease, opacity var(--animation) ease, transform var(--animation) ease;
   max-width: calc(80vw - 300px);
-
+  
   /* Adjust the width according to your design */
 }
 
@@ -416,9 +430,9 @@ ul {
   background-color: inherit;
   color: var(--btn-outline);
   /* background-image: linear-gradient(290deg,  rgba(140, 175, 175, 0) 0%,  var(--dark-main)   100%); */
-   border: 1px solid var( --btn-outline);
-  
-  /* background-color: #21162b; */
+  /* border: 1px solid var( --btn-outline);
+  */
+  background-color: #21162b;
 }
 
 .theme:hover {
@@ -483,6 +497,7 @@ ul {
 
 .navbar {
   padding: 0.5rem 0.5rem;
+  box-shadow: 0px 10px 10px 10px #040108;
 }
 
 .vcenter {
