@@ -310,7 +310,7 @@ ul {
   font-size: 14px;
   border: none;
   height: 40px;
-  width:85%; 
+  width:100%; 
   margin-top: 7px;
   margin-bottom: 7px;
   word-wrap: unset;
@@ -516,7 +516,7 @@ ul {
 }
 
 .content {
-  padding: 12px;
+  padding-right: 8px;
   display: none;
   overflow: hidden;
   outline: none;
