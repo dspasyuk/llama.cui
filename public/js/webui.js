@@ -393,7 +393,7 @@ cui.createTile = function (content, tileClass) {
   tileheader.className = "tileheader";
   tileElement.className = tileClass;
   // Set the header text based on the tileClass
-  headerText.textContent = tileClass === "user-tile" ? "User" : "AI";
+  headerText.innerHTML = tileClass === "user-tile" ? `<i class="fas fa-user userstyle"></i>` : `<i class="fa fa-robot robotstyle"></i>`;
   headerText.style.margin = "0 auto 0 0"; // Center the text
   // Append the header text and button to the tileheader
   tileheader.appendChild(headerText);
