@@ -9,8 +9,9 @@
   --textarea: rgb(29, 23, 36) !important;
   --btn-send: var(--textarea);
   --border:0px solid #fff;
-  --borderlist:1px solid #1a0725;
-  --corner:28px;
+  --borderlistcolor: #100416;
+  --borderlist:1px solid var(--borderlistcolor);
+  --corner:50px;
   --animation:0.3s;
 }
 
@@ -23,7 +24,9 @@ body {
   /* filter:  invert(0) hue-rotate(90deg); */
 }
 
-
+html,body{
+  scrollbar-color: var(--textarea) var(--borderlistcolor)  !important;
+ }
 
 /* .chat-container {
   filter: invert(0) hue-rotate(30deg)
@@ -116,7 +119,7 @@ button {
   margin: 0 auto;
   box-sizing: border-box;
   background-color: var(--textarea);
-  box-shadow: 0px 0px 20px 20px #0b0216;
+  /* box-shadow: 0px 0px 20px 20px #0b0216; */
   border-top-right-radius:  var(--corner);
   border-bottom-right-radius:  var(--corner);
   border-bottom-left-radius: var(--corner);
@@ -170,21 +173,30 @@ textarea:focus {
 }
 
 .tileheader {
-  height: 30px;
-  /* border-bottom: 1px solid #d4d4d4; */
+  height: 40px;
+  border-bottom: 1px solid #220d33;
+  /* background-color: #1b1220; */
   text-align: center;
   color: #868686;
-  padding-top: 5px;
   font-weight: bold;
   display: flex;
+  margin-right: -20px;
+  margin-left: -20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 11px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  padding-bottom: 10px;
   align-items: center;
   /* Center items vertically within the flex container */
 }
 
 .headerbutton {
-  height: 30px;
-  width: 30px;
-  padding-top: 0px;
+  padding-right: 5px;
+  padding-bottom: 0;
+  padding-left: 15px;
+  padding-top: 0;
   border: none !important;
   text-align: center;
   color: #6d6c6c;
@@ -194,25 +206,60 @@ textarea:focus {
 }
 
 .user-tile {
-  background-color: rgb(201, 235, 247);
-  border-radius: 10px;
-  margin-bottom: 10px;
-  padding: 20px;
-  word-wrap: normal;
-}
-
-.bot-tile {
-  background-color: rgb(208, 252, 208);
-  padding: 20px;
+  background-color: #1c1527;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 0px;
+  padding-bottom: 10px;
   border-radius: 10px;
   margin-bottom: 10px;
   width: 100%;
   word-wrap: normal;
+  color: #fff;
+  word-break: break-word;
+  overflow-x: auto;
+
+}
+
+.bot-tile {
+  background-color: #1c1527;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 0px;
+  padding-bottom: 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  width: 100%;
+  word-wrap: normal;
+  color: #fff;
   word-break: break-word;
   overflow-x: auto;
 }
+
+.userstyle {
+  color:dodgerblue;
+  border-top-left-radius: 10px; 
+  background-image:  linear-gradient(135deg, rgb(61, 31, 89), #1c1527, #1c1527);
+  margin-left: -22px;
+  height: 39px;
+  width: 60px; 
+  padding-top: 13px;
+  margin-top: -3px;
+}
+
+.robotstyle {
+  color:rgb(3, 151, 102);
+  border-top-left-radius: 10px; 
+  background-image:  linear-gradient(135deg, rgb(61, 31, 89), #1c1527, #1c1527);
+  margin-left: -22px;
+  height: 39px;
+  width: 60px; 
+  padding-top: 13px;
+  margin-top: -3px;
+}
+
 .tilebody{
-  padding-top: 10px;
+  padding-top: 20px;
   padding-bottom: 10px;
   padding-left: 10px;
   padding-right: 5px;
@@ -347,7 +394,7 @@ ul {
 
   .chat-container {
     width: 100%;
-    
+    margin-top: 20px;
     /* Expand the main chat container on small screens */
   }
 }
@@ -384,7 +431,7 @@ ul {
   visibility: hidden;
   padding-left: 15px !important;
   padding-right: 3px !important;
-  background: linear-gradient(circle, #1b0331, #180d0d) !important;
+  background-image: linear-gradient(135dg, #1b0331, #180d0d) !important;
   border: 1px solid rgba(54, 18, 85, 0.3);
   box-shadow: 0px 10px 10px 10px #06010c;
   max-width: 0;
@@ -432,7 +479,7 @@ ul {
   /* background-image: linear-gradient(290deg,  rgba(140, 175, 175, 0) 0%,  var(--dark-main)   100%); */
   /* border: 1px solid var( --btn-outline);
   */
-  background-color: #21162b;
+  background-color: #1c1527;
 }
 
 .theme:hover {
@@ -442,7 +489,7 @@ ul {
 
 .themenav {
   /* background-color: var(--dark-main); */
-  background: linear-gradient(circle, #1b0331, #180d0d)  !important;
+  background: linear-gradient(135dg, #1b0331, #180d0d)  !important;
   /* border-bottom:  linear-gradient(#1b0331, #180d0d)  !important; */
   border-bottom: 1px solid;
   border-image: linear-gradient( rgb(17, 17, 41), rgb(22, 7, 29)) 1!important;
