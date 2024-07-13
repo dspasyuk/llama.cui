@@ -4,9 +4,9 @@
   --light: #8f8e8e;
   --dark-main: #080808;
   --dark: #2b2a2a;
-  --btn-outline: #47334d;
-  --btn-stop: #af9fae;
-  --textarea: rgb(29, 23, 36) !important;
+  --btn-outline: #1e1e2e;
+  --btn-stop: #494970;
+  --textarea: #1e1e2e !important;
   --btn-send: var(--textarea);
   --border:0px solid #fff;
   --borderlistcolor: #100416;
@@ -14,6 +14,7 @@
   --corner:50px;
   --animation:0.3s;
 }
+
 
 body {
   font-family: Arial, sans-serif;
@@ -28,8 +29,9 @@ html,body{
   scrollbar-color: var(--textarea) var(--borderlistcolor)  !important;
  }
 
-/* .chat-container {
-  filter: invert(0) hue-rotate(30deg)
+
+/* html {
+  filter: invert(1) hue-rotate(100deg) light mode 
 } */
 
 .form-control{
@@ -144,7 +146,7 @@ textarea:focus {
   border-bottom-left-radius: var(--corner);
   border-top-left-radius: var(--corner);
   align-items: center;
-  color:var(--light)!important;
+  color:var(--white)!important;
   justify-content: center;
   border: none !important;
   background-color: var(--textarea) !important;
@@ -174,7 +176,7 @@ textarea:focus {
 
 .tileheader {
   height: 40px;
-  border-bottom: 1px solid #220d33;
+  border-bottom: 1px solid #1e2836;
   /* background-color: #1b1220; */
   text-align: center;
   color: #868686;
@@ -206,7 +208,7 @@ textarea:focus {
 }
 
 .user-tile {
-  background-color: #1c1527;
+  background-color: #1e1e2e;
   padding-left: 20px;
   padding-right: 20px;
   padding-top: 0px;
@@ -222,7 +224,7 @@ textarea:focus {
 }
 
 .bot-tile {
-  background-color: #1c1527;
+  background-color: #1e1e2e;
   padding-left: 20px;
   padding-right: 20px;
   padding-top: 0px;
@@ -239,7 +241,7 @@ textarea:focus {
 .userstyle {
   color:dodgerblue;
   border-top-left-radius: 10px; 
-  background-image:  linear-gradient(135deg, rgb(61, 31, 89), #1c1527, #1c1527);
+  background-image:  linear-gradient(135deg, rgb(44, 52, 66), #1e1e2e, #1e1e2e);
   margin-left: -22px;
   height: 39px;
   width: 60px; 
@@ -250,7 +252,7 @@ textarea:focus {
 .robotstyle {
   color:rgb(3, 151, 102);
   border-top-left-radius: 10px; 
-  background-image:  linear-gradient(135deg, rgb(61, 31, 89), #1c1527, #1c1527);
+  background-image:  linear-gradient(135deg,rgb(44, 52, 66), #1e1e2e, #1e1e2e);
   margin-left: -22px;
   height: 39px;
   width: 60px; 
@@ -421,7 +423,7 @@ ul {
 }
 
 .sidebar {
-  height: calc(100vh - 175px);
+  height: calc(100vh - 185px);
   overflow: scroll;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
@@ -431,13 +433,13 @@ ul {
   visibility: hidden;
   padding-left: 15px !important;
   padding-right: 3px !important;
-  background-image: linear-gradient(135dg, #1b0331, #180d0d) !important;
+  background-image: linear-gradient(135dg, var(--btn-outline), #180d0d) !important;
   border: 1px solid rgba(54, 18, 85, 0.3);
-  box-shadow: 0px 10px 10px 10px #06010c;
+  box-shadow: 0 0 0 1px var(--btn-outline);
   max-width: 0;
-  border-radius: 20px;
+  border-radius: 15px;
   margin: 5px !important;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 70px);
   opacity: 0;
 }
 
@@ -475,11 +477,11 @@ ul {
 
 .theme {
   background-color: inherit;
-  color: var(--btn-outline);
+  color: var(--light);
   /* background-image: linear-gradient(290deg,  rgba(140, 175, 175, 0) 0%,  var(--dark-main)   100%); */
   /* border: 1px solid var( --btn-outline);
   */
-  background-color: #1c1527;
+  background-color: #1e1e2e;
 }
 
 .theme:hover {
@@ -492,7 +494,7 @@ ul {
   background: linear-gradient(135dg, #1b0331, #180d0d)  !important;
   /* border-bottom:  linear-gradient(#1b0331, #180d0d)  !important; */
   border-bottom: 1px solid;
-  border-image: linear-gradient( rgb(17, 17, 41), rgb(22, 7, 29)) 1!important;
+  border-image: linear-gradient( rgb(22, 22, 37), rgb(21, 22, 36)) 1!important;
   color: var(--btn-outline);
 
 }
