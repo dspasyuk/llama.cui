@@ -57,6 +57,8 @@ Starting from version 0.24 model will be downloaded automatically.
    
    c. Einstein-v4-7B:           https://huggingface.co/LoneStriker/Einstein-v4-7B-GGUF
 
+   d. Qwen2-7B-Instruct Models: https://huggingface.co/Qwen/Qwen2-7B-Instruct-GGUF/tree/main (will need flash attentioon enabled in config.js e.g. -fa)
+
 7. Install the project and set your configuration parameters
   
    `cd llama.cui
