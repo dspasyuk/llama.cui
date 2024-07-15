@@ -31,24 +31,42 @@ cui.mcopyplugin =function(md) {
 };
 
 // Method to toggle HTML escaping
-cui.toggleEscapeHtml = function (button) {
+cui.toggleEscapeHtml = function(button) {
   const codeBlock = button.parentElement.querySelector('code');
   const preBlock = button.parentElement.querySelector('pre');
   const code = codeBlock.textContent;
   let scrollableElement = button.parentElement.querySelector('.renderHTML');
-  
+
   if (!scrollableElement) {
     scrollableElement = document.createElement('div');
     scrollableElement.className = 'renderHTML';
     preBlock.insertAdjacentElement('afterend', scrollableElement);
   }
+  scrollableElement.innerHTML = '';
+  const iframe = document.createElement('iframe');
+  iframe.style.width = '100%';
+  // iframe.style.height = '200px';
+  scrollableElement.appendChild(iframe);
 
-  // Update the content of the scrollable element
-  scrollableElement.innerHTML = code;
-  
-  // Scroll the element into view
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  iframeDoc.open();
+  iframeDoc.write(code);
+  iframeDoc.close();
+
+  // Ensure scripts within the iframe are executed
+  const scripts = iframeDoc.getElementsByTagName('script');
+  Array.from(scripts).forEach(oldScript => {
+    const newScript = iframeDoc.createElement('script');
+    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+    newScript.appendChild(iframeDoc.createTextNode(oldScript.innerHTML));
+    oldScript.parentNode.replaceChild(newScript, oldScript);
+  });
+  iframe.onload = function() {
+    iframe.style.height = iframe.contentWindow.document.documentElement.scrollHeight + 'px';
+  };
   scrollableElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
+
 
 cui.init = function (iphostname, port, piper, testQs) {
   // Default to escaping HTML
@@ -184,7 +202,7 @@ cui.listGenerate = function () {
         text: allData[chat][theid]["user"]
           .toString()
           .substring(0, 30)
-          .replace('"', ""),
+          .replace('"', "")+"...",
         href: "",
       };
     });
