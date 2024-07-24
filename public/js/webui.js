@@ -11,6 +11,27 @@ cui.disableHeaderPlugin = function(md) {
     return '';
   };
 }
+cui.openTab = function(button, tabName) {
+  const tabContainer = button.closest('.tab');
+  const codeblock = tabContainer.nextElementSibling.nextElementSibling;
+  const renderHTML = tabContainer.nextElementSibling;
+  const tabButtons = tabContainer.querySelectorAll('.tablinks');
+  for (let i = 0; i < tabButtons.length; i++) {
+    tabButtons[i].classList.remove('active');
+  }
+  button.classList.add("active");
+
+  console.log(tabName)
+  if (tabName === 'codeblock') {
+    codeblock.classList.remove('hide');
+    renderHTML.classList.add('hide');
+  } else if (tabName === 'previewblock') {
+    cui.toggleEscapeHtml(renderHTML, codeblock);
+    codeblock.classList.add('hide');
+    renderHTML.classList.remove('hide');
+    
+  }
+}
 
 cui.mcopyplugin =function(md) {
   const defaultFence = md.renderer.rules.fence || function(tokens, idx, options, env, self) {
@@ -21,51 +42,46 @@ cui.mcopyplugin =function(md) {
 
     // Inject the copy button into the existing container
     return `
-      <div class="code-block-wrapper" style="position: relative;">
+      <div class="tab">
+        <button class="tablinks active" onclick="cui.openTab(this, 'codeblock')">code</button>
+        <button class="tablinks" onclick="cui.openTab(this, 'previewblock')">preview</button>
+      </div>
+      <div class="code-block-wrapper renderHTML hide" style="position: relative;"></div>
+      <div class="code-block-wrapper codeblock" style="position: relative;">
         ${originalResult}
         <button class="btn headerbutton" onclick="cui.copyCode(this)" title="Copy code" style="position: absolute; top: 5px; right: 5px; margin-right:2%"><i class="fas fa-copy"></i></button>
-        <button class="btn headerbutton" name = "renderhtml" onclick="cui.toggleEscapeHtml(this)" title="Render HTML" style="position: absolute; top: 5px; right: 35px; margin-right:2%"><i class="fas fa-newspaper"></i></button>
       </div>
     `;
   };
 };
 
 // Method to toggle HTML escaping
-cui.toggleEscapeHtml = function(button) {
-  const codeBlock = button.parentElement.querySelector('code');
-  const preBlock = button.parentElement.querySelector('pre');
+cui.toggleEscapeHtml = function(scrollableElement, codeBlock) {
   const code = codeBlock.textContent;
-  let scrollableElement = button.parentElement.querySelector('.renderHTML');
-
-  if (!scrollableElement) {
-    scrollableElement = document.createElement('div');
-    scrollableElement.className = 'renderHTML';
-    preBlock.insertAdjacentElement('afterend', scrollableElement);
-  }
   scrollableElement.innerHTML = '';
   const iframe = document.createElement('iframe');
   iframe.style.width = '100%';
-  // iframe.style.height = '200px';
+  // iframe.style.height = codeBlock.offsetHeight!=0 ? codeBlock.offsetHeight+"px" : "100%";
   scrollableElement.appendChild(iframe);
 
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
   iframeDoc.open();
-  iframeDoc.write(code);
-  iframeDoc.close();
+  const isHTML = /<[^>]+>/.test(code);
+  if (isHTML) {
+    iframeDoc.write(code);
+  } else {
+    iframeDoc.write(`<script>${code}</script>`);
+  }
 
-  // Ensure scripts within the iframe are executed
-  const scripts = iframeDoc.getElementsByTagName('script');
-  Array.from(scripts).forEach(oldScript => {
-    const newScript = iframeDoc.createElement('script');
-    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-    newScript.appendChild(iframeDoc.createTextNode(oldScript.innerHTML));
-    oldScript.parentNode.replaceChild(newScript, oldScript);
-  });
+  iframeDoc.close();
   iframe.onload = function() {
     iframe.style.height = iframe.contentWindow.document.documentElement.scrollHeight + 'px';
   };
   scrollableElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
+
+
+
 
 
 cui.init = function (iphostname, port, piper, testQs) {
