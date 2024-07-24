@@ -105,7 +105,7 @@ Answer the following questions:
 5. How many days does it take to travel from New York City to London by plane, assuming non-stop flights and average speeds?
 6. What are the products of the chemical reaction between salicylic acid and acetic anhydride?
 7. If five cats can catch five mice in five minutes, how long will it take one cat to catch one mouse?
-8. Create a JS program that prints the first 100 Fibonacci numbers.
+8. Create a bouncing ball animation as all in one HTML/JS/CSS page.
 `
 
 
