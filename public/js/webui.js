@@ -42,6 +42,7 @@ cui.mcopyplugin =function(md) {
 
     // Inject the copy button into the existing container
     return `
+    <br>
       <div class="tab">
         <button class="tablinks active" onclick="cui.openTab(this, 'codeblock')">code</button>
         <button class="tablinks" onclick="cui.openTab(this, 'previewblock')">preview</button>
@@ -123,7 +124,7 @@ cui.init = function (iphostname, port, piper, testQs) {
   cui.piperate = piper.rate;
   cui.piperenabled = piper.enabled;
   if (cui.piperenabled) {
-     document.getElementById("piper-container").style.display = "block";
+     document.getElementById("piper-container").style.display = "flex";
   }
   cui.testQs = testQs;
   cui.messageId = "";

@@ -12,6 +12,24 @@ vdb.init = async function (
   this.pipeline;
   this.dbFile = dbfile;
   this.index = {};
+  this.dataChannel = new Map();
+  this.dataChannel.set("Documents", {
+    datastream: "Documents", 
+    datafolder: "./docs",
+    slice: 2000,
+    vectordb: "Documents.js"
+  });
+  
+  this.dataChannel.set("MongoDB", {
+    datastream: "MongoDB",
+    database: "fortknox",
+    collection: "clientlist",
+    url: "MongoDB://localhost:27017/",
+    vectordb: "Mongodb.js",
+    slice: 2000,
+  });
+  
+  this.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
   this.TransOptions = { pooling: "mean", normalize: false };
   try {
     const transformersModule = await import("@xenova/transformers");
@@ -21,7 +39,6 @@ vdb.init = async function (
   }
   this.getVector = await vdb.transInit();
   await vdb.initVectorDB();
-  // await this.pullDatabase();
   var result = await this.query(query);
   if (result.replace(/\s/g, "").trim().length > 5) {
     console.log("result", result.length, "result");
@@ -31,56 +48,31 @@ vdb.init = async function (
   }
 };
 
-vdb.initVectorDB = async function () {
-  if (config.embedding.MongoDB) {
-    this.index = new LocalIndex(
-      path.join(__dirname, "db", config.dataChannel.get("MongoDB").datastream)
-    );
-    if (!(await this.index.isIndexCreated())) {
-      await this.index.createIndex();
-    }
-    const mongodb = path.join(
-      __dirname,
-      "db",
-      config.dataChannel.get("MongoDB").datastream,
-      "index.json"
-    );
-    if (fs.existsSync(mongodb)) {
-      if (fs.statSync(mongodb).size > 200) {
-        console.log(
-          mongodb,
-          fs.statSync(mongodb).size,
-          `Database exist ${config.dataChannel.get("MongoDB").datastream}`
-        );
-      } else {
-        await this.pullDatabase();
-      }
+
+vdb.initIndex = async function(type){
+  const indexPath = path.join(__dirname, "db", this.dataChannel.get(type).datastream);
+  this.index = new LocalIndex(indexPath);
+
+  if (!(await this.index.isIndexCreated())) {
+    await this.index.createIndex();
+  }
+  const indexFile = path.join(indexPath, "index.json");
+  if (fs.existsSync(indexFile)) {
+    const fileSize = fs.statSync(indexFile).size;
+    if (fileSize > 200) {
+      console.log(`Database exists ${this.dataChannel.get(type).datastream}`);
+    } else {
+      await (type === "MongoDB" ? this.pullDatabase() : this.pullDocuments(this.dataChannel.get("Documents").datafolder));
     }
   }
+};
+
+vdb.initVectorDB = async function () {
+  if (config.embedding.MongoDB) {
+    await vdb.initIndex("MongoDB");
+  }
   if (config.embedding.Documents) {
-    this.index = new LocalIndex(
-      path.join(__dirname, "db", config.dataChannel.get("Documents").datastream)
-    );
-    if (!(await this.index.isIndexCreated())) {
-      await this.index.createIndex();
-    }
-    const docdb = path.join(
-      __dirname,
-      "db",
-      config.dataChannel.get("Documents").datastream,
-      "index.json"
-    );
-    if (fs.existsSync(docdb)) {
-      if (fs.statSync(docdb).size > 200) {
-        console.log(
-          `Database exist ${config.dataChannel.get("Documents").datastream}`
-        );
-      } else {
-        await this.pullDocuments(
-          config.dataChannel.get("Documents").datafolder
-        );
-      }
-    }
+    await vdb.initIndex("Documents");
   }
 };
 
@@ -91,8 +83,6 @@ vdb.readFile = function (filePath) {
 vdb.tokenize = function (text) {
   // Split the text into words using whitespace as the separator
   const words = text.split(/\s+/);
-
-  // Filter out empty strings and punctuation
   const cleanWords = words
     .filter((word) => word.length > 0 && !word.match(/[^a-zA-Z0-9]/))
     .join(" ");
@@ -113,7 +103,7 @@ vdb.pullDocuments = async function (DataFolder) {
       filename: filename,
       tokens: tokens.slice(
         0,
-        Math.min(tokens.length, config.dataChannel.get("Documents").slice)
+        Math.min(tokens.length, this.dataChannel.get("Documents").slice)
       ),
     });
   }
@@ -124,7 +114,7 @@ vdb.pullDocuments = async function (DataFolder) {
 
 vdb.pullDatabase = async function () {
   const mdb = require("./mgdb.js");
-  var cfg = config.dataChannel.get("MongoDB");
+  var cfg = this.dataChannel.get("MongoDB");
   var mjdb = new mdb(cfg.url, cfg.database);
   var documents = await mjdb.find(cfg.collection, {});
   for (let i = 0; i < documents.length; i++) {
@@ -215,6 +205,8 @@ vdb.query = async function (text) {
 };
 
 // vdb.init();
+// vdb.pullDocuments(vdb.dataChannel.get("Documents").datafolder);
+
 try {
   module.exports = exports = vdb;
 } catch (e) {}

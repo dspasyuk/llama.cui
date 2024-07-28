@@ -18,18 +18,25 @@
 
 body {
   font-family: Arial, sans-serif;
-  background-color: var(--brown);
   line-height: 1.2 !important;
-  background: radial-gradient(circle at center, rgb(1, 1, 10) 0%, rgb(4, 2, 12) 20%, rgb(2, 2, 7) 30%, rgb(2, 2, 3) 50%, rgb(0, 0, 2) 70%, rgba(0,2,2,1) 100%);
+  background: radial-gradient(circle at center, rgb(2, 2, 9) 0%,  rgb(2, 2, 8) 20%,
+  rgb(2, 2, 7) 20%, rgb(2, 2, 6) 30%, rgb(2, 2,4) 50%,
+  rgb(2, 2, 3) 70%, rgba(2,2,2) 100%);
+  background-attachment: fixed;
+  background-size: cover;
   overflow: hidden;
-  /* filter:  invert(0) hue-rotate(90deg); */
+  max-height: 100vh;
+  max-width: 100vw;
 }
 
 html,body{
   scrollbar-color: var(--textarea) var(--borderlistcolor)  !important;
  }
 
-
+.container-main{
+  width: 100%;
+  height: 100%;
+}
 /* html {
   filter: invert(1) hue-rotate(100deg) light mode 
 } */
@@ -52,16 +59,16 @@ html,body{
 
 .container-fluid{
   height: calc(100vh - 140px);
+  
 }
 
 .chat-container {
   position: relative;
-  max-width: 85vw;
+  max-width: 95vw;
   border: var(--border);
   height: calc(100vh -50px);
   margin: 5px auto;
   border-radius: 0px;
-  display: flex;
   flex-direction: column;
   transform: translateX(0);
   transition: max-width var(--animation) ease, opacity var(--animation) ease, transform var(--animation) ease;
@@ -115,9 +122,10 @@ button {
 
 .input-container {
   max-height: 300px;
-  min-height: 60px;
+  min-height: 40px;
   display: flex;
-  width: 80%!important;
+  min-width: 100px;
+  width: 90%!important;
   margin: 0 auto;
   box-sizing: border-box;
   background-color: var(--textarea);
@@ -136,10 +144,14 @@ textarea:focus {
   color:var(--white) !important;
 }
 
+textarea::placeholder {
+  line-height: 30px;
+  }
+
 .input-container textarea {
   display: flex;
-  padding-top: 25px !important;
-  min-height: 60px !important;
+  padding-top: 15px !important;
+  min-height: 40px !important;
   max-height: 300px !important;
   padding-left:40px !important;
   padding-bottom: 10px !important;
@@ -151,6 +163,7 @@ textarea:focus {
   border: none !important;
   background-color: var(--textarea) !important;
   resize: none;
+  align-items: center;
   margin: 0 auto;
   vertical-align: middle;
   -ms-overflow-style: none;  /* IE and Edge */
@@ -162,17 +175,7 @@ textarea:focus {
   align-self: center;
 }
 
-@media (max-width: 768px) {
-  .input-container {
-    width: 100%;
-  }
-}
 
-@media (min-width: 769px) {
-  .input-container {
-    width: 70%;
-  }
-}
 
 .tileheader {
   height: 40px;
@@ -395,9 +398,32 @@ ul {
   }
 
   .chat-container {
-    width: 100%;
-    margin-top: 20px;
-    /* Expand the main chat container on small screens */
+    width: 90vw;
+    height: calc(100vh - 120px)!important;
+  }
+  .left-sidebar {
+    height: calc(100vh - 120px)!important;
+    padding-left: 0;
+    margin: 0 !important;
+  }
+  .sidebar{
+    height:calc(100vh - 250px)!important;
+  }
+  .left-sidebar.open{
+    width: 100vw !important;
+    padding-left: 15 !important;
+    margin: 5px !important;
+  }
+  .chat-container.open {
+    transform: translateX(0);
+    transition: max-width var(--animation) ease, opacity var(--animation) ease, transform var(--animation) ease;
+    max-width: 0;
+    display:none !important;
+    /* Adjust the width according to your design */
+  }
+  .input-container {
+    max-height: 100px;
+    min-height: 30px;
   }
 }
 
@@ -419,7 +445,9 @@ ul {
 }
 
 .embed-icon {
-  padding-left: 15px;
+  padding-left: 18px;
+  padding-top: 3px;
+
 }
 
 .sidebar {
@@ -431,26 +459,31 @@ ul {
 
 .left-sidebar {
   visibility: hidden;
-  padding-left: 15px !important;
-  padding-right: 3px !important;
   background-image: linear-gradient(135dg, var(--btn-outline), #180d0d) !important;
   border: 1px solid rgba(54, 18, 85, 0.3);
+  border: var(--border);
   box-shadow: 0 0 0 1px var(--btn-outline);
   max-width: 0;
   border-radius: 15px;
-  margin: 5px !important;
+  margin: 5px;
   height: calc(100vh - 70px);
+  /* position:fixed;
+  top:55px;
+  bottom:0; */
   opacity: 0;
 }
 
 .left-sidebar.open {
   visibility: visible;
   max-width: 300px;
+  width: 300px;
+  padding-left: 15px;
+  padding-right: 3px;
   opacity: 1;
   transform: translateX(0);
   transition: max-width var(--animation) ease, opacity var(--animation) ease, transform var(--animation) ease;
   -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  scrollbar-width: none;  Firefox
 }
 .left-sidebar ::-webkit-scrollbar {
   display: none;
@@ -466,7 +499,6 @@ ul {
   transform: translateX(0);
   transition: max-width var(--animation) ease, opacity var(--animation) ease, transform var(--animation) ease;
   max-width: calc(80vw - 300px);
-  
   /* Adjust the width according to your design */
 }
 
@@ -502,7 +534,7 @@ ul {
   /* background-color: inherit; */
   cursor: pointer;
   padding: 7px;
-  width: 273px;
+  width:calc(100% - 8px);
   /* border: 1px solid var( --btn-outline); */
   /* text-align: left; */
   font-size: 16px;
@@ -528,7 +560,8 @@ ul {
 .bottom-left {
   background: linear-gradient(circle, #1b0331, #180d0d)  !important;
   border-top: 1px solid rgba(40, 5, 70, 0.3);
-  display: block;
+  display:block;
+  position: sticky;
   overflow: hidden;
   outline: none;
   /* background-color: inherit; */
@@ -622,4 +655,13 @@ iframe{
   display: none;
   height: 0px;
   margin-bottom: 0;
+}
+
+.exam{
+  background-color: inherit;
+  padding:0;
+  border: none;
+  color: var(--light);
+  padding: 0 7px;
+  cursor: pointer;
 }

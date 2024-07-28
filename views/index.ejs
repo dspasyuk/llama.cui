@@ -27,6 +27,7 @@
 </head>
 
 <body>
+  <div class="container-main">
   <nav class="navbar navbar-expand-lg themenav navbar-dark justify-content-between flex-nowrap flex-row">
     <div class="footerbar nav navbar-nav flex-row float-right">
       <button id="sidebar-toggle" class="btn theme sidebar-toggle float-left"> <i class="fas fa-bars"></i>
@@ -42,7 +43,7 @@
       <!-- Left Sidebar -->
       <div class="col-md-3 left-sidebar" id="left-sidebar">
         <div class="toolbar">
-          <button title="New Chart" onclick="cui.onNewChart()" style="width:220px" class="btn theme"> <i class="fas fa-file"></i></button>
+          <button title="New Chart" onclick="cui.onNewChart()" style="width:calc(100% - 50px)" class="btn theme"> <i class="fas fa-file"></i></button>
           <button title="Delete All" onclick="cui.deleteMessages()" type="button" class="btn theme "><i class="fas fa-trash "></i></button>
         </div>
         <div class="sidebar">
@@ -64,7 +65,7 @@
               <input class="embed-check" id="piper" type="checkbox" name="piper" value="" onclick="cui.piperToggle()">
               <span class="embed-icon" title="Enable Piper TTS"> <i class="fas fa-music"></i></span>
             </div>   
-            <div class="" id="tester"><button id="testgenerator" title="Run default model exam" onclick="cui.defaultTest()" type="button" class="btn theme">Exam</button></div>  
+            <div class="embed theme" id="tester"><button id="testgenerator" title="Run default model exam" onclick="cui.defaultTest()" type="button" class="exam">Exam</button></div>  
           </div> 
         </div>
       </div>
@@ -120,5 +121,6 @@
 
     adjustChatMessagesHeight(); // Initial adjustment on page load
   </script>
+  </div>
 </body>
 </html>
