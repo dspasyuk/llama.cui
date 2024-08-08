@@ -170,7 +170,7 @@ llama.cui supports embeddings from a text file (see the docs folder) and MongoDB
 
 You will need to delete the existing DB folder before running llama.cui. The new database will be generated on the next request for embedding (select use database in the bottom left corner of the UI interface to generate the database)  
 
-For data format convention, llama.cui uses the anytotext.js library. You can place any doc, xlsx, docx, txt, or other text files into doc directory to create your vector database. All embeddings are treated localy using all-MiniLM-L6-v2 model. 
+For data format convention, llama.cui uses the anytotext.js library. You can place any doc, xlsx, docx, txt, or other text files into "docs" directory to create your vector database. All embeddings are treated localy using all-MiniLM-L6-v2 model. 
 
 </details>
 
