@@ -166,18 +166,14 @@ export DYLD_LIBRARY_PAT=/PIPER_ROOT_DEER/piper-phonemize/lib:$DYLD_LIBRARY_PATH`
 </details>
 <details><summary> <H1> Embeddings </H1></summary>
 
-![embedding](https://github.com/dspasyuk/llama.cui/assets/34203011/c66a9cd7-f9d9-4b69-9b4a-53e11a14a5bf)
 
 
 llama.cui supports embeddings from a text file (see the docs folder) and MongoDB (do npm install Mongo and make changes to config.js to configure the database).
 
-To use embeddings, you will need to create your vector database using the embedding.js script. Simply place any docx, html, xlsx, etc. files in the rawdocs folder and run the embedding.js script using the command below:
-
-`node embedding.js`
-
 You will need to delete the existing DB folder before running llama.cui. The new database will be generated on the next request for embedding (select use database in the bottom left corner of the UI interface to generate the database)  
 
-For data format convention, llama.cui uses the anytotext.js library. 
+For data format convention, llama.cui uses the anytotext.js library. You can place any doc, xlsx, docx, txt, or other text files into doc directory to create your vector database. All embeddings are treated localy using all-MiniLM-L6-v2 model. 
+
 </details>
 
 <details open><summary> <H1> Screenshots </H1></summary>
