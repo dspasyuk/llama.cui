@@ -5,11 +5,13 @@ const prmt = require("./prompt.js");
 const fs = require('fs');
 var config = {};
 
-config.modelrepo = "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF";
+//Model Setting
+config.modelrepo = "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF"; //change this to use other models
+config.modelname = "Meta-Llama-3-8B-Instruct_Q4_K_S.gguf"; //change this to use other models
 config.modeldirectory = "./models";
-config.modelname = "Meta-Llama-3-8B-Instruct_Q4_K_S.gguf";
 
-//Model Setting //Llama.cpp settings
+
+ //Llama.cpp settings
 config.systemPrompt= fs.readFileSync('Alice.txt', 'utf8');
 
 config.params = {
@@ -27,12 +29,11 @@ config.params = {
   "-p":`'${config.systemPrompt}'`
 }
 
-config.llamacpp = "../llama.cpp/llama-cli";
-
 //Llama.cui settings//
-config.PORT = { client: "5000", server: "5000" };
+config.llamacpp = "../llama.cpp/llama-cli";
+config.PORT = { client: "7777", server: "7777" };
 config.IP = { client: "localhost", server: "localhost" };
-config.login = false;
+config.login = false; //change this to true to enable login
 config.timeout = 50000;
 config.session = {
   secret: "2C44-4D44-WppQ38S", //change before deployment
@@ -42,7 +43,7 @@ config.session = {
   cookie: {
     secure: false, // will change to true when deploying to production
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 100000, // 24 hours
+    maxAge: 24 * 60 * 60 * 10000000, // 2400 hours
     sameSite: true,
   },
 };
@@ -54,24 +55,7 @@ config.loginTrue = async function (user) {
   return theuser;
 };
 
-config.dataChannel = new Map();
-config.dataChannel.set("Documents", {
-  datastream: "Documents", 
-  datafolder: "./docs",
-  slice: 2000,
-  vectordb: "Documents.js"
-});
 
-config.dataChannel.set("MongoDB", {
-  datastream: "MongoDB",
-  database: "fortknox",
-  collection: "clientlist",
-  url: "MongoDB://localhost:27017/",
-  vectordb: "mongodb.js",
-  slice: 2000,
-});
-
-config.dataChannel.set("WebSearch", { datastream: "WebSearch", slice: 2000 });
 config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
 config.filter =function(output){
   return output.replace(/<\|.*?\|>/g, '');
@@ -79,8 +63,10 @@ config.filter =function(output){
 
 //adjust model prompt
 config.prompt = function(userID, prompt, context, firstchat){
+   console.log(userID, prompt, context, firstchat);
    return prmt.promptFormatNONE(config.systemPrompt, prompt, context, firstchat); 
 }
+
 //filter any unwanted model outputs or change formating here
 config.outputFilter = function(output){
   return config.filter(output);
@@ -88,9 +74,8 @@ config.outputFilter = function(output){
 
 //Piper setting
 config.piper = {
-  enabled: false,
+  enabled: true,
   rate: 20500,
-  // rate: 16000,
   output_file: 'S16_LE',
   exec: "../../piper/install/piper",
   model: "../../piper/models/librits/en_US-libritts_r-medium.onnx", 
@@ -99,10 +84,10 @@ config.piper = {
 config.testQuestions = config.testQuestions = `
 Answer the following questions:
 1. The day before two days after the day before tomorrow is Saturday. What day is it today?
-2. What is the square root of 169?
+2. Which number is larger 9.11 or 9.9?
 3. Solve the equation 3y = 6y + 11 and find y.
 4. There are two ducks in front of a duck, two ducks behind a duck, and a duck in the middle. How many ducks are there?
-5. How many days does it take to travel from New York City to London by plane, assuming non-stop flights and average speeds?
+5. Billy's mom had 4 children. The 1st one was April, the 2nd was May, and the 3rd was June. What was the 4th child named?
 6. What are the products of the chemical reaction between salicylic acid and acetic anhydride?
 7. If five cats can catch five mice in five minutes, how long will it take one cat to catch one mouse?
 8. Create a bouncing ball animation as all in one HTML/JS/CSS page.
@@ -114,6 +99,9 @@ try {
 } catch (e) {}
 
 // general:
+// Test Prompts:
+// ../llama.cpp/llama-cli --model ../../models/Meta-Llama-3.1-8B-Instruct-Q5_K_M.gguf --n-gpu-layers 33   -b 2048 --ctx_size 512 --temp 0.3 -fa --top_k 10   -p "^[[200~<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are a large language model. Your purpose is to assist users by providing information, answering questions based on the data you were trained on. Only answer if you know the answer, otherwise say that you do not know<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nHow many medals has simone biles won so far?<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n" -n 128
+
 
 //   -h,    --help, --usage          print usage and exit
 //          --version                show version and build info
