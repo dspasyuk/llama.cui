@@ -224,7 +224,7 @@ cui.listGenerate = function () {
       };
     });
     let list = "";
-    for (let i = 0; i < chatList.length; i++) {
+    for (let i = chatList.length - 1; i >= 0; i--) {
       const item = chatList[i];
       item.text = item.text.replace("<br>", "");
       list += `<li class="dark"> <div style="width:100%" onmouseover="cui.showDeleteButton('${item.id}_del')" onmouseout="cui.hideDeleteButton('${item.id}_del')" class="list-group-item-container">

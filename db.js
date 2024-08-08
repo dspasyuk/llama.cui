@@ -2,21 +2,23 @@ const { LocalIndex } = require("vectra");
 const path = require("path");
 const config = require("./config.js");
 const fs = require("fs");
-
+const reader = require('any-text');
+const { exec } = require("child_process");
 function vdb() {}
 
 vdb.init = async function (
   query = "Tell me about bull riding shotgun",
   dbfile = "./db/Documents/index.json"
 ) {
-  this.pipeline;
+  vdb.pipeline;
   this.dbFile = dbfile;
   this.index = {};
+  this.useLlamaEmbedding = false;
   this.dataChannel = new Map();
   this.dataChannel.set("Documents", {
     datastream: "Documents", 
     datafolder: "./docs",
-    slice: 2000,
+    slice: 500,
     vectordb: "Documents.js"
   });
   
@@ -33,15 +35,15 @@ vdb.init = async function (
   this.TransOptions = { pooling: "mean", normalize: false };
   try {
     const transformersModule = await import("@xenova/transformers");
-    this.pipeline = transformersModule.pipeline;
+    vdb.pipeline = transformersModule.pipeline;
+    vdb.getVector = await this.pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
   } catch (e) {
     console.error("Error importing @xenova/transformers:", e);
   }
-  this.getVector = await vdb.transInit();
+  // console.log("vdb.init", vdb.getVector);
   await vdb.initVectorDB();
-  var result = await this.query(query);
-  if (result.replace(/\s/g, "").trim().length > 5) {
-    console.log("result", result.length, "result");
+  var result = await vdb.query(query);
+  if (result) {
     return result;
   } else {
     return false;
@@ -76,8 +78,16 @@ vdb.initVectorDB = async function () {
   }
 };
 
-vdb.readFile = function (filePath) {
-  return fs.readFileSync(filePath, "utf8");
+vdb.readFile = async function (filePath) {
+  var slice;
+  let tokens = await reader.getText(filePath);
+  tokens = tokens.replace(/\n\n/g, " ");
+  // console.log(tokens);
+  const sliceSize = this.dataChannel.get("Documents").slice;
+  for (let i = 0; i < tokens.length; i += sliceSize) {
+        slice = `${filePath};\n\n` + tokens.slice(i, i + sliceSize);
+        await this.addItem(slice);
+    }
 };
 
 vdb.tokenize = function (text) {
@@ -86,31 +96,31 @@ vdb.tokenize = function (text) {
   const cleanWords = words
     .filter((word) => word.length > 0 && !word.match(/[^a-zA-Z0-9]/))
     .join(" ");
-  console.log(cleanWords);
+  // console.log(cleanWords);
   return cleanWords;
 };
 
-vdb.pullDocuments = async function (DataFolder) {
-  var files = fs.readdirSync(DataFolder);
-  // Rank documents (simplified)
-  var documents = [];
-  for (let i = 0; i < files.length; i++) {
-    let filename = path.join(__dirname, DataFolder, files[i]);
-    let tokens = this.readFile(filename);
-    tokens = tokens.replace(/\n\n/g, " ");
-    // tokens = vdb.tokenize(tokens);
-    documents.push({
-      filename: filename,
-      tokens: tokens.slice(
-        0,
-        Math.min(tokens.length, this.dataChannel.get("Documents").slice)
-      ),
-    });
-  }
-  for (let i = 0; i < documents.length; i++) {
-    await this.addItem(documents[i].tokens);
-  }
-};
+vdb.pullDocuments = function(dir) {
+  fs.readdir(dir, { withFileTypes: true }, async (err, files) => {
+      if (err) {
+          console.error(`Error reading directory ${dir}:`, err);
+          return;
+      }
+      for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const fullPath = path.join(dir, file.name);
+          if (file.isDirectory()) {
+              // Recursively traverse subdirectories
+              console.log(fullPath);
+              vdb.pullDocuments(fullPath);
+          } else if (file.isFile() && path.extname(file.name) === '.txt' || path.extname(file.name) === '.doc' || path.extname(file.name) === '.docx') {
+              // Read text files and handle their content
+              await vdb.readFile(fullPath);
+              console.log(fullPath);
+          }
+      }
+  });
+}
 
 vdb.pullDatabase = async function () {
   const mdb = require("./mgdb.js");
@@ -140,8 +150,12 @@ vdb.sentanceCompose = function (data) {
 };
 
 vdb.addItem = async function (text) {
-  var vector = await this.getVector(text, vdb.TransOptions);
-  // console.log(text);
+  var vector;
+  if (this.useLlamaEmbedding) {
+    vector = await this.getLlamaEmbedding(text);
+  } else {
+    vector = await vdb.getVector(text, vdb.TransOptions);
+  }
   await this.index.insertItem({
     vector: Array.from(vector.data),
     metadata: { text },
@@ -186,27 +200,60 @@ vdb.combineDictionaries = function (...dictionaries) {
 };
 
 vdb.query = async function (text) {
-  const vector = await this.getVector(text, vdb.TransOptions);
-  // console.log("Q", Array.from(vector.data))
-  var data = [];
+  var vector,
+  data = [];
+  if (this.useLlamaEmbedding) {
+    vector = await this.getLlamaEmbedding(text);
+  } else {
+    vector = await vdb.getVector(text, vdb.TransOptions);
+  }
+  
   const results = await this.index.queryItems(Array.from(vector.data), 7);
+  // console.log(text, vector.data);
   // console.log(text, JSON.stringify(results));
   if (results.length > 0) {
     for (let result of results) {
-      if (result.score > 0.33) {
+      if (result.score > 0.4) {
         data.push(result.item.metadata.text);
       }
     }
     let unique = vdb.findUniqueStrings(data.join(" "));
-    return unique.join(" "); // need to unique before joining
+    return "\n\n"+unique.join(" ")+"\n\n"; // need to unique before joining
   } else {
     console.log(`No results found.`);
+    return false;
   }
 };
 
-// vdb.init();
-// vdb.pullDocuments(vdb.dataChannel.get("Documents").datafolder);
+vdb.getLlamaEmbedding = function (text) {
+  // console.log("text", text);
+  return new Promise((resolve, reject) => {
+    const llamaembed = config.llamacpp.replace("llama-cli", "llama-embedding"); 
+    const embedmodel = config.llamacpp.replace("llama-cli", "snowflake-q8_0.gguf");
+    exec(`${llamaembed} -m ${embedmodel} -e -p "${text}" --embd-output-format array  -ngl 99`, (error, stdout, stderr) => {
+      if (error) {
+        reject(`error: ${error.message}`);
+      }
+      try{
+         if (stdout.includes("nan")) return;
+         const vector = JSON.parse(stdout);
+        //  console.log("vector", vector);
+         resolve({ data: vector[0] });
+      }catch(e){
+          console.log(e);
+          reject(`error: ${e.message}`);
+        }
+    });
+  });
+};
 
+async function run(){
+ await vdb.init();
+ await vdb.pullDocuments(vdb.dataChannel.get("Documents").datafolder);
+//vdb.getLlamaEmbedding ("Hello World");
+}
+
+//run();
 try {
   module.exports = exports = vdb;
 } catch (e) {}
