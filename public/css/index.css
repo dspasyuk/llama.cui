@@ -150,7 +150,7 @@ textarea::placeholder {
 
 .input-container textarea {
   display: flex;
-  padding-top: 15px !important;
+  padding-top: 19px !important;
   min-height: 40px !important;
   max-height: 300px !important;
   padding-left:40px !important;
@@ -422,7 +422,7 @@ ul {
     /* Adjust the width according to your design */
   }
   .input-container {
-    max-height: 100px;
+    
     min-height: 30px;
   }
 }
