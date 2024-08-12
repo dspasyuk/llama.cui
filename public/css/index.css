@@ -145,12 +145,12 @@ textarea:focus {
 }
 
 textarea::placeholder {
-  line-height: 30px;
+  line-height: 20px;
   }
 
 .input-container textarea {
   display: flex;
-  padding-top: 19px !important;
+  padding-top: 25px !important;
   min-height: 40px !important;
   max-height: 300px !important;
   padding-left:40px !important;
@@ -164,7 +164,6 @@ textarea::placeholder {
   background-color: var(--textarea) !important;
   resize: none;
   align-items: center;
-  margin: 0 auto;
   vertical-align: middle;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
