@@ -1,17 +1,17 @@
 :root {
-  --brown: #0d1117;
+  --brown: #303030;
   --white: #ffffff;
-  --light: #8f8e8e;
-  --dark-main: #080808;
-  --dark: #2b2a2a;
-  --btn-outline: #1e1e2e;
-  --btn-stop: #494970;
-  --textarea: #1e1e2e !important;
+  --light: hsl(0, 0%, 56%);
+  --dark-main: #1e1e1e;
+  --dark: #1e1e1e;
+  --btn-outline: #303030;
+  --btn-stop: #1e1e1e;
+  --textarea: #303030 !important;
   --btn-send: var(--textarea);
   --border:0px solid #fff;
-  --borderlistcolor: #0a0b11;
+  --borderlistcolor: #303030;
   --borderlist:1px solid var(--borderlistcolor);
-  --corner:50px;
+  --corner:10px;
   --animation:0.5s;
 }
 
@@ -19,9 +19,7 @@
 body {
   font-family: Arial, sans-serif;
   line-height: 1.2 !important;
-  background: radial-gradient(circle at center, rgb(2, 2, 9) 0%,  rgb(2, 2, 8) 20%,
-  rgb(2, 2, 7) 20%, rgb(2, 2, 6) 30%, rgb(2, 2,4) 50%,
-  rgb(2, 2, 3) 70%, rgba(2,2,2) 100%);
+  background: var(--dark);
   background-attachment: fixed;
   background-size: cover;
   overflow: hidden;
@@ -30,16 +28,17 @@ body {
 }
 
 html,body{
-  scrollbar-color: var(--textarea) var(--borderlistcolor)  !important;
+  scrollbar-color: var(--textarea) var(--btn-stop)  !important;
+  scrollbar-width: 7px;
  }
 
 .container-main{
   width: 100%;
   height: 100%;
 }
-/* html {
-  filter: invert(1) hue-rotate(100deg) light mode 
-} */
+html {
+  filter: invert(0); 
+}
 
 .form-control{
   line-height: 1.2 !important;
@@ -96,7 +95,7 @@ html,body{
 .chat-messages::-webkit-scrollbar-thumb {
   background-color: var(--btn-outline); /* Color for the scrollbar thumb */
   border-radius: 10px;
-  box-shadow: inset 0 0 5px rgba(34, 34, 34, 0.2);
+  /* box-shadow: inset 0 0 5px rgba(34, 34, 34, 0.2); */
 }
 
 .chat-messages::-webkit-scrollbar-track {
@@ -122,7 +121,7 @@ button {
 
 .input-container {
   max-height: 300px;
-  min-height: 40px;
+  min-height: 20px;
   display: flex;
   min-width: 100px;
   width: 90%!important;
@@ -145,16 +144,17 @@ textarea:focus {
 }
 
 textarea::placeholder {
-  line-height: 20px;
-  }
+  /* line-height: 0px; */
+  /* padding-top: 12px!important; */
+  margin-bottom: -5px;
+}
 
 .input-container textarea {
   display: flex;
-  padding-top: 25px !important;
-  min-height: 40px !important;
+  min-height: 20px !important;
   max-height: 300px !important;
   padding-left:40px !important;
-  padding-bottom: 10px !important;
+  padding-top:19px !important;
   border-bottom-left-radius: var(--corner);
   border-top-left-radius: var(--corner);
   align-items: center;
@@ -178,7 +178,7 @@ textarea::placeholder {
 
 .tileheader {
   height: 40px;
-  border-bottom: 1px solid #1e2836;
+  border-bottom: 1px solid var(--btn-outline);
   /* background-color: #1b1220; */
   text-align: center;
   color: #868686;
@@ -210,7 +210,7 @@ textarea::placeholder {
 }
 
 .user-tile {
-  background-color: #1e1e2e;
+  background-color: var(--brown);
   padding-left: 20px;
   padding-right: 20px;
   padding-top: 0px;
@@ -226,7 +226,7 @@ textarea::placeholder {
 }
 
 .bot-tile {
-  background-color: #1e1e2e;
+  background-color:var(--brown);
   padding-left: 20px;
   padding-right: 20px;
   padding-top: 0px;
@@ -243,7 +243,7 @@ textarea::placeholder {
 .userstyle {
   color:dodgerblue;
   border-top-left-radius: 10px; 
-  background-image:  linear-gradient(135deg, rgb(44, 52, 66), #1e1e2e, #1e1e2e);
+  background-image:  linear-gradient(135deg, var(--dark) 2%,  var(--brown)  10%);
   margin-left: -22px;
   height: 39px;
   width: 60px; 
@@ -254,7 +254,7 @@ textarea::placeholder {
 .robotstyle {
   color:rgb(3, 151, 102);
   border-top-left-radius: 10px; 
-  background-image:  linear-gradient(135deg,rgb(44, 52, 66), #1e1e2e, #1e1e2e);
+  background-image:  linear-gradient(135deg, var(--dark) 2%,  var(--brown)  10%);
   margin-left: -22px;
   height: 39px;
   width: 60px; 
@@ -300,8 +300,8 @@ code {
 }
 
 .sendmessage:hover {
-  background-color: var(--btn-send) !important;
-  color:var(--btn-stop) !important;
+  background-color: var(--btn) !important;
+  color:var(--white) !important;
 }
 
 ul {
@@ -475,19 +475,19 @@ ul {
 .left-sidebar.open {
   visibility: visible;
   max-width: 300px;
-  width: 300px;
+  min-width: 300px;
   padding-left: 15px;
   padding-right: 3px;
   opacity: 1;
   transform: translateX(0);
   transition: max-width var(--animation) ease, opacity var(--animation) ease, transform var(--animation) ease;
   -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  Firefox
+  scrollbar-width: none; 
 }
 .left-sidebar ::-webkit-scrollbar {
   display: none;
   width: 0;
-}
+} 
 
 .chat-messages ::-webkit-scrollbar-track {
   margin-top: 50px;
@@ -510,9 +510,8 @@ ul {
   background-color: inherit;
   color: var(--light);
   /* background-image: linear-gradient(290deg,  rgba(140, 175, 175, 0) 0%,  var(--dark-main)   100%); */
-  /* border: 1px solid var( --btn-outline);
-  */
-  background-color: #1e1e2e;
+  border: 1px solid var( --btn-outline);
+  /* background-color: #1e1e2e; */
 }
 
 .theme:hover {
@@ -521,7 +520,7 @@ ul {
 }
 
 .themenav {
-  background-color: #040108;
+  background-color: var( --dark);
   /* background: linear-gradient(135dg, #010102, #180d0d)  !important; */
   /* border-bottom:  linear-gradient(#1b0331, #180d0d)  !important; */
   border-bottom: 1px solid;
@@ -558,7 +557,8 @@ ul {
 
 .bottom-left {
   background: linear-gradient(circle, #1b0331, #180d0d)  !important;
-  border-top: 1px solid rgba(40, 5, 70, 0.3);
+  border-top: 1px solid var(--btn-outline);
+  margin-right: 10px;
   display:block;
   position: sticky;
   overflow: hidden;
@@ -570,14 +570,15 @@ ul {
 .tester {
   display: flex;
   justify-content: space-between;
-  padding-right: 8px;
+  padding-right: 5px;
+  padding-left: 8px;
   padding-top: 8px;
   border-radius: 10px !important;
 }
 
 .navbar {
   padding: 0.5rem 0.5rem;
-  box-shadow: 0px 10px 10px 10px #040108;
+  /* box-shadow: 0px 10px 10px 10px #040108; */
 }
 
 .vcenter {
@@ -610,7 +611,7 @@ iframe{
 
 /* Style the buttons inside the tab */
 .tab .tablinks {
-  background-color:#0b070f;
+  background-color:var(--btn-outline);
   float: left;
   border: none;
   outline: none;
@@ -619,26 +620,26 @@ iframe{
   cursor: pointer;
   padding: 5px 5px;
   margin-right:3px;
-  border-top: 1px solid #1f142b;
-  border-right: 1px solid #1f142b;
-  border-left: 1px solid #1f142b;
+  border-top: 1px solid var(--dark);
+  border-right: 1px solid var(--dark);
+  border-left: 1px solid var(--dark);
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
   transition: 0.3s;
   font-size: 14px;
-  color:#9b61d8;
+  color:var(--white);
   z-index: 2;
 }
 
 /* Change background color of buttons on hover */
 .tab .tablinks:hover {
-  background-color: #3f1f64;
+  background-color: var(--btn-outline);
   color: white;
 }
 
 /* Create an active/current tablink class */
 .tab .tablinks.active {
-  background-color: #0c0313;
+  background-color:var(--dark);
   color: #fff;
 }
 
