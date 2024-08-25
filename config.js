@@ -56,7 +56,7 @@ config.loginTrue = async function (user) {
 };
 
 
-config.embedding = { MongoDB: false, Documents: true, WebSearch: false };
+config.embedding = { MongoDB: false, Documents: true, WebSearch: true };
 config.filter =function(output){
   return output.replace(/<\|.*?\|>/g, '');
 }
