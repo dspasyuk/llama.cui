@@ -5,7 +5,7 @@
 // make clean && LLAMA_CUBLAS=1 make  -j
 //Copyright Denis Spasyuk
 //License MIT
-
+// require('./overwrightlog.js');  
 const express = require("express");
 const { spawn, exec } = require("child_process");
 const http = require("http");
@@ -13,9 +13,10 @@ const socketIO = require("socket.io");
 var cors = require("cors");
 const path = require("path");
 const vdb = require("./db.js");
+const DDG = require("./ddg.js");
 const fs = require("fs");
 const downloadModel = require("./modeldownloader.js");
-const version = 0.326; //changed public and server and config
+const version = 0.330; //changed public and server and config
 var session = require("express-session");
 const MemoryStore = require("memorystore")(session);
 const memStore = new MemoryStore();
@@ -158,7 +159,7 @@ ser.init = function (error) {
                 // Redirect to the "/" page
                 res.redirect("/");
               }
-              console.log("Login Successful");
+              // console.log("Login Successful");
             } else {
               res.render("login", { title: "login" });
             }
@@ -263,6 +264,21 @@ ser.open = function () {
   exec(start + ' ' + url);
 };
 
+ser.webseach = async function(input){
+  const ddg = new DDG({limit:4});
+  var ggsearch = [];
+  if (config.embedding.WebSearch) {
+    for await (const result of ddg.text(input)) {
+      
+      if(result && result.content!=null){
+          // console.log(result);
+          ggsearch.push(result);
+      }
+    }
+  }
+  return {embed:ggsearch};
+}
+
 ser.runPiper = function (output) {
   if (config.piper.enabled) {
     this.fullmessage += " " + output;
@@ -295,11 +311,10 @@ ser.handleLlama = function (msg) {
     if (output) {
       clearTimeout(this.streamTimeout);
     }
-    // console.log(this.socketId);
     this.io.to(this.socketId).emit("output", output);
     this.runPiper(output);
     if (output.includes("\n\n>")) {
-      console.log("Stopped");
+      // console.log("Stopped");
       this.messageQueue.splice(0, 1);
       this.isProcessing = false;
       this.processMessageQueue();
@@ -314,7 +329,7 @@ ser.processMessageQueue = function () {
   }
   this.isProcessing = true;
   const message = this.messageQueue[0];
-  const { socketId, input, piper } = message;
+  const { socketId, input, embed, piper } = message;
   this.socketId = socketId;
   this.piper_client_enabled = piper;
   // Send the message to the child process
@@ -341,14 +356,21 @@ ser.handleSocketConnection = async function (socket) {
       }
       // console.log("input",  data.firstchat);
       var socketId = data.socketid;
+      console.log(input.length);
+      if(config.embedding.WebSearch && input.length < 100){
+          const searchRes = await ser.webseach(input);
+          this.io.to(socketId).emit("output", searchRes);
+          embed += JSON.stringify(searchRes.embed);
+      }
       input = config.prompt(socketId, input, embed, data.firstchat);
       input = input + "\\";
       let piper = data.piper;
       this.connectedClients.set(socketId, input);
       // Add the incoming message to the queue
-      this.messageQueue.push({ socketId, input, piper});
+      this.messageQueue.push({ socketId, input, embed, piper});
       this.streamTimeout = setTimeout(this.handleTimeout, config.timeout);
       // Process messages if the queue is not being processed currently
+
       if (!this.isProcessing) {
         this.processMessageQueue();
       }

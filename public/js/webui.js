@@ -21,7 +21,6 @@ cui.openTab = function(button, tabName) {
   }
   button.classList.add("active");
 
-  console.log(tabName)
   if (tabName === 'codeblock') {
     codeblock.classList.remove('hide');
     renderHTML.classList.add('hide');
@@ -261,7 +260,11 @@ cui.loadMessage = function (chat) {
   chatMessages.innerHTML = "";
   for (let m = 0; m < messages.length; m++) {
     cui.createUserTile(cui.md.render(messages[m].user));
-    cui.createBotTile(messages[m].bot);
+    if(messages[m].embedding!=undefined){
+      cui.createBotTile(messages[m].bot, messages[m].embedding);
+    }else{
+      cui.createBotTile(messages[m].bot);
+    }
   }
 };
 //new message
@@ -274,7 +277,7 @@ cui.onNewChart = function () {
 };
 
 cui.socketInit = function () {
-  console.log(`${cui.iphostname}:${cui.port}`);
+  // console.log(`${cui.iphostname}:${cui.port}`);
   this.socket = io(`${cui.iphostname}:${cui.port}`, {
     query: { sessionID },
   });
@@ -289,12 +292,23 @@ cui.socketInit = function () {
   
   cui.currentTile = null; // Reference to the current tile element
   this.socket.on("output", (response) => {
+
+    if(typeof response === 'object' && response !== null) {
+       embedding = response;
+       cui.createBotTile("", embedding);
+       message = cui.getMessageById(cui.messageId);
+       message.embedding = embedding;
+       cui.setMessage(message);
+       chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    else{
     if (response.includes(cui.terminationTocken)) {
       cui.currentTile.textContent += " " + response.replace(cui.terminationTocken, "");
       cui.bufferText += " " + response;
       cui.currentTile.innerHTML = cui.md.render(cui.bufferText);
       message = cui.getMessageById(cui.messageId);
       message.bot = cui.md.render(cui.bufferText);
+      // console.log("message", message);
       cui.setMessage(message);
       cui.createSVG(cui.currentTile);
       cui.currentTile = null;
@@ -303,7 +317,9 @@ cui.socketInit = function () {
     } else {
       if (!cui.currentTile || cui.currentTile.classList.contains("user-tile")) {
         cui.bufferText = response;
+        // console.log("lalalallal ");
         cui.createBotTile(cui.bufferText);
+       
       } else {
         cui.currentTile.textContent += " " + response;
         cui.bufferText += " " + response;
@@ -314,7 +330,7 @@ cui.socketInit = function () {
     if (!userScrolledManually) {
       chatMessages.scrollTop = chatMessages.scrollHeight;
      }
-   
+    }
   });
 
 
@@ -330,7 +346,7 @@ cui.socketInit = function () {
   
   this.socket.on("connect", () => {
     cui.socketid = this.socket.id; // Get socket.id after connection is established
-    console.log(cui.socketid);
+    // console.log(cui.socketid);
   });
 
   this.socket.on("disconnect", () => {
@@ -374,8 +390,8 @@ cui.sendTextToSpeech = function (textFromTileBody) {
   }
 };
 
-cui.createBotTile = function (content) {
-  this.createTile(content, "bot-tile"); //prettyprint
+cui.createBotTile = function (content, embed) {
+  this.createTile(content, "bot-tile", embed); //prettyprint
 };
 
 cui.createUserTile = function (content) {
@@ -397,7 +413,6 @@ cui.piperToggle = function(){
 
 cui.createSVG = function (ell) {
   var extractedSvg = svgme.extractSvgFromText(ell.innerText);
-  // console.log(contentElement.innerText);
   if (extractedSvg) {
     svgme.convertSvgToHtml(ell,extractedSvg);
   }
@@ -417,9 +432,46 @@ cui.createHTML = function (ell) {
 };
 
 
+cui.SearchResultCard = function(result) {
+    // Create the card div
+    const card = document.createElement("div");
+    card.className = "card websearch mb-3";
+  
+    // Create the card header with title and href
+    const cardHeader = document.createElement("div");
+    cardHeader.className = "card-header";
+  
+    const cardTitle = document.createElement("h8");
+    cardTitle.className = "card-title d-inline";
+    cardTitle.innerText = result.title;
+  
+    const cardLink = document.createElement("a");
+    cardLink.className = "fas fa-globe float-right";
+    cardLink.href = result.href;
+    cardLink.target = "_blank";
+    cardLink.style.color = "#ccc";
+    cardLink.title = `Go to ${result.href}`;
+ 
+  
+    cardHeader.appendChild(cardTitle);
+    cardHeader.appendChild(cardLink);
+  
+    card.appendChild(cardHeader);
+    return card;
+}
 
 
-cui.createTile = function (content, tileClass) {
+cui.toggleExpansion = function(cards) {
+    if (cards.style.height === '45px') {
+      cards.style.height = 'auto';
+      cards.style.overflow = 'visible';
+    } else {
+      cards.style.height = '45px';
+      cards.style.overflow = 'hidden';
+    }
+    }
+
+cui.createTile = function (content, tileClass, embed="") {
   document.getElementsByClassName("chat-container")[0].style.backgroundImage =
     "none";
   const tileElement = document.createElement("div");
@@ -431,6 +483,7 @@ cui.createTile = function (content, tileClass) {
   headerText.innerHTML = tileClass === "user-tile" ? `<i class="fas fa-user userstyle"></i>` : `<i class="fa fa-robot robotstyle"></i>`;
   headerText.style.margin = "0 auto 0 0"; // Center the text
   // Append the header text and button to the tileheader
+
   tileheader.appendChild(headerText);
   // Button is appended after the text
   if (tileClass === "user-tile") {
@@ -453,7 +506,8 @@ cui.createTile = function (content, tileClass) {
     const vocalize = document.createElement("button");
     vocalize.name = "piperToggle";
     vocalize.onclick =function () {
-      const tilebody = vocalize.parentElement.nextElementSibling;
+      const parent = vocalize.parentElement.parentElement;
+      const tilebody = parent.querySelector(".tilebody");
       const textFromTileBody = tilebody.textContent.trim();
       // vocalize.innerHTML = '<i class="fas fa-stop"></i>';  
       cui.sendTextToSpeech(textFromTileBody);
@@ -473,6 +527,21 @@ cui.createTile = function (content, tileClass) {
   tileheader.appendChild(copyButton);
   // Append the tileheader to the tileElement
   tileElement.appendChild(tileheader);
+
+  if (tileClass === "bot-tile" && embed) {
+    const embedEl = document.createElement("div");
+    embedEl.className ="embedding";
+    embedEl.onclick = function () {
+      cui.toggleExpansion(this);
+    };
+    for (let i = 0; i < embed.embed.length; i++) {
+      const embedCard = cui.SearchResultCard(embed.embed[i]);
+      embedEl.appendChild(embedCard);
+    }
+    tileElement.appendChild(embedEl);
+    console.log("embedd");
+  } 
+
   // Create a content element and append it to tileElement
   const contentElement = document.createElement("div");
   contentElement.className = "tilebody";
@@ -529,7 +598,8 @@ cui.sendMessage = function () {
     cui.createUserTile(cui.md.render(input));// Create a new user tile for the question
     cui.messageId = cui.get_random_id();
     cui.setMessage({ id: cui.messageId, user: input, bot: "" });
-    cui.createBotTile("");
+    // console.log("empty");
+    // cui.createBotTile("");
     cui.bufferText ="";
     cui.listGenerate();
     cui.showStop();
