@@ -253,7 +253,7 @@ textarea::placeholder {
 
 .embedding{
   width : 100%;
-  height : 45px; 
+  /* height : 45px;  */
   overflow : hidden; 
   background : inherit; 
   border : none; 
