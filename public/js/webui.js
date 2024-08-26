@@ -443,7 +443,7 @@ cui.SearchResultCard = function(result) {
   
     const cardTitle = document.createElement("h8");
     cardTitle.className = "card-title d-inline";
-    cardTitle.innerText = result.title;
+    cardTitle.innerText = result.title.slice(0, 80)+'...';
   
     const cardLink = document.createElement("a");
     cardLink.className = "fas fa-globe float-right";
@@ -471,7 +471,7 @@ cui.toggleExpansion = function(cards) {
     }
     }
 
-cui.createTile = function (content, tileClass, embed="") {
+cui.createTile = function (content, tileClass, embed=[]) {
   document.getElementsByClassName("chat-container")[0].style.backgroundImage =
     "none";
   const tileElement = document.createElement("div");
@@ -528,14 +528,16 @@ cui.createTile = function (content, tileClass, embed="") {
   // Append the tileheader to the tileElement
   tileElement.appendChild(tileheader);
 
-  if (tileClass === "bot-tile" && embed) {
+  if (tileClass === "bot-tile" && embed.length > 0) {
+    // console.log("embed", embed);
     const embedEl = document.createElement("div");
     embedEl.className ="embedding";
-    embedEl.onclick = function () {
+    embedEl.style.height ="45px";
+    embedEl.ondblclick = function () {
       cui.toggleExpansion(this);
     };
-    for (let i = 0; i < embed.embed.length; i++) {
-      const embedCard = cui.SearchResultCard(embed.embed[i]);
+    for (let i = 0; i < embed.length; i++) {
+      const embedCard = cui.SearchResultCard(embed[i]);
       embedEl.appendChild(embedCard);
     }
     tileElement.appendChild(embedEl);
