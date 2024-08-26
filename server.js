@@ -375,8 +375,9 @@ ser.handleSocketConnection = async function (socket) {
       if(config.embedding.WebSearch && input.length < 100){
           const searchRes = await ser.webseach(input);
           embedobj = embedobj.concat(searchRes);
-          embed += JSON.stringify(searchRes.embed);
+          embed += JSON.stringify(searchRes);
           [tokens, len] = ser.tokenCount(embed);
+          console.log("Embed length: " + len, tokens);
           if (len > config.maxTokens) {
             embed = tokens.slice(0, config.maxTokens).join(" ");
             // console.log("Embed truncated to " + config.maxTokens + " tokens");
@@ -385,8 +386,9 @@ ser.handleSocketConnection = async function (socket) {
       if(embed!=null || embed!=undefined || embed!= ""){
         this.io.to(socketId).emit("output", embedobj);
       }
-      input = config.prompt(socketId, input, embed, data.firstchat);
+      input = config.prompt(socketId, input, embed, data.firstchat || false);
       input = input + "\\";
+      console.log("Input: " + input);
       let piper = data.piper;
       this.connectedClients.set(socketId, input);
       // Add the incoming message to the queue
