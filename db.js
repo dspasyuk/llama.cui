@@ -6,6 +6,7 @@ const reader = require('any-text');
 const { exec } = require("child_process");
 function vdb() {}
 
+console.warn = function() {};
 vdb.init = async function (
   query = "Tell me about bull riding shotgun",
   dbfile = "./db/Documents/index.json"
@@ -18,7 +19,7 @@ vdb.init = async function (
   this.dataChannel.set("Documents", {
     datastream: "Documents", 
     datafolder: "./docs",
-    slice: 500,
+    slice: 1024,
     vectordb: "Documents.js"
   });
   
@@ -35,8 +36,11 @@ vdb.init = async function (
   this.TransOptions = { pooling: "mean", normalize: false };
   try {
     const transformersModule = await import("@xenova/transformers");
+   
     vdb.pipeline = transformersModule.pipeline;
-    vdb.getVector = await this.pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
+    vdb.getVector = await vdb.transInit();
+    vdb.getSum = await vdb.sumInit();
+
   } catch (e) {
     console.error("Error importing @xenova/transformers:", e);
   }
@@ -50,14 +54,14 @@ vdb.init = async function (
   }
 };
 
-
-vdb.initIndex = async function(type){
+vdb.initIndex = async function (type) {
   const indexPath = path.join(__dirname, "db", this.dataChannel.get(type).datastream);
   this.index = new LocalIndex(indexPath);
 
   if (!(await this.index.isIndexCreated())) {
     await this.index.createIndex();
   }
+
   const indexFile = path.join(indexPath, "index.json");
   if (fs.existsSync(indexFile)) {
     const fileSize = fs.statSync(indexFile).size;
@@ -78,16 +82,31 @@ vdb.initVectorDB = async function () {
   }
 };
 
-vdb.readFile = async function (filePath) {
-  var slice;
+vdb.readFile = async function (filePath, dir) {
+  console.log(filePath);
   let tokens = await reader.getText(filePath);
-  tokens = tokens.replace(/\n\n/g, " ");
-  // console.log(tokens);
+  [tokens, len] = vdb.tokenCount(tokens);
+ 
   const sliceSize = this.dataChannel.get("Documents").slice;
-  for (let i = 0; i < tokens.length; i += sliceSize) {
-        slice = `${filePath};\n\n` + tokens.slice(i, i + sliceSize);
-        await this.addItem(slice);
+  let startIndex = 0;
+
+  while (startIndex < tokens.length) {
+    // Find the end index without splitting words
+    let endIndex = startIndex + sliceSize;
+
+    // If endIndex is not at a space, backtrack to the nearest space
+    if (endIndex < tokens.length) {
+      while (endIndex > startIndex) {
+        endIndex--;
+      }
     }
+    // Extract the slice
+    const slice = tokens.slice(startIndex, endIndex);
+    // console.log("slice", slice);
+    await this.addItem(slice.join(" "), path.relative(dir, filePath));
+    // Move startIndex to endIndex plus one to skip the space
+    startIndex = endIndex + 1;
+  }
 };
 
 vdb.tokenize = function (text) {
@@ -111,12 +130,12 @@ vdb.pullDocuments = function(dir) {
           const fullPath = path.join(dir, file.name);
           if (file.isDirectory()) {
               // Recursively traverse subdirectories
-              console.log(fullPath);
+              // console.log(fullPath);
               vdb.pullDocuments(fullPath);
           } else if (file.isFile() && path.extname(file.name) === '.txt' || path.extname(file.name) === '.doc' || path.extname(file.name) === '.docx') {
               // Read text files and handle their content
-              await vdb.readFile(fullPath);
-              console.log(fullPath);
+              await vdb.readFile(fullPath, dir);
+              // console.log(fullPath);
           }
       }
   });
@@ -136,6 +155,10 @@ vdb.transInit = async function () {
   return await this.pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
 };
 
+vdb.sumInit = async function () {
+  return await this.pipeline('summarization', 'Xenova/distilbart-cnn-6-6');
+};
+
 vdb.sentanceCompose = function (data) {
   let values = [];
   for (const [key, value] of Object.entries(data)) {
@@ -149,16 +172,21 @@ vdb.sentanceCompose = function (data) {
   return values.join(" ");
 };
 
-vdb.addItem = async function (text) {
-  var vector;
-  if (this.useLlamaEmbedding) {
-    vector = await this.getLlamaEmbedding(text);
-  } else {
-    vector = await vdb.getVector(text, vdb.TransOptions);
-  }
+vdb.tokenCount = function (text) {
+  const tokens = text.match(/\b\w+\b/g) || [];
+  const tokensarr =  tokens.filter(token => /\S/.test(token))
+  return [tokensarr, tokensarr.length]; 
+};
+
+vdb.addItem = async function (text, filePath = "") {
+  const vector = this.useLlamaEmbedding ? await this.getLlamaEmbedding(text) : await vdb.getVector(text, vdb.TransOptions);
+  console.time("summarization");
+  const summary = await vdb.getSum(text, { max_new_tokens: 30 });
+  console.timeEnd("summarization");
+
   await this.index.insertItem({
     vector: Array.from(vector.data),
-    metadata: { text },
+    metadata: { content: text, href: filePath, title: summary[0].summary_text }
   });
 };
 
@@ -201,6 +229,7 @@ vdb.combineDictionaries = function (...dictionaries) {
 
 vdb.query = async function (text) {
   var vector,
+  tmp = {},
   data = [];
   if (this.useLlamaEmbedding) {
     vector = await this.getLlamaEmbedding(text);
@@ -209,16 +238,19 @@ vdb.query = async function (text) {
   }
   
   const results = await this.index.queryItems(Array.from(vector.data), 7);
-  // console.log(text, vector.data);
-  // console.log(text, JSON.stringify(results));
   if (results.length > 0) {
     for (let result of results) {
+      tmp = {};
       if (result.score > 0.4) {
-        data.push(result.item.metadata.text);
+        // console.log(result.item);
+        tmp.content = result.item.metadata.content;
+        tmp.title = result.item.metadata.title;
+        tmp.score = result.score;
+        tmp.href = result.item.metadata.href;
+        data.push(tmp);
       }
     }
-    let unique = vdb.findUniqueStrings(data.join(" "));
-    return "\n\n"+unique.join(" ")+"\n\n"; // need to unique before joining
+    return data; // need to unique before joining
   } else {
     console.log(`No results found.`);
     return false;
@@ -249,11 +281,10 @@ vdb.getLlamaEmbedding = function (text) {
 
 async function run(){
  await vdb.init();
- await vdb.pullDocuments(vdb.dataChannel.get("Documents").datafolder);
-//vdb.getLlamaEmbedding ("Hello World");
 }
 
-//run();
+// run();
+
 try {
   module.exports = exports = vdb;
 } catch (e) {}

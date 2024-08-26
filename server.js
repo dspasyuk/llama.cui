@@ -93,6 +93,7 @@ ser.init = function (error) {
   this.app.set("views", path.join(__dirname, "views"));
   this.app.set("view engine", "ejs");
   this.app.use(express.static(path.join(__dirname, "public")));
+  this.app.use(express.static(path.join(__dirname, "docs")));
 
   // Define a route to render the EJS view
   this.app.get("/", ser.loggedIn, (req, res, next) => {
@@ -276,7 +277,7 @@ ser.webseach = async function(input){
       }
     }
   }
-  return {embed:ggsearch};
+  return ggsearch;
 }
 
 ser.runPiper = function (output) {
@@ -345,22 +346,44 @@ ser.handleTimeout = function () {
   ser.llamachild.kill("SIGINT");
 };
 
+ser.tokenCount = function (text) {
+  const tokens = text.match(/\b\w+\b/g) || [];
+  const tokensarr =  tokens.filter(token => /\S/.test(token))
+  return [tokensarr, tokensarr.length]; 
+};
+
 ser.handleSocketConnection = async function (socket) {
   if (socket.request.session) {
     socket.on("message", async (data) => {
       var input = data.message;
       var embed = "";
+      var embedobj = [];
       if (data.embedding) {
-        console.log("embedding");
         embed = await vdb.init(input);
+        [tokens, len] = ser.tokenCount(JSON.stringify(embed));
+        // console.log("Embed length: " + len, tokens);
+        if (len > config.maxTokens) {
+          embed = tokens.slice(0, config.maxTokens).join(" ");
+          // console.log("Embed truncated to " + config.maxTokens + " tokens");
+        }
+        embedobj = embedobj.concat(embed);
+        if(embed!=null || embed!=undefined){
+          embed = JSON.stringify(embed)
+        }
       }
-      // console.log("input",  data.firstchat);
       var socketId = data.socketid;
-      console.log(input.length);
       if(config.embedding.WebSearch && input.length < 100){
           const searchRes = await ser.webseach(input);
-          this.io.to(socketId).emit("output", searchRes);
+          embedobj = embedobj.concat(searchRes);
           embed += JSON.stringify(searchRes.embed);
+          [tokens, len] = ser.tokenCount(embed);
+          if (len > config.maxTokens) {
+            embed = tokens.slice(0, config.maxTokens).join(" ");
+            // console.log("Embed truncated to " + config.maxTokens + " tokens");
+          }
+      }
+      if(embed!=null || embed!=undefined || embed!= ""){
+        this.io.to(socketId).emit("output", embedobj);
       }
       input = config.prompt(socketId, input, embed, data.firstchat);
       input = input + "\\";

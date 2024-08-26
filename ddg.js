@@ -62,7 +62,7 @@ class DDG {
 
  async fetchContent(url) {
     try {
-      const response = await axios.get(url, {timeout:2000});
+      const response = await axios.get(url, {timeout:5000});
       const data = response.data;
       // Simplified extraction of the content/abstract from the page
       const abstract = this.extractAbstract(data);
