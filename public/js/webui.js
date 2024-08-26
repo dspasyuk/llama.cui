@@ -537,8 +537,10 @@ cui.createTile = function (content, tileClass, embed=[]) {
       cui.toggleExpansion(this);
     };
     for (let i = 0; i < embed.length; i++) {
-      const embedCard = cui.SearchResultCard(embed[i]);
-      embedEl.appendChild(embedCard);
+      if(embed[i]!=undefined || embed[i]!=null || embed[i]!={}) {
+        const embedCard = cui.SearchResultCard(embed[i]);
+        embedEl.appendChild(embedCard);
+      }
     }
     tileElement.appendChild(embedEl);
     console.log("embedd");
