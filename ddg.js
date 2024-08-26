@@ -25,46 +25,61 @@ class DDG {
 
   async *text(keywords, options = {}) {
     if (!keywords) throw new Error("Keywords are mandatory");
-
+  
     const vqd = await this.getVqd(keywords);
     if (!vqd) throw new Error("Error in getting vqd");
-
+  
     const payload = this.buildPayload(keywords, vqd, options, false);
     const cache = new Set();
     const searchPositions = ["0", "20", "70", "120"];
     let count = 0;
-
+  
     for (const pos of searchPositions) {
       if (count >= this.limit) return;
+  
       payload.s = pos;
-      const response = await this.getUrl("GET", "https://links.duckduckgo.com/d.js", payload);
+      var response = await this.getUrl("GET", "https://links.duckduckgo.com/d.js", payload);
       if (!response) break;
-
-      const { results } = response.data || {};
+  
+      var { results } = response.data || {};
       if (!results) break;
-
+  
+      const contentFetchPromises = [];
+  
       for (const row of results) {
         if (count >= this.limit) return;
+  
         const href = row.u;
         if (href && !cache.has(href) && !href.includes("google.com")) {
           cache.add(href);
+  
           const body = this.normalizeHtml(row.a);
           if (body) {
-            const fullContent = await this.fetchContent(href); // Fetch full content
-            yield this.mapTextResult(row, body, fullContent);
+            // Push the promise to the array
+            contentFetchPromises.push(this.fetchContent(href).then((fullContent) => {
+              return this.mapTextResult(row, body, fullContent);
+            }));
+  
             count++;
-            if (count >= 3) break; // Limit to first 3 results
+            if (count >= this.limitRead) break; // Limit the number of content fetches
           }
         }
       }
+  
+      // Wait for all promises to resolve and yield results
+      results = await Promise.all(contentFetchPromises);
+      for (const result of results) {
+        yield result;
+      }
+  
+      if (count >= this.limit) return;
     }
   }
 
- async fetchContent(url) {
+  async fetchContent(url) {
     try {
-      const response = await axios.get(url, {timeout:5000});
+      const response = await axios.get(url, { timeout: 5000 });
       const data = response.data;
-      // Simplified extraction of the content/abstract from the page
       const abstract = this.extractAbstract(data);
       return abstract;
     } catch (error) {
