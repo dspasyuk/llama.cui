@@ -57,6 +57,7 @@ config.loginTrue = async function (user) {
 
 
 config.embedding = { MongoDB: false, Documents: true, WebSearch: true };
+config.maxTokens = 8000;
 config.filter =function(output){
   return output.replace(/<\|.*?\|>/g, '');
 }
