@@ -536,8 +536,8 @@ cui.createTile = function (content, tileClass, embed=[]) {
     embedEl.ondblclick = function () {
       cui.toggleExpansion(this);
     };
-    for (let i = 0; i < embed.length; i++) {
-      if(embed[i]!=undefined || embed[i]!=null || embed[i]!={}) {
+   for (let i = 0; i < embed.length; i++) {
+      if(embed[i]!=undefined && embed[i]!=null && embed[i]!={} && embed[i].title!=undefined) {
         const embedCard = cui.SearchResultCard(embed[i]);
         embedEl.appendChild(embedCard);
       }
