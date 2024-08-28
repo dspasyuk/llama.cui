@@ -39,7 +39,7 @@ vdb.init = async function (
    
     vdb.pipeline = transformersModule.pipeline;
     vdb.getVector = await vdb.transInit();
-    vdb.getSum = await vdb.sumInit();
+   
 
   } catch (e) {
     console.error("Error importing @xenova/transformers:", e);
@@ -84,9 +84,10 @@ vdb.initVectorDB = async function () {
 
 vdb.readFile = async function (filePath, dir) {
   console.log(filePath);
+  vdb.getSum = await vdb.sumInit();
   let tokens = await reader.getText(filePath);
   [tokens, len] = vdb.tokenCount(tokens);
- 
+  
   const sliceSize = this.dataChannel.get("Documents").slice;
   let startIndex = 0;
 
@@ -146,6 +147,7 @@ vdb.pullDatabase = async function () {
   var cfg = this.dataChannel.get("MongoDB");
   var mjdb = new mdb(cfg.url, cfg.database);
   var documents = await mjdb.find(cfg.collection, {});
+  vdb.getSum = await vdb.sumInit();
   for (let i = 0; i < documents.length; i++) {
     await this.addItem(vdb.sentanceCompose(documents[i]));
   }
