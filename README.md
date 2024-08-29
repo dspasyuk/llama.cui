@@ -164,9 +164,9 @@ export DYLD_LIBRARY_PAT=/PIPER_ROOT_DEER/piper-phonemize/lib:$DYLD_LIBRARY_PATH`
 
 [![Piper Demo]()](https://github.com/dspasyuk/llama.cui/assets/34203011/1a7d530c-92a3-4d14-9c7d-79a25f73610f)
 </details>
-<details><summary> <H1> Embeddings </H1></summary>
+<details><summary> <H1> Embeddings: Local Documents and Web</H1></summary>
 
-llama.cui supports embeddings from a text file (see the docs folder) and MongoDB (do npm install Mongo and make changes to config.js to configure the database).
+llama.cui supports embeddings from a text file (see the docs folder), MongoDB and Web (duckduckgo). 
 
 You will need to delete the existing DB folder before running llama.cui. The new database will be generated on the next request for embedding (select use database in the bottom left corner of the UI interface to generate the database)  
 
