@@ -75,7 +75,7 @@
         <div class="chat-messages flex-grow-1" id="chatMessages"></div>
         <div class="input-wrapper">
           <div class="input-container" data-max-height="300">
-            <textarea id="messageInput" placeholder="Ask a question" class="form-control grow-wrap" onInput="autoResize(this)"></textarea>
+            <textarea id="messageInput" placeholder="Ask a question" class="form-control grow-wrap" oninput="autoResize(this)" data-current-index = 0></textarea>
             <button id="stopgenerator" onclick="cui.stopGenerating()" type="button" class="btn btn-outline-secondary stopper"><i class="fas fa-stop"></i></button>
             <button style="width: 65px" id="sendMessage" type="button" class="btn sendmessage"><i class="fas fa-play"></i></button>
           </div>
@@ -102,6 +102,7 @@
     });
 
     function autoResize(textarea) {
+      console.log("autoResize called");
       var maxHeight = parseInt(textarea.parentNode.getAttribute('data-max-height')) || 300;
       textarea.style.height = 'auto';
       textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
