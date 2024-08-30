@@ -138,6 +138,8 @@ cui.init = function (iphostname, port, piper, testQs) {
   cui.sendMessageButton.addEventListener("click", () => {
     cui.sendMessage();
   });
+  this.userMessages = [];
+  cui.rollMessages ();
 };
 
 cui.PCMplayer = function(){
@@ -536,7 +538,7 @@ cui.createTile = function (content, tileClass, embed=[]) {
     embedEl.ondblclick = function () {
       cui.toggleExpansion(this);
     };
-    for (let i = 0; i < embed.length; i++) {
+   for (let i = 0; i < embed.length; i++) {
       if(embed[i]!=undefined && embed[i]!=null && embed[i]!={} && embed[i].title!=undefined) {
         const embedCard = cui.SearchResultCard(embed[i]);
         embedEl.appendChild(embedCard);
@@ -592,6 +594,7 @@ cui.sendMessage = function () {
   const embedcheck = document.getElementById("embed");
   cui.currentTile = null;
   if (input !== "") {
+    this.userMessages.push(input);
     cui.socket.emit("message", {
       message: input,
       socketid: cui.socketid,
@@ -716,3 +719,50 @@ cui.getMessageById = function (id) {
   const message = chats[cui.currentChat][id];
   return message || {};
 };
+
+
+cui.updateMessageField = function (index, userMessages) {
+  const messageField = document.getElementById("messageInput");
+  
+  if (index >= 0 && index < userMessages.length) {
+    messageField.value = userMessages[index];
+  } else if (index === userMessages.length) {
+    messageField.value = ''; // Clear the field if beyond the last message
+  }
+};
+
+cui.handleKeydown = function (event) {
+  const messageField = document.getElementById("messageInput");
+  let currentIndex = parseInt(messageField.getAttribute('data-current-index')) || this.userMessages.length;
+
+  if (event.key === "ArrowDown") {
+    // Show the previous message
+    if (currentIndex > 0) {
+      currentIndex--;
+      cui.updateMessageField(currentIndex, this.userMessages);
+      autoResize(messageField);
+    }
+    event.preventDefault(); // Prevent cursor from moving in text field
+  } else if (event.key === "ArrowUp") {
+    // Show the next message
+    if (currentIndex < this.userMessages.length) {
+      currentIndex++;
+      cui.updateMessageField(currentIndex, this.userMessages);
+      autoResize(messageField);
+    }
+    event.preventDefault(); // Prevent cursor from moving in text field
+  }
+
+  // Store the updated index
+  messageField.setAttribute('data-current-index', currentIndex);
+};
+
+cui.rollMessages = function () {
+  const messageField = document.getElementById("messageInput");
+  let allData = cui.getAlldata();
+  this.userMessages = Array.from(new Set((Object.values(allData).map((o)=>Object.values(o).map((o2)=>o2.user))).flat()));
+  messageField.addEventListener("keydown", function (event) {
+    cui.handleKeydown(event);
+  });
+};
+
