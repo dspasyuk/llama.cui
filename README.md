@@ -176,7 +176,8 @@ For data format convention, llama.cui uses the anytotext.js library. You can pla
 
 <details open><summary> <H1> Screenshots </H1></summary>
    
-![Screenshot](https://github.com/dspasyuk/llama.cui/assets/34203011/820fb710-2fd0-4ed4-9945-01440155d1fe)
+![Screenshot](https://github.com/user-attachments/assets/f89c0320-c7bc-4c18-9866-62aba28b1145)
+
 
 ![Code_highlight](https://github.com/dspasyuk/llama.cui/assets/34203011/eb740616-8b5c-40f2-a85d-b42fd8775aba)
 
