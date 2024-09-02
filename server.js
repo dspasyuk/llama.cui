@@ -5,7 +5,6 @@
 // make clean && LLAMA_CUBLAS=1 make  -j
 //Copyright Denis Spasyuk
 //License MIT
-// require('./overwrightlog.js');  
 const express = require("express");
 const { spawn, exec } = require("child_process");
 const http = require("http");
@@ -424,8 +423,6 @@ ser.handleSocketConnection = async function (socket) {
     });
   } else {
     console.log("Not Logged In!");
-    //  socket.emit("redirect-login");
-    // Disconnect the socket
     socket.disconnect(true);
   }
 };
@@ -438,6 +435,13 @@ ser.start = function () {
     );
   });
 };
+
+process.on('SIGINT', () => {
+  ser.server.close((err) => {
+    console.log('Server closed');
+    process.exit(0);
+});
+});
 
 async function run() {
   await ser.modelinit();
