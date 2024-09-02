@@ -10,7 +10,9 @@ class HTTPError extends Error {
   }
 }
 
-const unescapeHtml = (text) => text.replace(/&quot;/g, '"');
+const unescapeHtml = (text) => text
+.replace(/&quot;/g, '"')
+.replace(/&#x27;/g, "'");
 const removeHtmlTags = (text) => text.replace(/<[^>]*>/g, "");
 const unquoteUrl = (url) => url.replace(" ", "+");
 

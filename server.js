@@ -106,6 +106,7 @@ ser.init = function (error) {
       port: config.PORT.client,
       testQs: config.testQuestions,
       sessionID: sessionID,
+      embedding: config.embedding,
       piper: {rate:config.piper.rate, enabled:config.piper.enabled},
     });
   });
@@ -268,15 +269,13 @@ ser.open = function () {
 ser.webseach = async function(input){
   const ddg = new DDG({limit:4});
   var ggsearch = [];
-  if (config.embedding.WebSearch) {
-    for await (const result of ddg.text(input)) {
-      
+  for await (const result of ddg.text(input)) {
       if(result && result.content!=null){
           // console.log(result);
           ggsearch.push(result);
       }
     }
-  }
+  
   return ggsearch;
 }
 
@@ -358,7 +357,7 @@ ser.handleSocketConnection = async function (socket) {
       var input = data.message;
       var embed = "";
       var embedobj = [];
-      if (data.embedding) {
+      if (data.embedding.db) {
         embed = await vdb.init(input);
         [tokens, len] = ser.tokenCount(JSON.stringify(embed));
         // console.log("Embed length: " + len, tokens);
@@ -372,12 +371,12 @@ ser.handleSocketConnection = async function (socket) {
         }
       }
       var socketId = data.socketid;
-      if(config.embedding.WebSearch && input.length < 100){
+      if(config.embedding.WebSearch && data.embedding.web && input.length < 100){
           const searchRes = await ser.webseach(input);
           embedobj = embedobj.concat(searchRes);
           embed += JSON.stringify(searchRes);
           [tokens, len] = ser.tokenCount(embed);
-          console.log("Embed length: " + len, tokens);
+          // console.log("Embed length: " + len, tokens);
           if (len > config.maxTokens) {
             embed = tokens.slice(0, config.maxTokens).join(" ");
             // console.log("Embed truncated to " + config.maxTokens + " tokens");
@@ -388,7 +387,7 @@ ser.handleSocketConnection = async function (socket) {
       }
       input = config.prompt(socketId, input, embed, data.firstchat || false);
       input = input + "\\";
-      console.log("Input: " + input);
+      // console.log("Input: " + input);
       let piper = data.piper;
       this.connectedClients.set(socketId, input);
       // Add the incoming message to the queue

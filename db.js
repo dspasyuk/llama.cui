@@ -87,14 +87,11 @@ vdb.readFile = async function (filePath, dir) {
   vdb.getSum = await vdb.sumInit();
   let tokens = await reader.getText(filePath);
   [tokens, len] = vdb.tokenCount(tokens);
-  
   const sliceSize = this.dataChannel.get("Documents").slice;
   let startIndex = 0;
-
   while (startIndex < tokens.length) {
     // Find the end index without splitting words
     let endIndex = startIndex + sliceSize;
-
     // If endIndex is not at a space, backtrack to the nearest space
     if (endIndex < tokens.length) {
       while (endIndex > startIndex) {

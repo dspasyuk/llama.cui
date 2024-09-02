@@ -84,10 +84,9 @@ cui.toggleEscapeHtml = function(scrollableElement, codeBlock) {
 
 
 
-cui.init = function (iphostname, port, piper, testQs) {
+cui.init = function (iphostname, port, piper, testQs, ebabledEmbedding) {
   // Default to escaping HTML
   cui.escapeHtml = true;
-
   cui.md = window.markdownit({
     breaks: true,
     linkify: true,
@@ -122,9 +121,6 @@ cui.init = function (iphostname, port, piper, testQs) {
   cui.port = port;
   cui.piperate = piper.rate;
   cui.piperenabled = piper.enabled;
-  if (cui.piperenabled) {
-     document.getElementById("piper-container").style.display = "flex";
-  }
   cui.testQs = testQs;
   cui.messageId = "";
   cui.isClicked = false;
@@ -140,6 +136,7 @@ cui.init = function (iphostname, port, piper, testQs) {
   });
   this.userMessages = [];
   cui.rollMessages ();
+  cui.getEmbedingConfig(ebabledEmbedding);
 };
 
 cui.PCMplayer = function(){
@@ -438,37 +435,32 @@ cui.SearchResultCard = function(result) {
     // Create the card div
     const card = document.createElement("div");
     card.className = "card websearch mb-3";
-  
     // Create the card header with title and href
     const cardHeader = document.createElement("div");
     cardHeader.className = "card-header";
-  
     const cardTitle = document.createElement("h8");
     cardTitle.className = "card-title d-inline";
-    cardTitle.innerText = result.title.slice(0, 80)+'...';
-  
+    cardTitle.innerText = result.title.slice(0, 50)+'...';
     const cardLink = document.createElement("a");
-    cardLink.className = "fas fa-globe float-right";
+    cardLink.className = "embedlink fas fa-chevron-right";
     cardLink.href = result.href;
     cardLink.target = "_blank";
     cardLink.style.color = "#ccc";
     cardLink.title = `Go to ${result.href}`;
- 
-  
     cardHeader.appendChild(cardTitle);
     cardHeader.appendChild(cardLink);
-  
+
     card.appendChild(cardHeader);
     return card;
 }
 
 
 cui.toggleExpansion = function(cards) {
-    if (cards.style.height === '45px') {
+    if (cards.style.height === '40px') {
       cards.style.height = 'auto';
       cards.style.overflow = 'visible';
     } else {
-      cards.style.height = '45px';
+      cards.style.height = '40px';
       cards.style.overflow = 'hidden';
     }
     }
@@ -534,7 +526,7 @@ cui.createTile = function (content, tileClass, embed=[]) {
     // console.log("embed", embed);
     const embedEl = document.createElement("div");
     embedEl.className ="embedding";
-    embedEl.style.height ="45px";
+    embedEl.style.height ="40px";
     embedEl.ondblclick = function () {
       cui.toggleExpansion(this);
     };
@@ -591,14 +583,16 @@ cui.checkisFirst = function () {
 
 cui.sendMessage = function () {
   const input = cui.messageInput.value.trim(); // Get the message content
-  const embedcheck = document.getElementById("embed");
+  const embedcheck = document.getElementById("embedcheck");
+  const webembed = document.getElementById("webembedcheck");
+  console.log("embedcheck", webembed.checked);
   cui.currentTile = null;
   if (input !== "") {
     this.userMessages.push(input);
     cui.socket.emit("message", {
       message: input,
       socketid: cui.socketid,
-      embedding: embedcheck.checked,
+      embedding: {db:embedcheck.checked, web:webembed.checked},
       piper: cui.checkPiperEnabled(),
       firstchat:cui.checkisFirst()
     });
@@ -766,3 +760,27 @@ cui.rollMessages = function () {
   });
 };
 
+cui.getEmbedingConfig = function (ebabledEmbedding) {
+  const embedcheck = document.getElementById("embedcheckcon");
+  var webembed = document.getElementById("webembedcheckcon");
+  const dbembedcheck = document.getElementById("dbembedcheckcon");
+  const piper = document.getElementById("piper-container");
+  //{ MongoDB: false, Documents: true, WebSearch: true }
+  for (el in ebabledEmbedding) {
+    if (el == "WebSearch") {
+      webembed.style.display = ebabledEmbedding[el] ? "block" : "none"; 
+    }
+    if (el == "MongoDB") {
+      dbembedcheck.style.display = ebabledEmbedding[el] ? "block" : "none";
+    }
+    if (el == "Documents") {
+      embedcheck.style.display = ebabledEmbedding[el] ? "block" : "none";
+    }
+  }
+  if (cui.piperenabled) {
+    console.log(cui.piperenabled);
+    piper.style.display = "block";
+  }else{
+    piper.style.display = "none";
+  }
+};
