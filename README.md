@@ -179,7 +179,7 @@ For data format convention, llama.cui uses the anytotext.js library. You can pla
 ![Screenshot](https://github.com/user-attachments/assets/f89c0320-c7bc-4c18-9866-62aba28b1145)
 
 
-![Code_highlight](https://github.com/dspasyuk/llama.cui/assets/34203011/eb740616-8b5c-40f2-a85d-b42fd8775aba)
+![Code_highlight](https://github.com/user-attachments/assets/69bdb5ca-3f7a-48b0-be19-f0dc3682d3d8)
 
 HTML/CSS/JS code preview 
 
