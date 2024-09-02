@@ -55,7 +55,7 @@
             </div>
           </div>
         </div>
-        <div class="bottom-left">
+        <!-- <div style="display: none;" class="bottom-left">
           <div class="tester" id="wiki">  
             <div class="embed theme">
               <input class="embed-check" id="embed" type="checkbox" name="embedding" value="">
@@ -67,13 +67,42 @@
             </div>   
             <div class="embed theme" id="tester"><button id="testgenerator" title="Run default model exam" onclick="cui.defaultTest()" type="button" class="exam">Exam</button></div>  
           </div> 
-        </div>
+        </div> -->
       </div>
   
       <!-- Main Chat Container -->
       <div id="chatcontainer" class="col-md-9 chat-container d-flex flex-column">
         <div class="chat-messages flex-grow-1" id="chatMessages"></div>
         <div class="input-wrapper">
+          <div id="switchholder" class="switchholder">
+            <label id ="webembedcheckcon" class="switch">
+              <input id = "webembedcheck" type="checkbox" />
+              <span class="slider round" title="Enable Web Search">
+                <i class="switchicon fas fa-globe"></i>
+              </span>
+            </label>
+            <label id = "embedcheckcon" class="switch">
+              <input id = "embedcheck" type="checkbox" />
+              <span class="slider round" title="Enable Document Search">
+                <i class="switchicon fas fa-file"></i>
+              </span>
+            </label>
+            <label id = "dbembedcheckcon" class="switch">
+              <input id = "dbembedcheck" type="checkbox" />
+              <span class="slider round" title="Enable Database Search">
+                <i class="switchicon fas fa-database"></i>
+              </span>
+            </label>
+            <label id="piper-container" class="switch">
+              <input  onclick="cui.piperToggle()" id="piper" type="checkbox" />
+              <span class="slider round" title="Enable TTS">
+                <i class="switchicon fas fa-music"></i>
+              </span>
+            </label>
+            <!-- <label class="switch"> -->
+              <button class="exam" type="button" onclick="cui.defaultTest()" title="Run Exam"> <i class="fas fa-list-alt"></i></button>
+            <!-- </label> -->
+          </div>          
           <div class="input-container" data-max-height="300">
             <textarea id="messageInput" placeholder="Ask a question" class="form-control grow-wrap" oninput="autoResize(this)" data-current-index = 0></textarea>
             <button id="stopgenerator" onclick="cui.stopGenerating()" type="button" class="btn btn-outline-secondary stopper"><i class="fas fa-stop"></i></button>
@@ -90,7 +119,8 @@
     let piper = <%- JSON.stringify(piper) %>;
     let testQs = <%- JSON.stringify(testQs) %>;
     let sessionID = <%- JSON.stringify(sessionID) %>;
-    cui.init(iphostname, port, piper, testQs);
+    let ebabledEmbedding = <%- JSON.stringify(embedding) %>;
+    cui.init(iphostname, port, piper, testQs, ebabledEmbedding);
     
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const leftSidebar = document.getElementById('left-sidebar');
