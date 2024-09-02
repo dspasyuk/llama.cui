@@ -6,9 +6,9 @@ const fs = require('fs');
 var config = {};
 
 //Model Setting
-config.modelrepo = "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF"; //change this to use other models
-config.modelname = "Meta-Llama-3-8B-Instruct_Q4_K_S.gguf"; //change this to use other models
-config.modeldirectory = "./models";
+config.modelrepo = "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF";
+config.modeldirectory = path.resolve('./models');
+config.modelname = "qwen2-7b-instruct-q5_k_m.gguf";
 
 
  //Llama.cpp settings
@@ -16,15 +16,16 @@ config.systemPrompt= fs.readFileSync('Alice.txt', 'utf8');
 
 config.params = {
   "--model":  path.join(config.modeldirectory, config.modelname),
-  "--n-gpu-layers": 25, // remove if using CPU !!!!!!!!!!!!!
+  "--n-gpu-layers": 33, // remove if using CPU !!!!!!!!!!!!!
   "-cnv":"",
   "--simple-io":"",
   "-b": 2048,
   "--ctx_size":0,
   "--temp":0.3,
+  "-fa":"",
   "--top_k":10,
   "--multiline-input":"",
-  "--chat-template":"llama3",
+  "--chat-template":"chatml",
   "--log-disable":"", 
   "-p":`'${config.systemPrompt}'`
 }
