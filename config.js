@@ -75,7 +75,7 @@ config.outputFilter = function(output){
 
 //Piper setting
 config.piper = {
-  enabled: true,
+  enabled: false,
   rate: 20500,
   output_file: 'S16_LE',
   exec: "../../piper/install/piper",
