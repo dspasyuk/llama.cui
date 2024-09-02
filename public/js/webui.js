@@ -526,6 +526,7 @@ cui.createTile = function (content, tileClass, embed=[]) {
     // console.log("embed", embed);
     const embedEl = document.createElement("div");
     embedEl.className ="embedding";
+    embedEl.title ="Double click to expand";
     embedEl.style.height ="40px";
     embedEl.ondblclick = function () {
       cui.toggleExpansion(this);
