@@ -8,7 +8,7 @@ var config = {};
 //Model Setting
 config.modelrepo = "QuantFactory/Qwen2-7B-Instruct-GGUF";
 config.modeldirectory = path.resolve('./models');
-config.modelname = "qwen2-7b-instruct-q5_k_m.gguf";
+config.modelname = "Qwen2-7B-Instruct.Q5_K_M.gguf";
 
 
  //Llama.cpp settings
