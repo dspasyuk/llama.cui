@@ -1,9 +1,6 @@
 const axios = require('axios');
 const exec = require('child_process').exec;
 const spawn = require('child_process').spawn;
-const cheerio = require('cheerio');
-// const hljs = require('highlight.js');
-// hljs.registerLanguage('javascript', require('highlight.js/lib/languages/javascript'));
 
 function Par() {}
 
@@ -154,40 +151,6 @@ Par.extractText = async function(text, minWords = 2, targetWordsPerChunk = 200, 
 }
 
 
-Par.extractTextFromWebpage = async function(url, minWords = 5) {
-  const cheerio = require('cheerio');
-
-  try {
-    // Make an HTTP request to the webpage
-    const response = await axios.get(url);
-    // Load the HTML content into cheerio
-    const $ = cheerio.load(response.data);
-    // Extract text using a specific selector (modify as needed)
-    const extractedText = [];
-    let currentBlock = '';  // Variable to store consecutive lines as a block
-    $('p').each((index, element) => {
-      const text = $(element).text().trim();
-      const words = text.split(/\s+/);
-      // Only include text with more than minWords words
-      if (words.length >= minWords) {
-        currentBlock += text + ' ';  // Add the text to the current block
-      } else if (currentBlock.trim() !== '') {
-        extractedText.push(currentBlock.trim());  // Push the current block if not empty
-        currentBlock = '';  // Reset the current block
-      }
-    });
-    // Check if the last block is not empty
-    if (currentBlock.trim() !== '') {
-      extractedText.push(currentBlock.trim());
-    }
-
-    return extractedText.join('\n');
-  } catch (error) {
-    console.error('Error extracting text:', error.message);
-    throw error;
-  }
-}
-
 Par.installPackage = function(package){
     exec(`npm install ${package}`, async (error, stdout, stderr) => {
     if(error) {
@@ -229,7 +192,6 @@ Par.runEval = async function(message){
     }
 }  catch(err){
       return err;
-  return false;
 }
 }
 
