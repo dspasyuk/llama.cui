@@ -432,130 +432,149 @@ cui.createHTML = function (ell) {
 
 
 cui.SearchResultCard = function(result) {
-    // Create the card div
-    const card = document.createElement("div");
-    card.className = "card websearch mb-3";
-    // Create the card header with title and href
-    const cardHeader = document.createElement("div");
-    cardHeader.className = "card-header";
-    const cardTitle = document.createElement("h8");
-    cardTitle.className = "card-title d-inline";
-    cardTitle.innerText = result.title.slice(0, 50)+'...';
-    const cardLink = document.createElement("a");
-    cardLink.className = "embedlink fas fa-chevron-right";
-    cardLink.href = result.href;
-    cardLink.target = "_blank";
-    cardLink.style.color = "#ccc";
-    cardLink.title = `Go to ${result.href}`;
-    cardHeader.appendChild(cardTitle);
-    cardHeader.appendChild(cardLink);
+  // Create the card div
+  const card = document.createElement("div");
+  card.className = "websearch mb-3";
 
-    card.appendChild(cardHeader);
-    return card;
-}
+  // Create the card header with title and href
+  let titleText = "";
+  if (result.href) {
+      try {
+          titleText = new URL(result.href).hostname.replace("www.", "");
+      } catch (e) {
+          titleText = result.href;
+      }
 
+      const cardLink = document.createElement("a");
+      cardLink.className = "embedlink";
+      cardLink.href = result.href;
+      cardLink.target = "_blank";
+      cardLink.text = titleText;
+      cardLink.style.color = "#ccc";
+      cardLink.title = `Go to ${result.href}`;
 
-cui.toggleExpansion = function(cards) {
-    if (cards.style.height === '40px') {
-      cards.style.height = 'auto';
-      cards.style.overflow = 'visible';
-    } else {
-      cards.style.height = '40px';
-      cards.style.overflow = 'hidden';
-    }
-    }
+      card.appendChild(cardLink);
+  }
+  return card;
+};
 
-cui.createTile = function (content, tileClass, embed=[]) {
-  document.getElementsByClassName("chat-container")[0].style.backgroundImage =
-    "none";
+cui.createTile = function (content, tileClass, embed = []) {
+  document.getElementsByClassName("chat-container")[0].style.backgroundImage = "none";
   const tileElement = document.createElement("div");
   const tileheader = document.createElement("div");
   const headerText = document.createElement("p");
   tileheader.className = "tileheader";
   tileElement.className = tileClass;
-  // Set the header text based on the tileClass
+
   headerText.innerHTML = tileClass === "user-tile" ? `<i class="fas fa-user userstyle"></i>` : `<i class="fa fa-robot robotstyle"></i>`;
   headerText.style.margin = "0 auto 0 0"; // Center the text
-  // Append the header text and button to the tileheader
 
   tileheader.appendChild(headerText);
-  // Button is appended after the text
+
   if (tileClass === "user-tile") {
-    const reload = document.createElement("button");
-    reload.onclick = function () {
-      cui.resubmit(this);
-    };
-    reload.innerHTML = '<i class="fas fa-sync"></i>';
-    reload.className = "btn headerbutton";
-    tileheader.appendChild(reload);
+      const reload = document.createElement("button");
+      reload.onclick = function () {
+          cui.resubmit(this);
+      };
+      reload.innerHTML = '<i class="fas fa-sync"></i>';
+      reload.className = "btn headerbutton";
+      tileheader.appendChild(reload);
   }
+
   const copyButton = document.createElement("button");
   copyButton.onclick = async function () {
-    const tilebody = copyButton.parentElement.nextElementSibling;
-    // Access the text content of the tilebody
-    const textFromTileBody = tilebody.textContent.trim();
-    await navigator.clipboard.writeText(textFromTileBody);
+      const tilebody = copyButton.parentElement.nextElementSibling;
+      const textFromTileBody = tilebody.textContent.trim();
+      await navigator.clipboard.writeText(textFromTileBody);
   };
 
-    const vocalize = document.createElement("button");
-    vocalize.name = "piperToggle";
-    vocalize.onclick =function () {
+  const vocalize = document.createElement("button");
+  vocalize.name = "piperToggle";
+  vocalize.onclick = function () {
       const parent = vocalize.parentElement.parentElement;
       const tilebody = parent.querySelector(".tilebody");
       const textFromTileBody = tilebody.textContent.trim();
-      // vocalize.innerHTML = '<i class="fas fa-stop"></i>';  
       cui.sendTextToSpeech(textFromTileBody);
-      // let interval = setInterval(function () {if (!cui.isPlaying) {cui.piperStopToggle(); clearInterval(interval)}}, 500);
-    };
-    vocalize.innerHTML = '<i class="fas fa-music"></i>';
-    vocalize.className = "btn headerbutton";
-    tileheader.appendChild(vocalize);
-    if(cui.checkPiperEnabled()){
-       vocalize.style.display = "block";
-    }else{
-        vocalize.style.display = "none";
-    }
+  };
+  vocalize.innerHTML = '<i class="fas fa-music"></i>';
+  vocalize.className = "btn headerbutton";
+  tileheader.appendChild(vocalize);
+  if (cui.checkPiperEnabled()) {
+      vocalize.style.display = "block";
+  } else {
+      vocalize.style.display = "none";
+  }
 
   copyButton.innerHTML = '<i class="fas fa-copy"></i>';
   copyButton.className = "btn headerbutton";
   tileheader.appendChild(copyButton);
-  // Append the tileheader to the tileElement
   tileElement.appendChild(tileheader);
 
   if (tileClass === "bot-tile" && embed.length > 0) {
-    // console.log("embed", embed);
-    const embedEl = document.createElement("div");
-    embedEl.className ="embedding";
-    embedEl.title ="Double click to expand";
-    embedEl.style.height ="40px";
-    embedEl.ondblclick = function () {
-      cui.toggleExpansion(this);
-    };
-   for (let i = 0; i < embed.length; i++) {
-      if(embed[i]!=undefined && embed[i]!=null && embed[i]!={} && embed[i].title!=undefined) {
-        const embedCard = cui.SearchResultCard(embed[i]);
-        embedEl.appendChild(embedCard);
-      }
-    }
-    tileElement.appendChild(embedEl);
-    console.log("embedd");
-  } 
+      const embedEl = document.createElement("div");
+      embedEl.className = "embedding";
+      embedEl.title = "Double click to expand";
+      embedEl.style.height = "40px";
+      embedEl.ondblclick = function () {
+          cui.toggleExpansion(this);
+      };
 
-  // Create a content element and append it to tileElement
+      // Limit the number of links to 3
+      for (let i = 0; i < embed.length; i++) {
+          if (i < 3) {
+              const embedCard = cui.SearchResultCard(embed[i]);
+              if (embedCard) {
+                  embedEl.appendChild(embedCard);
+              }
+          }
+      }
+
+      // If there are more than 3 links, add a "show more" button
+      if (embed.length > 3) {
+          const showMoreButton = document.createElement("button");
+          showMoreButton.className = "embedlink";
+          showMoreButton.innerText = `+${embed.length - 3} more`;
+          showMoreButton.style.color = "#ccc";
+          showMoreButton.style.background = "none";
+          showMoreButton.style.border = "none";
+          showMoreButton.style.cursor = "pointer";
+          showMoreButton.onclick = function () {
+              cui.toggleExpansion(embedEl);
+              showMoreButton.style.display = "none"; // Hide the button after expanding
+              // Append the remaining links
+              for (let i = 3; i < embed.length; i++) {
+                  const embedCard = cui.SearchResultCard(embed[i]);
+                  if (embedCard) {
+                      embedEl.appendChild(embedCard);
+                  }
+              }
+          };
+          embedEl.appendChild(showMoreButton);
+      }
+
+      tileElement.appendChild(embedEl);
+  }
+
   const contentElement = document.createElement("div");
   contentElement.className = "tilebody";
   contentElement.innerHTML = content;
   tileElement.appendChild(contentElement);
-  // Append the tileElement to chatMessages
   chatMessages.appendChild(tileElement);
   cui.currentTile = contentElement;
-  //SVG INSERT
-  // cui.createSVG(tileElement);
-  if (tileClass === "bot-tile") {
-    cui.createSVG(tileElement);
-    // cui.createHTML(tileElement);
-  }
 
+  if (tileClass === "bot-tile") {
+      cui.createSVG(tileElement);
+  }
+};
+
+cui.toggleExpansion = function (cards) {
+  if (cards.style.height === '40px') {
+      cards.style.height = 'auto';
+      cards.style.overflow = 'visible';
+  } else {
+      cards.style.height = '40px';
+      cards.style.overflow = 'hidden';
+  }
 };
 
 cui.get_random_id = function () {

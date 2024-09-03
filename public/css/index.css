@@ -241,8 +241,6 @@ textarea::placeholder {
 
 .websearch{
   width: auto;
-  min-height: 40px;
-  height: 40px;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.2);
   border: var(--btn-outline);
@@ -250,6 +248,12 @@ textarea::placeholder {
   font-size: 12px;
   margin: 0 10px auto;
   word-wrap: unset;
+  padding: 5px;
+  border-radius: 5px;
+}
+.websearch:hover {
+  background-color: var(--btn-outline);
+  color:var(--white) !important;
 }
 
 .embedding{
@@ -257,12 +261,10 @@ textarea::placeholder {
   overflow : hidden; 
   background : inherit; 
   border : none; 
-  margin:10px;
+  margin-right:10px;
+  margin-left:10px;
   display: flex;
   justify-content: left;
-}
-.card-header{
-  overflow: hidden;
 }
 
 .userstyle {
@@ -288,7 +290,7 @@ textarea::placeholder {
 }
 
 .tilebody{
-  padding-top: 20px;
+  padding-top: 10px;
   padding-bottom: 10px;
   padding-left: 22px;
   padding-right: 10px;
@@ -329,20 +331,13 @@ code {
   color:var(--white) !important;
 }
 .embedlink{
-  position: absolute;
+  position: relative;
   right: 0;
-  font-size: 20px;
-  width: 20px;
-  padding: 10px;
-    padding-right: 10px;
-  height: 45px;
-  top: 0;
+  font-size: 12px;
+  width: auto;
+  text-wrap: nowrap;
+  height: 25px;
   text-align: center;
-  padding-right: 16px;
-}
-.embedlink:hover {
-  background-color: var(--btn-outline);
-  color:var(--white) !important;
 }
 
 ul {
