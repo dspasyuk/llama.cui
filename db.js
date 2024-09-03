@@ -84,7 +84,7 @@ vdb.initVectorDB = async function () {
 
 vdb.readFile = async function (filePath, dir) {
   console.log(filePath);
-  vdb.getSum = await vdb.sumInit();
+  // vdb.getSum = await vdb.sumInit();
   let tokens = await reader.getText(filePath);
   [tokens, len] = vdb.tokenCount(tokens);
   const sliceSize = this.dataChannel.get("Documents").slice;
@@ -144,7 +144,7 @@ vdb.pullDatabase = async function () {
   var cfg = this.dataChannel.get("MongoDB");
   var mjdb = new mdb(cfg.url, cfg.database);
   var documents = await mjdb.find(cfg.collection, {});
-  vdb.getSum = await vdb.sumInit();
+  // vdb.getSum = await vdb.sumInit();
   for (let i = 0; i < documents.length; i++) {
     await this.addItem(vdb.sentanceCompose(documents[i]));
   }
@@ -179,13 +179,13 @@ vdb.tokenCount = function (text) {
 
 vdb.addItem = async function (text, filePath = "") {
   const vector = this.useLlamaEmbedding ? await this.getLlamaEmbedding(text) : await vdb.getVector(text, vdb.TransOptions);
-  console.time("summarization");
-  const summary = await vdb.getSum(text, { max_new_tokens: 30 });
-  console.timeEnd("summarization");
+  // console.time("summarization");
+  // const summary = await vdb.getSum(text, { max_new_tokens: 30 });
+  // console.timeEnd("summarization");
 
   await this.index.insertItem({
     vector: Array.from(vector.data),
-    metadata: { content: text, href: filePath, title: summary[0].summary_text }
+    metadata: { content: text, href: filePath, title: text.slice(0,20) || ""} // summary[0].summary_text }
   });
 };
 
