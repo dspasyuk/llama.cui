@@ -6,7 +6,7 @@ const fs = require('fs');
 var config = {};
 
 //Model Setting
-config.modelrepo = "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF";
+config.modelrepo = "QuantFactory/Qwen2-7B-Instruct-GGUF";
 config.modeldirectory = path.resolve('./models');
 config.modelname = "qwen2-7b-instruct-q5_k_m.gguf";
 
