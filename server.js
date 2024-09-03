@@ -436,16 +436,16 @@ ser.start = function () {
   });
 };
 
+
+async function run() {
+  await ser.modelinit();
+  ser.init();
+}
+run();
+
 process.on('SIGINT', () => {
   console.log('Received SIGINT. Terminating processes...');
   if (ser.llamachild) ser.llamachild.kill('SIGINT');
   if (ser.piper) ser.piper.kill('SIGINT');
   process.exit(0); // Exit the main process
 });
-
-async function run() {
-  await ser.modelinit();
-  ser.init();
-}
-
-run();
