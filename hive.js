@@ -143,8 +143,8 @@ function Hive(){ }
         const similarity = Hive.cosineSimilarity(queryVector, itemVector, queryVectorMag);
         results.push({ document: item, similarity });
       }
-    //   results[0].document.meta
-      results.sort((a, b) => b.similarity - a.similarity); // Sort by similarity descending
+  
+       results.sort((a, b) => b.similarity - a.similarity); // Sort by similarity descending
     } else {
       console.error(`Collection ${Hive.dbName} does not exist.`);
     }

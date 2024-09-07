@@ -43,7 +43,15 @@ vdb.initVectorDB = async function (type = "Documents") {
 vdb.query = async function (query, database = "Documents") {
   const vector = await Hive.getVector(query, Hive.TransOptions);
   results = await Hive.find(vector.data, 5);
-  results = results.map((r) => {r.document.meta.href = path.relative(this.dataChannel.get(database).datafolder, r.document.meta.href); return r.document.meta;});
+  results = results.reduce((acc, r) => {
+    if (r.similarity > 0.2) {
+      console.log(r.similarity);
+      r.document.meta.href = path.relative(this.dataChannel.get(database).datafolder, r.document.meta.href);
+      acc.push(r.document.meta); // Add the filtered item to the accumulator
+    }
+    return acc; // Always return the accumulator
+  }, []);
+  console.log(results);
   return results;
 };
 
