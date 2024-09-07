@@ -55,7 +55,7 @@ Cui.sendMessage = async function (message) {
   this.socket.emit("message", {
     message: message,
     socketid: Cui.socketid,            /// enable me 
-    embedding: false,
+    embedding: {db:false, web:true},
     piper: false,
   })
 } 
@@ -75,7 +75,14 @@ Cui.parseMessage = async function(message){
 
 
 Cui.processMessage = function (response) { 
-  process.stdout.write(rgbit(response+" ", "blue"));
+  if(typeof response === 'object' && response !== null) {
+      sources = response.map(item => new URL(item.href).hostname.replace("www.", ""));
+      process.stdout.write(rgbit(sources.join(" ")+"\n ", "green"));
+      response ="";
+  }else{
+    process.stdout.write(rgbit(response+" ", "blue"));
+  }
+ 
   if (response.includes("\n>")) {
     Cui.startUserInput();
   }

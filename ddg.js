@@ -80,7 +80,7 @@ class DDG {
 
   async fetchContent(url) {
     try {
-      const response = await axios.get(url, { timeout: 5000 });
+      const response = await axios.get(url, { timeout: 4000 });
       const data = response.data;
       const abstract = this.extractAbstract(data);
       return abstract;

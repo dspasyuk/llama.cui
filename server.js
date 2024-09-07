@@ -15,7 +15,7 @@ const vdb = require("./db.js");
 const DDG = require("./ddg.js");
 const fs = require("fs");
 const downloadModel = require("./modeldownloader.js");
-const version = 0.330; //changed public and server and config
+const version = 0.331; //changed public and server and config
 var session = require("express-session");
 const MemoryStore = require("memorystore")(session);
 const memStore = new MemoryStore();
@@ -350,50 +350,56 @@ ser.tokenCount = function (text) {
   return [tokensarr, tokensarr.length]; 
 };
 
+ser.TokenLimit = function(objects, maxTokens, tokenCounter) {
+  let embed = "";
+  let totalTokens = 0;
+  let cutobj = []; 
+  for (let obj of objects) {
+    let objStr = JSON.stringify(obj);
+    let [tokens, tokenLen] = tokenCounter(objStr); // Use tokenCounter to count tokens
+
+    if (totalTokens + tokenLen > maxTokens) {
+      // Truncate the object string to fit the remaining tokens
+      let remainingTokens = maxTokens - totalTokens;
+      objStr = tokens.slice(0, remainingTokens).join(" ");
+      totalTokens += remainingTokens;
+      embed += objStr;
+      break; // Stop once we've reached the limit
+    }
+    totalTokens += tokenLen;
+    embed += objStr;
+    cutobj.push(obj);
+  }
+
+  return [embed, cutobj]; // Return the concatenated string within token limit
+}
+
 ser.handleSocketConnection = async function (socket) {
   if (socket.request.session) {
     socket.on("message", async (data) => {
       var input = data.message;
+      var socketId = data.socketid;
       var embed = "";
       var embedobj = [];
       if (data.embedding.db) {
-        embed = await vdb.init(input);
-        [tokens, len] = ser.tokenCount(JSON.stringify(embed));
-        // console.log("Embed length: " + len, tokens);
-        if (len > config.maxTokens) {
-          embed = tokens.slice(0, config.maxTokens).join(" ");
-          // console.log("Embed truncated to " + config.maxTokens + " tokens");
-        }
-        embedobj = embedobj.concat(embed);
-        if(embed!=null || embed!=undefined){
-          embed = JSON.stringify(embed)
-        }
+          embedobj = embedobj.concat(await vdb.init(input));
       }
-      var socketId = data.socketid;
       if(config.embedding.WebSearch && data.embedding.web && input.length < 100){
           const searchRes = await ser.webseach(input);
           embedobj = embedobj.concat(searchRes);
-          embed += JSON.stringify(searchRes);
-          [tokens, len] = ser.tokenCount(embed);
-          // console.log("Embed length: " + len, tokens);
-          if (len > config.maxTokens) {
-            embed = tokens.slice(0, config.maxTokens).join(" ");
-            // console.log("Embed truncated to " + config.maxTokens + " tokens");
-          }
       }
       if(embed!=null || embed!=undefined || embed!= ""){
+        [embed, embedobj] = ser.TokenLimit(embedobj, config.maxTokens, ser.tokenCount);
         this.io.to(socketId).emit("output", embedobj);
       }
       input = config.prompt(socketId, input, embed, data.firstchat || false);
       input = input + "\\";
-      // console.log("Input: " + input);
       let piper = data.piper;
       this.connectedClients.set(socketId, input);
       // Add the incoming message to the queue
       this.messageQueue.push({ socketId, input, embed, piper});
       this.streamTimeout = setTimeout(this.handleTimeout, config.timeout);
       // Process messages if the queue is not being processed currently
-
       if (!this.isProcessing) {
         this.processMessageQueue();
       }
