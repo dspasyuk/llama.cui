@@ -20,6 +20,6 @@
     "memorystore": "^1.6.7",
     "progress": "^2.0.3",
     "socket.io": "^4.7.2",
-    "socket.io-client": "^4.7.2",
+    "socket.io-client": "^4.7.2"
   }
 }
