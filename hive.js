@@ -48,114 +48,131 @@ function Hive(){ }
   }
 
   // Create a collection
-  Hive.createCollection = function () {
-    if (!Hive.collections.has(Hive.dbName)) {
-      Hive.collections.set(Hive.dbName, []);
-      console.log(`Collection ${Hive.dbName} created in memory.`);
-    } else {
-      console.log(`Collection ${Hive.dbName} already exists.`);
-    }
+// Create a collection
+Hive.createCollection = function () {
+  if (!Hive.collections.has(Hive.dbName)) {
+    Hive.collections.set(Hive.dbName, []);
+    // console.log(`Collection ${Hive.dbName} created in memory.`);
+  } else {
+    console.log(`Collection ${Hive.dbName} already exists.`);
   }
+};
 
-  // Insert one object into a specific collection
-  Hive.insertOne = function (entry) {
-    if (Hive.collections.has(Hive.dbName)) {
-      const { vector, meta } = entry;
-      Hive.collections.get(Hive.dbName).push({
+// Insert one object into a specific collection
+Hive.insertOne = function (entry) {
+  if (Hive.collections.has(Hive.dbName)) {
+    const { vector, meta } = entry;
+    const magnitude = Hive.normalize(vector);
+    Hive.collections.get(Hive.dbName).push({
+      vector,
+      magnitude, // Precompute and store the magnitude
+      meta,
+    });
+  }
+};
+
+
+// Insert many entries into a collection
+Hive.insertMany = function (entries) {
+  if (Hive.collections.has(Hive.dbName)) {
+    const collection = Hive.collections.get(Hive.dbName);
+    for (let i = 0; i < entries.length; i++) {
+      const { vector, meta } = entries[i];
+      collection.push({
         vector: vector,
         meta,
+        magnitude: Hive.normalize(vector),
       });
-      console.log(Hive.collections.get(Hive.dbName));
-    } else {
-      console.log(`Collection ${Hive.dbName} does not exist.`);
     }
+    Hive.saveToDisk(); // Auto-save after bulk insertion
+  } else {
+    console.log(`Collection ${Hive.dbName} does not exist.`);
   }
-  // Insert many entries into a collection
-  Hive.insertMany = function (entries) {
-    if (Hive.collections.has(Hive.dbName)) {
-      const collection = Hive.collections.get(Hive.dbName);
-      for (let i = 0; i < entries.length; i++) {
-        const { vector, meta } = entries[i];
-        collection.push({
-          vector: vector,
-          meta,
-        });
-      }
-      Hive.saveToDisk(); // Auto-save after bulk insertion
-    } else {
-      console.log(`Collection ${Hive.dbName} does not exist.`);
-    }
-  }
+};
 
-
-  Hive.ensureDirectoryExists = function(filePath) {
+  Hive.ensureDirectoryExists = function (filePath) {
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
   };
-
-  // Save the database to disk
-  Hive.saveToDisk= function () {
-    const data = {};
-    Hive.collections.forEach((value, key) => {
-      data[key] = value.map((entry) => ({
-        vector: entry.vector, // Convert Float32Array back to Array for JSON
+  
+// Save the database to disk
+Hive.saveToDisk = function () {
+  const data = {};
+  const collectionsKeys = Array.from(Hive.collections.keys());
+  for (let i = 0; i < collectionsKeys.length; i++) {
+    const key = collectionsKeys[i];
+    const value = Hive.collections.get(key);
+    data[key] = [];
+    for (let j = 0; j < value.length; j++) {
+      const entry = value[j];
+      data[key].push({
+        vector: Array.from(entry.vector), // Convert Float32Array back to Array for JSON
         meta: entry.meta,
-      }));
-    });
-    Hive.ensureDirectoryExists(Hive.filePath);
-    fs.writeFileSync(Hive.filePath, JSON.stringify(data), "utf8");
-    console.log(`Database saved to ${Hive.filePath}`);
+        magnitude: entry.magnitude,
+      });
+    }
   }
 
-  // Load the database into memory from disk
-  Hive.loadToMemory= async function (){
-    if (fs.existsSync(Hive.filePath)) {
-      const rawData = fs.readFileSync(Hive.filePath, "utf8");
-      const data = JSON.parse(rawData);
-      Hive.collections.clear(); // Clear existing collections
-      for (const [dbName, entries] of Object.entries(data)) {
-        Hive.createCollection(dbName); // Recreate collections
-        entries.forEach((entry) => {
-          Hive.collections.get(dbName).push({
-            vector: new Float32Array(entry.vector),
-            meta: entry.meta,
-          });
+  Hive.ensureDirectoryExists(Hive.filePath);
+  fs.writeFileSync(Hive.filePath, JSON.stringify(data), "utf8");
+  console.log(`Database saved to ${Hive.filePath}`);
+};
+
+// Load the database into memory from disk
+Hive.loadToMemory = async function () {
+  if (fs.existsSync(Hive.filePath)) {
+    const rawData = fs.readFileSync(Hive.filePath, "utf8");
+    const data = JSON.parse(rawData);
+    Hive.collections.clear(); // Clear existing collections
+    
+    for (const [dbName, entries] of Object.entries(data)) {
+      Hive.createCollection(dbName); // Recreate collections
+      const collection = Hive.collections.get(dbName);
+      console.log("Number of Entries", entries.length);
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i];
+        collection.push({
+          vector: new Float32Array(entry.vector),
+          meta: entry.meta,
+          magnitude: entry.magnitude,
         });
       }
-      console.log(`Database loaded into memory from ${Hive.filePath}`);
-    } else {
-      console.log(`File ${Hive.filePath} does not exist.`);
     }
+    
+    console.log(`Database loaded into memory from ${Hive.filePath}`);
+  } else {
+    console.log(`File ${Hive.filePath} does not exist.`);
   }
+};
 
 
-  // Find vectors similar to the query vector  
-  Hive.find = async function (queryVector, topK = 5) {
-    const queryVectorMag = Hive.normalize(queryVector);
-    const results = [];
-    if (Hive.collections.has(Hive.dbName)) {
-      const collection = Hive.collections.get(Hive.dbName);
-      for (const item of collection) {
-        const itemVector = item.vector;
-       // console.log("pooled", queryVector.length, "item",itemVector.length);
-        const similarity = Hive.cosineSimilarity(queryVector, itemVector, queryVectorMag);
-        results.push({ document: item, similarity });
-      }
+// Find vectors similar to the query vector
+Hive.find = async function (queryVector, topK = 5) {
+  const queryVectorMag = Hive.normalize(queryVector);
+  const collection = Hive.collections.get(Hive.dbName) || [];
+
+  const results = [];
   
-       results.sort((a, b) => b.similarity - a.similarity); // Sort by similarity descending
-    } else {
-      console.error(`Collection ${Hive.dbName} does not exist.`);
-    }
-    return results.slice(0, topK); // Return top K results
+  for (let i = 0; i < collection.length; i++) {
+    const item = collection[i];
+    const similarity = Hive.cosineSimilarity(queryVector, item.vector, queryVectorMag, item.magnitude);
+    results.push({ document: item, similarity });
   }
+
+  results.sort((a, b) => b.similarity - a.similarity);
+  return results.slice(0, topK);
+};
+
   
-  Hive.cosineSimilarity = function (queryVector, itemVector, queryVectorMag) {
-    const dotProduct = queryVector.reduce((sum, val, i) => sum + val * itemVector[i], 0);
-    const itemVectorMag = Hive.normalize(itemVector);
+  Hive.cosineSimilarity = function (queryVector, itemVector, queryVectorMag, itemVectorMag) {
+    let dotProduct = 0;
+    for (let i = 0; i < queryVector.length; i++) {
+        dotProduct += queryVector[i] * itemVector[i];
+    }
     return dotProduct / (queryVectorMag * itemVectorMag);
-  }
+  };
   
   Hive.normalize = function (vector) {
     let sum = 0;
@@ -163,43 +180,48 @@ function Hive(){ }
       sum += vector[i] * vector[i];
     }
     return Math.sqrt(sum);
-  }
+  };
   
 
 
   Hive.tokenCount = function (text) {
     const tokens = text.match(/\b\w+\b/g) || [];
-    const tokensarr = tokens.filter((token) => /\S/.test(token));
-    // console.log(tokensarr, tokensarr.length);
+    const tokensarr = [];
+    
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+      if (/\S/.test(token)) {
+        tokensarr.push(token);
+      }
+    }
     return [tokensarr, tokensarr.length];
-  }
-
+  };
+  
   Hive.addItem = async function (text, filePath = "") {
     try {
       const vector = await Hive.getVector(text, Hive.TransOptions);
       // Insert the item into the "Documents" collection
-      Hive.insertOne( {
+      Hive.insertOne({
         vector: Array.from(vector.data),
         meta: {
           content: Hive.escapeChars(text),
-          href: Hive.escapeChars(filePath),
+          href:filePath,
           title: Hive.escapeChars(text.slice(0, 20)),
         },
       });
- 
     } catch (error) {
       console.error("Error adding item:", error);
     }
-  }
+  };
 
   // Read file and tokenize its content, splitting into slices for insertion
   Hive.readFile = async function (filePath, dir) {
     let text = await reader.getText(filePath); // Simulate reading file content
     const [tokens, len] = Hive.tokenCount(text);
-
+  
     const sliceSize = 512;
     let startIndex = 0;
-
+  
     while (startIndex < len) {
       let endIndex = startIndex + sliceSize;
       // Ensure we don't split a word
@@ -215,13 +237,25 @@ function Hive(){ }
       await Hive.addItem(slice.join(" "), filePath);
       startIndex = endIndex + 1;
     }
-  }
+  };
 
   // Tokenize the text, cleaning it of non-alphanumeric characters
   Hive.tokenize = function (text) {
     const words = text.split(/\s+/);
-    return words.filter((word) => word.length > 0 && !word.match(/[^a-zA-Z0-9]/)).join(" ");
-  }
+    let result = "";
+  
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
+      if (word.length > 0 && !word.match(/[^a-zA-Z0-9]/)) {
+        if (result.length > 0) {
+          result += " ";
+        }
+        result += word;
+      }
+    }
+  
+    return result;
+  };
 
   // Pull documents recursively from a directory and process them
   Hive.pullDocuments = async function (dir) {
@@ -236,21 +270,37 @@ function Hive(){ }
       }
     }
     Hive.saveToDisk();
-  }
-
+  };
+  
   Hive.escapeChars = function (text) {
-    // Function to escape special characters in text
-    return text.replace(/[&<>"']/g, (match) => {
-      const escapeChars = {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      };
-      return escapeChars[match];
-    });
-  }
+    // Function to escape special characters and remove repeated single-letter characters
+    return (
+      text
+        // Escape special characters
+        .replace(/[&<>"'\\\/]/g, (match) => {
+          const escapeChars = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+            "\\": "\\\\",
+            "/": "\\/",
+          };
+          return escapeChars[match];
+        })
+        // Remove non-alphanumeric characters except spaces, letters, and digits
+        .replace(/[^A-Za-z0-9\s]/g, "")
+        // Collapse multiple spaces into one
+        .replace(/\s+/g, " ")
+        // Remove repeated single-letter words (e.g., R, A)
+        .replace(/\b([A-Za-z])\b(\s+\1)+/g, "")
+        // Remove any isolated single letters
+        .replace(/\b[A-Za-z]\b/g, "")
+        // Trim spaces at the beginning and end of the text
+        .trim()
+    );
+  };
 
 // Hive.init();
 module.exports = Hive;
