@@ -2,15 +2,11 @@
 // License MIT
 
 import path from "path";
-import prmt from "./prompt.js";
+import prmt from "./src/prompt.js";
 import fs from "fs";
-import { fileURLToPath } from "url";
-import hash from "./hash.js";
+import hash from "./src/hash.js";
 const Hash = new hash();
 
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const config = {};
 
