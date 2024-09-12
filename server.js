@@ -13,13 +13,13 @@ import { Server as socketIO } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import vdb from './db.js';
-import DDG from './ddg.js';
+import vdb from './src/db.js';
+import DDG from './src/ddg.js';
 import fs from 'fs';
-import downloadModel from './modeldownloader.js';
+import downloadModel from './src/modeldownloader.js';
 import session from 'express-session';
 import MemoryStoreModule from 'memorystore';
-import hash from "./hash.js";
+import hash from "./src/hash.js";
 const Hash = new hash();
 import config from './config.js';
 
@@ -257,7 +257,6 @@ ser.piperChild = function () {
   });
   this.piper.stdout.on('data', (data) => { 
     //16-bit mono PCM samples buffers
-   // console.log(data);
     ser.io.to(this.socketId).emit("buffer", data);
 });
   this.piper.stderr.on("error", (error) => {
@@ -284,8 +283,10 @@ ser.webseach = async function(input){
   return ggsearch;
 }
 
+
 ser.runPiper = function (output) {
   if (config.piper.enabled) {
+    
     this.fullmessage += " " + output;
     if (
       this.fullmessage.includes(".") ||
@@ -296,7 +297,8 @@ ser.runPiper = function (output) {
       this.fullmessage.includes("\n")
     ) {
       if(this.piper_client_enabled){
-         this.piper.stdin.write(this.fullmessage);
+         var submit = this.fullmessage;
+         this.piper.stdin.write(submit.replace(/\*/g, '').replace(/\#/g, ''));
       } 
       // console.log("fullmesd", this.fullmessage);
       this.fullmessage = "";
