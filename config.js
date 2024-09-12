@@ -16,7 +16,7 @@ const config = {};
 
 config.modelrepo = "QuantFactory/Qwen2-7B-Instruct-GGUF";
 config.modeldirectory = path.resolve('./models');
-config.modelname = "qwen2-7b-instruct-q4_0.gguf"// "Qwen2-7B-Instruct.Q5_K_M.gguf";
+config.modelname = "Qwen2-7B-Instruct.Q4_0.gguf"; // "Qwen2-7B-Instruct.Q5_K_M.gguf";
 
 // Model Setting //Llama.cpp settings
 config.systemPrompt = fs.readFileSync('Alice.txt', 'utf8');
@@ -26,7 +26,6 @@ config.params = {
   "--model": path.join(config.modeldirectory, config.modelname),
   "--n-gpu-layers": 33, // remove if using CPU
   "-cnv": "",
-  
   "--simple-io": "",
   "-b": 512*4,
   "--ctx_size": 0,
