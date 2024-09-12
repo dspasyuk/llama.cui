@@ -1,14 +1,15 @@
 //Copyright Denis Spasyuk
 //License MIT
-const axios = require("axios");
-const io = require("socket.io-client");
-const config = require("./config.js");
-const readline = require("readline");
-const path = require('path');
-const util = require('util');
-const hashUtils = require('./hash.js');
-const parser = require('./parser.js');
-const {rgbit} = require('./rgbit.js');
+import axios from "axios";
+import io from "socket.io-client";
+import config from "./config.js";
+import readline from "readline";
+import path from "path";
+import util from "util";
+import hash from "./hash.js";
+const Hash = new hash();
+import parser from "./parser.js";
+import colors from "./rgbit.js";
 // const { spawn } = require('child_process');
 
 // Connect to the server via socket.io
@@ -76,11 +77,11 @@ Cui.parseMessage = async function(message){
 
 Cui.processMessage = function (response) { 
   if(typeof response === 'object' && response !== null) {
-      sources = response.map(item => new URL(item.href).hostname.replace("www.", ""));
-      process.stdout.write(rgbit(sources.join(" ")+"\n ", "green"));
+      var sources = response.map(item => new URL(item.href).hostname.replace("www.", ""));
+      process.stdout.write(colors.rgbit(sources.join(" ")+"\n ", "green"));
       response ="";
   }else{
-    process.stdout.write(rgbit(response+" ", "blue"));
+    process.stdout.write(colors.rgbit(response+" ", "blue"));
   }
  
   if (response.includes("\n>")) {
@@ -88,7 +89,6 @@ Cui.processMessage = function (response) {
   }
 
 };
-
 
 
 Cui.connectAndInteract = function (sessionID) {
@@ -126,7 +126,7 @@ Cui.parseInput = function(input){
 
 
 Cui.startUserInput = function () {
-  this.rl.question(rgbit("U: ", "red"), async (input) => {
+  this.rl.question(colors.rgbit("U: ", "red"), async (input) => {
     input = await Cui.parseInput(input); //+ "<|im_start|>system \n If asked for code create code only in nodejs. Wrap the code in ```javascript  ``` So write all code in one block do not use eval function <|im_end|>";
     // console.log(input);
     Cui.sendMessage(input);
@@ -139,7 +139,7 @@ Cui.loginInit = async function () {
     const [,, username, password] = process.argv;
       // If not provided, check if saved credentials exist
       try {
-        const savedCredentials = await hashUtils.readCredentialsFromFile();
+        const savedCredentials = await Hash.readCredentialsFromFile();
         if (savedCredentials) {
           console.log('Using saved credentials...');
           const sessionID = await Cui.authenticate(savedCredentials.username, savedCredentials.password);
@@ -151,7 +151,7 @@ Cui.loginInit = async function () {
           try {
             const inputUsername = username || (await questionAsync("Enter your username: "));
             const inputPassword = password || (await questionAsync("Enter your password: "));
-            await hashUtils.saveCredentialsToFile(inputUsername, inputPassword);
+            await Hash.saveCredentialsToFile(inputUsername, inputPassword);
             const sessionID = await Cui.authenticate(inputUsername, inputPassword);
             Cui.connectAndInteract(sessionID);
           } catch (error) {

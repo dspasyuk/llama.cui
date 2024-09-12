@@ -1,4 +1,5 @@
-rgbit = function(text, color) {
+function colors() {};
+colors.rgbit = function(text, color) {
     if (color === 'red') {
       return '\x1b[31m' + text + '\x1b[0m';
     } else if (color === 'green') {
@@ -16,12 +17,8 @@ rgbit = function(text, color) {
     return text;
   }
   
-striprgb = function(text) {
+colors.striprgb = function(text) {
     return text.replace(/[\u001B\u009B][[()#;?]*(?:[0-9]{1,4}[KkMmGg])?.*|\x1B\[([0-9]{1,2}(;[0-9]{1,2})?K)|(\x1B\[0m)/g, '');
   }
   
-
-try {
-    module.exports = exports = {rgbit, striprgb};
-} catch (e) {}
-  
+  export default colors;

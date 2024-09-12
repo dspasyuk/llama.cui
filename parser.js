@@ -1,6 +1,4 @@
-const axios = require('axios');
-const exec = require('child_process').exec;
-const spawn = require('child_process').spawn;
+import { exec, spawn } from 'child_process';
 
 function Par() {}
 
@@ -151,8 +149,8 @@ Par.extractText = async function(text, minWords = 2, targetWordsPerChunk = 200, 
 }
 
 
-Par.installPackage = function(package){
-    exec(`npm install ${package}`, async (error, stdout, stderr) => {
+Par.installPackage = function(pac){
+    exec(`npm install ${pac}`, async (error, stdout, stderr) => {
     if(error) {
       console.log('error is:' , error);
       throw error;
@@ -166,10 +164,10 @@ Par.fixError = async function(message){
    if(message.includes(errMessage)){
     let index =  message.indexOf(errMessage); 
     let prefix =  message.slice(errMessage.length+index);
-    let package = prefix.split("\n");
-    package = package[0].replace(/'/g,"");
-    console.log("Package:", package);
-    await Par.installPackage(package);
+    let pac = prefix.split("\n");
+    pac = pac[0].replace(/'/g,"");
+    console.log("Package:", pac);
+    await Par.installPackage(pac);
   }else{
     return message;
   }
@@ -195,7 +193,4 @@ Par.runEval = async function(message){
 }
 }
 
-
-try {
-  module.exports = exports = Par;
-} catch (e) {}
+export default Par;

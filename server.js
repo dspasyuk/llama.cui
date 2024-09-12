@@ -5,24 +5,30 @@
 // make clean && LLAMA_CUBLAS=1 make  -j
 //Copyright Denis Spasyuk
 //License MIT
-const express = require("express");
-const { spawn, exec } = require("child_process");
-const http = require("http");
-const socketIO = require("socket.io");
-var cors = require("cors");
-const path = require("path");
-const vdb = require("./db.js");
-const DDG = require("./ddg.js");
-const fs = require("fs");
-const downloadModel = require("./modeldownloader.js");
-const version = 0.331; //changed public and server and config
-var session = require("express-session");
-const MemoryStore = require("memorystore")(session);
+
+import express from 'express';
+import { spawn, exec } from 'child_process';
+import http from 'http';
+import { Server as socketIO } from 'socket.io';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import vdb from './db.js';
+import DDG from './ddg.js';
+import fs from 'fs';
+import downloadModel from './modeldownloader.js';
+import session from 'express-session';
+import MemoryStoreModule from 'memorystore';
+import hash from "./hash.js";
+const Hash = new hash();
+import config from './config.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const MemoryStore = MemoryStoreModule(session);
 const memStore = new MemoryStore();
-const config = require("./config.js");
-if (config.login) {
-  var hash = require("./hash.js");
-}
+const version = 0.331; //changed public and server and config
+
 function ser() {}
 
 ser.modelinit = async function () {
@@ -64,7 +70,7 @@ ser.init = function (error) {
   this.app.use(this.sessionStore);
   this.app.use(cors());
 
-  this.io = socketIO(this.server, {
+  this.io = new socketIO(this.server, {
     cors: {
       origin: "*",
       methods: ["GET", "POST"],
@@ -149,7 +155,7 @@ ser.init = function (error) {
             res.render("login", { title: "login" });
           } else {
             // Compare the provided password with the stored password
-            if (await hash.comparePassword(password, users.password)) {
+            if (await Hash.comparePassword(password, users.password)) {
               // Authentication successful
               req.session.loggedin = true;
               req.session.user = { username };
@@ -455,3 +461,6 @@ process.on('SIGINT', () => {
   if (ser.piper) ser.piper.kill('SIGINT');
   process.exit(0); // Exit the main process
 });
+
+
+export default ser;

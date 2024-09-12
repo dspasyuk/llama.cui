@@ -1,5 +1,6 @@
-const axios = require("axios");
-const { timeout } = require("./config");
+import axios from "axios";
+
+
 // Utility functions
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -10,9 +11,8 @@ class HTTPError extends Error {
   }
 }
 
-const unescapeHtml = (text) => text
-.replace(/&quot;/g, '"')
-.replace(/&#x27;/g, "'");
+const unescapeHtml = (text) =>
+  text.replace(/&quot;/g, '"').replace(/&#x27;/g, "'");
 const removeHtmlTags = (text) => text.replace(/<[^>]*>/g, "");
 const unquoteUrl = (url) => url.replace(" ", "+");
 
@@ -27,53 +27,51 @@ class DDG {
 
   async *text(keywords, options = {}) {
     if (!keywords) throw new Error("Keywords are mandatory");
-  
+
     const vqd = await this.getVqd(keywords);
     if (!vqd) throw new Error("Error in getting vqd");
-  
+
     const payload = this.buildPayload(keywords, vqd, options, false);
     const cache = new Set();
     const searchPositions = ["0", "20", "70", "120"];
     let count = 0;
-  
+
     for (const pos of searchPositions) {
       if (count >= this.limit) return;
-  
+
       payload.s = pos;
-      var response = await this.getUrl("GET", "https://links.duckduckgo.com/d.js", payload);
+      const response = await this.getUrl("GET", "https://links.duckduckgo.com/d.js", payload);
       if (!response) break;
-  
-      var { results } = response.data || {};
+
+      let { results } = response.data || {};
       if (!results) break;
-  
+
       const contentFetchPromises = [];
-  
+
       for (const row of results) {
         if (count >= this.limit) return;
-  
+
         const href = row.u;
         if (href && !cache.has(href) && !href.includes("google.com")) {
           cache.add(href);
-  
+
           const body = this.normalizeHtml(row.a);
           if (body) {
-            // Push the promise to the array
             contentFetchPromises.push(this.fetchContent(href).then((fullContent) => {
               return this.mapTextResult(row, body, fullContent);
             }));
-  
+
             count++;
-            if (count >= this.limitRead) break; // Limit the number of content fetches
+            if (count >= this.limitRead) break;
           }
         }
       }
-  
-      // Wait for all promises to resolve and yield results
+
       results = await Promise.all(contentFetchPromises);
       for (const result of results) {
         yield result;
       }
-  
+
       if (count >= this.limit) return;
     }
   }
@@ -90,58 +88,55 @@ class DDG {
     }
   }
 
- extractAbstract(htmlContent) {
-    // Remove script, style, and comments
+  extractAbstract(htmlContent) {
     const cleanedContent = htmlContent
-      .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '')
-      .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, '')
-      .replace(/<!--[\s\S]*?-->/g, ''); // Remove HTML comments
+      .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "")
+      .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "")
+      .replace(/<!--[\s\S]*?-->/g, "");
 
-    // Match all text within common text-containing tags
-    const matches = cleanedContent.match(/<p[^>]*>(.*?)<\/p>|<div[^>]*>(.*?)<\/div>|<span[^>]*>(.*?)<\/span>|<article[^>]*>(.*?)<\/article>|<section[^>]*>(.*?)<\/section>/g);
+    const matches = cleanedContent.match(
+      /<p[^>]*>(.*?)<\/p>|<div[^>]*>(.*?)<\/div>|<span[^>]*>(.*?)<\/span>|<article[^>]*>(.*?)<\/article>|<section[^>]*>(.*?)<\/section>/g
+    );
 
     if (!matches) return "No abstract available";
 
-    // Accumulate text and track token count
     let accumulatedText = "";
     let tokenCount = 0;
 
     for (const match of matches) {
-      const text = removeHtmlTags(match).trim(); // Trim to remove extra whitespace
-      const sentenceEnd = /[.!?;]/g; // Regex to identify sentence endings
+      const text = removeHtmlTags(match).trim();
+      const sentenceEnd = /[.!?;]/g;
 
-      if (text.length === 0) continue; // Skip empty texts
+      if (text.length === 0) continue;
 
-      const words = text.split(/\s+/); // Split text into words
+      const words = text.split(/\s+/);
       for (let i = 0; i < words.length; i++) {
         const word = words[i];
-        tokenCount += Math.ceil(word.length / 4); // Approximate token count
+        tokenCount += Math.ceil(word.length / 4);
 
         accumulatedText += word + " ";
 
-        // Check if the token limit is exceeded
-        // console.log("Token count:", tokenCount);
         if (tokenCount >= this.tokenCutoff) {
-          // Look for the nearest sentence-ending punctuation
           const endOfSentence = text.slice(accumulatedText.length).search(sentenceEnd);
           if (endOfSentence !== -1) {
-            accumulatedText = accumulatedText.trim() + text.slice(accumulatedText.length, accumulatedText.length + endOfSentence + 1);
+            accumulatedText =
+              accumulatedText.trim() +
+              text.slice(accumulatedText.length, accumulatedText.length + endOfSentence + 1);
           }
-          return accumulatedText.trim(); // Return accumulated text at sentence boundary
+          return accumulatedText.trim();
         }
       }
     }
 
-    // console.log("Final accumulated text:", accumulatedText);
     return accumulatedText.trim() || "No abstract available";
   }
 
- mapTextResult(row, body, fullContent) {
+  mapTextResult(row, body, fullContent) {
     return {
       title: this.normalizeHtml(row.t),
       href: this.normalizeUrl(row.u),
       body,
-      content: fullContent, // Include the fetched content or abstract
+      content: fullContent,
     };
   }
 
@@ -153,7 +148,7 @@ class DDG {
 
     const payload = this.buildPayload(keywords, vqd, options, true);
     const cache = new Set();
-    let count = 0; // Counter to limit the number of results
+    let count = 0;
 
     for (let attempt = 0; attempt < 10; attempt++) {
       const response = await this.getUrl("GET", "https://duckduckgo.com/i.js", payload);
@@ -163,7 +158,7 @@ class DDG {
       if (!results) break;
 
       for (const row of results) {
-        if (count >= this.limit) return; // Exit when the limit is reached
+        if (count >= this.limit) return;
         const imageUrl = row.image;
         if (imageUrl && !cache.has(imageUrl)) {
           cache.add(imageUrl);
@@ -178,7 +173,6 @@ class DDG {
     }
   }
 
-  // Helper functions
   async getUrl(method, url, params) {
     for (let i = 0; i < 3; i++) {
       try {
@@ -204,7 +198,11 @@ class DDG {
     try {
       const response = await this.getUrl("GET", "https://duckduckgo.com", { q: keywords });
       if (response) {
-        for (const [startTag, endTag] of [['vqd="', '"'], ["vqd=", "&"], ["vqd='", "'"]]) {
+        for (const [startTag, endTag] of [
+          ['vqd="', '"'],
+          ["vqd=", "&"],
+          ["vqd='", "'"],
+        ]) {
           const start = response.data.indexOf(startTag) + startTag.length;
           const end = response.data.indexOf(endTag, start);
           if (start !== -1 && end !== -1) return response.data.substring(start, end);
@@ -216,7 +214,7 @@ class DDG {
     return null;
   }
 
- buildPayload(keywords, vqd, options, isImageSearch) {
+  buildPayload(keywords, vqd, options, isImageSearch) {
     const safesearchBase = { on: 1, moderate: 1, off: -1 };
     const {
       region = "wt-wt",
@@ -249,7 +247,7 @@ class DDG {
     };
   }
 
- mapImageResult(row) {
+  mapImageResult(row) {
     return {
       title: row.title,
       image: this.normalizeUrl(row.image),
@@ -261,22 +259,21 @@ class DDG {
     };
   }
 
- normalizeHtml(rawHtml) {
+  normalizeHtml(rawHtml) {
     return rawHtml ? unescapeHtml(removeHtmlTags(rawHtml)) : "";
   }
 
- normalizeUrl(url) {
+  normalizeUrl(url) {
     return url ? unquoteUrl(url) : "";
   }
 
- extractNextPosition(nextUrl) {
+  extractNextPosition(nextUrl) {
     return nextUrl.split("s=")[1]?.split("&")[0];
   }
 
- isServerError(url) {
+  isServerError(url) {
     return url.includes("500");
   }
 }
 
-// Export the class for use in client-side code
-module.exports = DDG;
+export default DDG;

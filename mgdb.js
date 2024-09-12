@@ -1,5 +1,4 @@
-const { MongoClient } = require('mongodb');
-
+import { MongoClient } from 'mongodb';
 
 class MDB {
     constructor(url, dbn) {
@@ -198,4 +197,4 @@ class MDB {
     }
 }
 
-module.exports = MDB;
+export default MDB;

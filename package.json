@@ -6,6 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
+  "type": "module",
   "author": "Denis Spasyuk",
   "license": "MIT",
   "description": "llama.cui chat UI for llama.cpp",
@@ -15,7 +16,7 @@
     "axios": "^1.6.2",
     "bcrypt": "^5.1.1",
     "ejs": "^3.1.9",
-    "express": "^4.18.2",
+    "express": "^4.19.2",
     "express-session": "^1.17.3",
     "memorystore": "^1.6.7",
     "progress": "^2.0.3",

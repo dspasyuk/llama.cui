@@ -16,7 +16,6 @@ prmt.promptFormatCML = function (systemPrompt, userPrompt, context, isFirstMessa
     return formattedPrompt;
 }
 
-
 prmt.promptFormatLAMA3 = function (systemPrompt, userPrompt, context, isFirstMessage = false) {
     let formattedPrompt = "";
     let embedding = `${context ? `\n Context: '${context}'` : ""}`;
@@ -33,7 +32,4 @@ prmt.promptFormatNONE= function (systemPrompt, userPrompt, context, isFirstMessa
     return formattedPrompt;
 }
 
-  try {
-    module.exports = exports = prmt;
-  } catch (e) {}
-  
+export default prmt;

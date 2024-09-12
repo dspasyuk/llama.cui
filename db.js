@@ -1,10 +1,10 @@
-const Hive = require("./hive.js");
-const path = require("path");
-const config = require("./config.js");
-const fs = require("fs");
-const { exec } = require("child_process");
-function vdb() {}
+import Hive from "./hive.js";
+import path from "path";
+import config from "./config.js";
+import { exec } from "child_process";
 
+
+function vdb() {}
 
 vdb.init = async function (
   query = "Human Factors Workscope",
@@ -34,33 +34,28 @@ vdb.init = async function (
   return await vdb.query(query);
 };
 
-
 vdb.initVectorDB = async function (type = "Documents") {
-  const indexPath = path.join(__dirname, "db", this.dataChannel.get(type).datastream);
-  await Hive.init(indexPath, this.dbFile, this.dataChannel.get(type).datafolder);
+    await Hive.init(type, this.dbFile, this.dataChannel.get(type).datafolder);
 };
 
 vdb.query = async function (query, database = "Documents") {
   const vector = await Hive.getVector(query, Hive.TransOptions);
-  results = await Hive.find(vector.data, 5);
+  let results = await Hive.find(vector.data, 5);
   results = results.reduce((acc, r) => {
     if (r.similarity > 0.2) {
-      console.log(r.similarity);
       r.document.meta.href = path.relative(this.dataChannel.get(database).datafolder, r.document.meta.href);
       acc.push(r.document.meta); // Add the filtered item to the accumulator
     }
     return acc; // Always return the accumulator
   }, []);
-  console.log(results);
   return results;
 };
 
 vdb.pullDatabase = async function () {
-  const mdb = require("./mgdb.js");
-  var cfg = this.dataChannel.get("MongoDB");
-  var mjdb = new mdb(cfg.url, cfg.database);
-  var documents = await mjdb.find(cfg.collection, {});
-  // vdb.getSum = await vdb.sumInit();
+  const { default: mdb } = await import("./mgdb.js"); // Dynamic import for ESM
+  const cfg = this.dataChannel.get("MongoDB");
+  const mjdb = new mdb(cfg.url, cfg.database);
+  const documents = await mjdb.find(cfg.collection, {});
   for (let i = 0; i < documents.length; i++) {
     await Hive.addItem(vdb.sentanceCompose(documents[i]));
   }
@@ -75,17 +70,14 @@ vdb.sentanceCompose = function (data) {
   for (const [key, value] of Object.entries(data)) {
     if (!key.includes("id")) {
       if (value !== "" && value !== null && value !== undefined) {
-        values.push(`${key} : ${value}`); //Return key value pair as string
+        values.push(`${key} : ${value}`); // Return key-value pair as string
       }
     }
   }
-  // console.log(values.join(", "));
   return values.join(" ");
 };
 
-
 vdb.getLlamaEmbedding = function (text) {
-  // console.log("text", text);
   return new Promise((resolve, reject) => {
     const llamaembed = config.llamacpp.replace("llama-cli", "llama-embedding"); 
     const embedmodel = config.llamacpp.replace("llama-cli", "snowflake-q8_0.gguf");
@@ -93,19 +85,16 @@ vdb.getLlamaEmbedding = function (text) {
       if (error) {
         reject(`error: ${error.message}`);
       }
-      try{
-         if (stdout.includes("nan")) return;
-         const vector = JSON.parse(stdout);
-        //  console.log("vector", vector);
-         resolve({ data: vector });
-      }catch(e){
-          console.log(e);
-          reject(`error: ${e.message}`);
-        }
+      try {
+        if (stdout.includes("nan")) return;
+        const vector = JSON.parse(stdout);
+        resolve({ data: vector });
+      } catch (e) {
+        console.log(e);
+        reject(`error: ${e.message}`);
+      }
     });
   });
 };
 
-try {
-  module.exports = exports = vdb;
-} catch (e) {}
+export default vdb;

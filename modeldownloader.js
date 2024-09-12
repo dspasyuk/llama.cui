@@ -1,7 +1,7 @@
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
-const ProgressBar = require("progress");
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import ProgressBar from 'progress';
 
 async function createDirectories(filePath) {
   const directoryPath = path.dirname(filePath);
@@ -83,4 +83,4 @@ async function downloadModel(repo, modelName, outputDirectory) {
   }
 }
 
-module.exports = downloadModel;
+export default downloadModel;
