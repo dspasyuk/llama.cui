@@ -2,7 +2,7 @@ import { pipeline } from "@xenova/transformers";
 import fs from "fs";
 import path from "path";
 import reader from "any-text";
-
+import { fileURLToPath } from "url";
 
 /**
  * The Hive class is a database management system that provides a simple and efficient way to store and retrieve data.
@@ -10,41 +10,66 @@ import reader from "any-text";
  * The class also includes functionality for loading and saving the database to disk, as well as integrating with natural language processing models for feature extraction.
  */
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename); // remove
 
 function Hive() {}
 
-Hive.init = async function (dbName = "Documents", filePath, pathToDocs = false) {
+
+// Initialize Hive DB with support for both text and image embeddings
+Hive.init = async function (dbName = "Documents", pathToDB, pathToDocs = false, type = "text") {
   Hive.dbName = dbName;
-  Hive.filePath = filePath || `./${Hive.dbName}/${Hive.dbName}.json`; // Default file path for saving/loading
+  Hive.sliceSize = 512;
+  Hive.models = {text: "Xenova/all-MiniLM-L6-v2", image:"Xenova/clip-vit-base-patch16"};
+  Hive.documents = {text: [".txt", ".doc", ".docx", ".pdf"], image:[".png", ".jpg", ".jpeg"]}; // Add image file types
+  Hive.TransOptions = { pooling: "mean", normalize: false };
+  Hive.escapeRules={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;","\\":"\\\\","/":"\\/"};
+  Hive.pathToDB = pathToDB || path.join(__dirname, "db", Hive.dbName, Hive.dbName + ".json");
   Hive.collections = new Map();
   Hive.createCollection(Hive.dbName);
-  Hive.TransOptions = { pooling: "mean", normalize: false };
-  Hive.loadToMemory(); // Load to memory automatically
-  await Hive.initTransformers();
-  if (pathToDocs && fs.existsSync(pathToDocs) && Hive.databaseExists() === false) {
-    await Hive.pullDocuments(pathToDocs);
+  Hive.loadToMemory();
+  await Hive.initTransformers(type);
+
+  if (pathToDocs && fs.existsSync(pathToDocs)) {
+    if(Hive.databaseExists() === false){
+      await Hive.pullDocuments(pathToDocs, type);
+    }
+  } else {
+    console.log(pathToDocs ? `Document folder "${pathToDocs}" does not exist` : `Document folder not defined`);
   }
 };
+
 Hive.databaseExists = function () {
-  if (fs.existsSync(Hive.filePath) && fs.statSync(Hive.filePath).size > 200) {
+  console.log(Hive.pathToDB, fs.existsSync(Hive.pathToDB));
+  if (fs.existsSync(Hive.pathToDB) && fs.statSync(Hive.pathToDB).size > 200) {
     return true;
   } else {
-    console.log(`Database does not exist ${Hive.filePath}`);
+    console.log(`Database does not exist ${Hive.pathToDB}`);
     return false;
   }
 };
 
-// Initialize transformers
-Hive.initTransformers = async function () {
+// Initialize transformers pipeline based on input type
+Hive.initTransformers = async function (type) {
   if (!Hive.pipeline) {
-    Hive.getVector = await Hive.transInit();
+    if (type === "text") {
+      Hive.getVector = await Hive.textEmbeddingInit(); // Text embedding
+    } else if (type === "image") {
+      Hive.getVector = await Hive.imageEmbeddingInit(); // Image embedding
+    } else {
+      throw new Error("Unsupported type for embedding");
+    }
   } else {
     console.log(`Transformers already initialized`);
   }
 };
 
-Hive.transInit = async function () {
-  return await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
+Hive.textEmbeddingInit = async function () {
+  return await pipeline("feature-extraction", Hive.models.text);
+};
+
+Hive.imageEmbeddingInit = async function () {
+  return await pipeline("image-feature-extraction", Hive.models.image);
 };
 
 // Create a collection
@@ -75,6 +100,12 @@ Hive.insertOne = function (entry) {
   }
 };
 
+Hive.updateOne = function (query, entry) {
+  if (Hive.collections.has(Hive.dbName)) {
+    Hive.findMeta(query, entry);
+  }
+};
+
 // Insert many entries into a collection
 Hive.insertMany = function (entries) {
   if (Hive.collections.has(Hive.dbName)) {
@@ -94,8 +125,8 @@ Hive.insertMany = function (entries) {
   }
 };
 
-Hive.ensureDirectoryExists = function (filePath) {
-  const dir = path.dirname(filePath);
+Hive.ensureDirectoryExists = function (pathToDB) {
+  const dir = path.dirname(pathToDB);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -120,23 +151,21 @@ Hive.saveToDisk = function () {
     }
   }
 
-  Hive.ensureDirectoryExists(Hive.filePath);
-  fs.writeFileSync(Hive.filePath, JSON.stringify(data), "utf8");
-  console.log(`Database saved to ${Hive.filePath}`);
+  Hive.ensureDirectoryExists(Hive.pathToDB);
+  fs.writeFileSync(Hive.pathToDB, JSON.stringify(data), "utf8");
+  console.log(`Database saved to ${Hive.pathToDB}`);
 };
 
 // Load the database into memory from disk
 Hive.loadToMemory = async function () {
-  if (fs.existsSync(Hive.filePath)) {
-    const rawData = fs.readFileSync(Hive.filePath, "utf8");
-    const data = JSON.parse(rawData);
+  if (fs.existsSync(Hive.pathToDB)) {
+    const rawData = fs.readFileSync(Hive.pathToDB, "utf8");
+    const data = JSON.parse(rawData);   
     Hive.collections.clear(); // Clear existing collections
-    
     for (const [dbName, entries] of Object.entries(data)) {
       Hive.createCollection(dbName); // Recreate collections
       const collection = Hive.collections.get(dbName);
-     
-      console.log("Number of Entries", entries.length);
+      console.log("Number of DB Entries", entries.length);
       for (let i = 0; i < entries.length; i++) {
         const entry = entries[i];
         collection.push({
@@ -147,26 +176,34 @@ Hive.loadToMemory = async function () {
         });
       }
     }
-    
-    console.log(`Database loaded into memory from ${Hive.filePath}`);
+    console.log(`Database loaded into memory from ${Hive.pathToDB}`);
   } else {
-    console.log(`File ${Hive.filePath} does not exist.`);
+    console.log(`File ${Hive.pathToDB} does not exist.`);
   }
 };
 
 // Find vectors similar to the query vector
-Hive.find = async function (queryVector, topK = 5) {
+Hive.findMeta = async function (query, entry) {
+  const collection = Hive.collections.get(Hive.dbName);
+  for (let i = 0; i < collection.length; i++) {
+    const item = collection[i];
+    if(item.meta.filePath===query.filePath){
+       collection[i] = entry;
+       break
+    }
+  }
+  Hive.saveToDisk();
+};
+
+Hive.find = async function (queryVector, topK = 10) {
   const queryVectorMag = Hive.normalize(queryVector);
   const collection = Hive.collections.get(Hive.dbName) || [];
-
   const results = [];
-  
   for (let i = 0; i < collection.length; i++) {
     const item = collection[i];
     const similarity = Hive.cosineSimilarity(queryVector, item.vector, queryVectorMag, item.magnitude);
     results.push({ document: item, similarity });
   }
-
   results.sort((a, b) => b.similarity - a.similarity);
   return results.slice(0, topK);
 };
@@ -200,16 +237,22 @@ Hive.tokenCount = function (text) {
   return [tokensarr, tokensarr.length];
 };
 
-Hive.addItem = async function (text, filePath = "") {
+
+Hive.addItem = async function (input, filePath = "", type = "text") {
   try {
-    const vector = await Hive.getVector(text, Hive.TransOptions);
-    // Insert the item into the "Documents" collection
+    let vector;
+    if (type === "text") {
+      vector = await Hive.getVector(input, Hive.TransOptions);
+    } else if (type === "image") {
+      // Dynamically import sharp only when processing an image
+      vector = await Hive.getVector(filePath, Hive.TransOptions);
+    }
     Hive.insertOne({
       vector: Array.from(vector.data),
       meta: {
-        content: Hive.escapeChars(text),
+        content: type === "text" ? Hive.escapeChars(input) : `Image: ${path.basename(filePath)}`,
         href: filePath,
-        title: Hive.escapeChars(text.slice(0, 20)),
+        title: type === "text" ? Hive.escapeChars(input.slice(0, 20)) : `Image: ${path.basename(filePath)}`,
       },
     });
   } catch (error) {
@@ -217,28 +260,42 @@ Hive.addItem = async function (text, filePath = "") {
   }
 };
 
-// Read file and tokenize its content, splitting into slices for insertion
-Hive.readFile = async function (filePath, dir) {
-  let text = await reader.getText(filePath); // Simulate reading file content
-  const [tokens, len] = Hive.tokenCount(text);
-
-  const sliceSize = 512;
-  let startIndex = 0;
-
-  while (startIndex < len) {
-    let endIndex = startIndex + sliceSize;
-    // Ensure we don't split a word
-    if (endIndex < len) {
-      while (endIndex > startIndex && tokens[endIndex] !== " ") {
-        endIndex--;
-      }
+// Pull documents recursively from a directory and process them
+Hive.pullDocuments = async function (dir) {
+  const files = await fs.promises.readdir(dir, { withFileTypes: true });
+  for (const file of files) {
+    const fullPath = path.join(dir, file.name);
+    const ext = path.extname(file.name).toLowerCase();
+    console.log(`Processing file ${fullPath}`);
+    if (file.isDirectory()) {
+      await Hive.pullDocuments(fullPath);
+    } else if (Hive.documents.text.includes(ext)) {
+      await Hive.readFile(fullPath, "text");
+    } else if (Hive.documents.image.includes(ext)) {
+      await Hive.readFile(fullPath, "image");
     }
-    if (endIndex === startIndex) {
-      endIndex = Math.min(startIndex + sliceSize, len);
+  }
+  Hive.saveToDisk();
+};
+
+// Read file content (text or image) and extract embeddings
+Hive.readFile = async function (filePath, type) {
+  
+  if (type === "text") {
+    let text = await reader.getText(filePath);
+    const [tokens, len] = Hive.tokenCount(text);
+    
+    let startIndex = 0;
+    while (startIndex < len) {
+      let endIndex = startIndex + this.sliceSize;
+      endIndex = Math.min(endIndex, len); // Ensure proper slicing
+      const slice = tokens.slice(startIndex, endIndex);
+      await Hive.addItem(slice.join(" "), filePath, type);
+      startIndex = endIndex + 1;
     }
-    const slice = tokens.slice(startIndex, endIndex);
-    await Hive.addItem(slice.join(" "), filePath);
-    startIndex = endIndex + 1;
+  } else if (type === "image") {
+    // const imageBuffer = fs.readFileSync(filePath); // Read image as buffer
+    await Hive.addItem("", filePath, type);
   }
 };
 
@@ -259,20 +316,6 @@ Hive.tokenize = function (text) {
 
   return result;
 };
-// Pull documents recursively from a directory and process them
-Hive.pullDocuments = async function (dir) {
-  const files = await fs.promises.readdir(dir, { withFileTypes: true });
-  for (const file of files) {
-    const fullPath = path.join(dir, file.name);
-    if (file.isDirectory()) {
-      await Hive.pullDocuments(fullPath);
-    } else if (file.isFile() && [".txt", ".doc", ".docx", ".pdf"].includes(path.extname(file.name))) {
-      await Hive.readFile(fullPath, dir);
-      console.log(`Processed file: ${fullPath}`);
-    }
-  }
-  Hive.saveToDisk();
-};
 
 Hive.escapeChars = function (text) {
   // Function to escape special characters and remove repeated single-letter characters
@@ -280,16 +323,7 @@ Hive.escapeChars = function (text) {
     text
       // Escape special characters
       .replace(/[&<>"'\\\/]/g, (match) => {
-        const escapeChars = {
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;",
-          "\\": "\\\\",
-          "/": "\\/",
-        };
-        return escapeChars[match];
+        return Hive.escapeRules[match];
       })
       // Remove non-alphanumeric characters except spaces, letters, and digits
       .replace(/[^A-Za-z0-9\s]/g, "")
