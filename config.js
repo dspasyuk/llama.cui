@@ -12,7 +12,7 @@ const config = {};
 
 config.modelrepo = "QuantFactory/Qwen2-7B-Instruct-GGUF";
 config.modeldirectory = path.resolve('./models');
-config.modelname = "Qwen2-7B-Instruct.Q4_0.gguf"; // "Qwen2-7B-Instruct.Q5_K_M.gguf";
+config.modelname = "Qwen2-7B-Instruct.Q4_0.gguf"// "Qwen2-7B-Instruct.Q5_K_M.gguf";
 
 // Model Setting //Llama.cpp settings
 config.systemPrompt = fs.readFileSync('Alice.txt', 'utf8');
@@ -31,7 +31,7 @@ config.params = {
   "--top_k": 10,
   "--multiline-input": "",
   "--chat-template": "chatml",
-  //"--log-disable": "",          
+  "--log-disable": "",          
   "-p": `'${config.systemPrompt}'`
 };
 
@@ -81,11 +81,11 @@ config.outputFilter = function (output) {
 // Piper setting
 config.piper = {
   enabled: true,
-  rate: 20500,
-  // rate: 16000,
+  rate: 21500,
+  //rate: 16000,
   output_file: 'S16_LE',
   exec: "../piper/install/piper",
-  model: "../piper/models/librits/en_US-libritts_r-medium.onnx", 
+  model: "../piper/models/librits/en_US-libritts-r-medium.onnx", 
 };
 
 config.testQuestions = `
