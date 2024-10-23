@@ -24,7 +24,7 @@ config.params = {
   "-cnv": "",
   "--simple-io": "",
   "-b": 512*4,
-  "--ctx_size": 0,
+  "--ctx_size": 1024*8,
   "--temp": 0.3,
   "-fa": "",
   "-t": "6",
