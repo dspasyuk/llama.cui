@@ -80,7 +80,7 @@ config.outputFilter = function (output) {
 
 // Piper setting
 config.piper = {
-  enabled: true,
+  enabled: false,
   rate: 21500,
   //rate: 16000,
   output_file: 'S16_LE',
