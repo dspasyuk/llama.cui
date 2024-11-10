@@ -31,7 +31,7 @@ config.params = {
   "--top_k": 10,
   "--multiline-input": "",
   "--chat-template": "chatml",
-  "--log-disable": "",          
+  //"--log-disable": "",          
   "-p": `'${config.systemPrompt}'`
 };
 
