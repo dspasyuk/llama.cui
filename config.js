@@ -15,7 +15,7 @@ config.modeldirectory = path.resolve('./models');
 config.modelname = "Qwen2.5-7B.Q4_0.gguf"; // "use https://huggingface.co/QuantFactory/Qwen2.5-7B-GGUF/resolve/main/Qwen2.5-7B.Q5_K_M.gguf?download=true for Linux";
 
 // Model Setting //Llama.cpp settings
-config.systemPrompt = fs.readFileSync('Alice.txt', 'utf8');
+config.systemPrompt = fs.readFileSync('./Alice.txt', 'utf8');
 // config.systemPrompt= fs.readFileSync('Science.txt', 'utf8');
 
 config.params = {
