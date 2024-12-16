@@ -10,9 +10,9 @@ const Hash = new hash();
 
 const config = {};
 
-config.modelrepo = "QuantFactory/Qwen2.5-7B-GGUF";
+config.modelrepo = "bartowski/Qwen2.5-7B-Instruct-GGUF";
 config.modeldirectory = path.resolve('./models');
-config.modelname = "Qwen2.5-7B.Q4_0.gguf"; // "use https://huggingface.co/QuantFactory/Qwen2.5-7B-GGUF/resolve/main/Qwen2.5-7B.Q5_K_M.gguf?download=true for Linux";
+config.modelname = "Qwen2.5-7B-Instruct-Q4_0.gguf"; 
 
 // Model Setting //Llama.cpp settings
 config.systemPrompt = fs.readFileSync('./Alice.txt', 'utf8');
