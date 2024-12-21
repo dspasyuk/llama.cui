@@ -14,12 +14,13 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import vdb from './src/db.js';
-import DDG from './src/ddg.js';
+import GOOG from './src/goo.js';
 import fs from 'fs';
 import downloadModel from './src/modeldownloader.js';
 import session from 'express-session';
 import MemoryStoreModule from 'memorystore';
 import hash from "./src/hash.js";
+import axios from "axios";
 const Hash = new hash();
 import config from './config.js';
 
@@ -32,10 +33,10 @@ const version = 0.331; //changed public and server and config
 function ser() {}
 
 ser.modelinit = async function () {
-  if (fs.existsSync(config.params["--model"])) {
+  if (fs.existsSync(config.llamaParams["--model"])) {
     console.log("Model exists");
   } else {
-    console.log("Downloading the model", config.params["--model"]);
+    console.log("Downloading the model", config.llamaParams["--model"]);
     console.log("Model repo: " + config.modelrepo, config.modelname,    config.modeldirectory);
     await downloadModel(
       config.modelrepo,
@@ -46,14 +47,12 @@ ser.modelinit = async function () {
 };
 
 ser.init = function (error) {
-  console.log(
-    config.llamacpp + " " + Object.entries(config.params).flat().join(" ")
-  );
+  this.terminationtoken = "\n\n>";
   this.connectedClients = new Map();
   this.socketId = null;
   this.messageQueue = []; // Queue to store messages from clients
   this.isProcessing = false; // Flag to track if a message is being processed
-  this.runLLamaChild();
+  if (config.AI.llamacpp) this.runLLamaChild();
   this.piper_client_enabled = true;
   if (config.piper.enabled) {
     this.fullmessage = "";
@@ -118,11 +117,15 @@ ser.init = function (error) {
 
   this.app.post("/stopper", async (request, response) => {
     console.log("STOPPING");
-    ser.llamachild.kill("SIGINT");
-    this.messageQueue.splice(0, 1);
-    this.isProcessing = false;
-    this.processMessageQueue();
-    response.send({ message: "stopped" });
+    if(config.AI.llamacpp){
+      ser.llamachild.kill("SIGINT");
+      this.messageQueue.splice(0, 1);
+      this.isProcessing = false;
+      this.processMessageQueue();
+      response.send({ message: "stopped" });
+    }else{
+      response.send({ message: "stopped" });
+    }
   });
 
   this.app.get("/login", (req, res) => {
@@ -199,7 +202,10 @@ ser.isValidSession = function (sessionID) {
 };
 
 ser.runLLamaChild = function () {
-  var configParams = Object.entries(config.params).flat();
+  console.log(
+    config.llamacpp + " " + Object.entries(config.llamaParams).flat().join(" ")
+  );
+  var configParams = Object.entries(config.llamaParams).flat();
   this.llamachild = spawn(
     config.llamacpp,
     configParams.filter((item) => item !== ""),
@@ -220,6 +226,58 @@ ser.runLLamaChild = function () {
       this.runLLamaChild();
     }
   });
+};
+
+ser.runGroq = function (input) {
+  if(input.length!=0){
+  config.groqParameters.data.messages[1].content = input;
+  axios.post('https://api.groq.com/openai/v1/chat/completions', 
+    JSON.stringify(config.groqParameters.data),
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.groqParameters.APIkey}`,
+      }
+    }).then(response => {
+    // console.log(JSON.stringify(response.data));
+    this.handleGroq(response.data.choices[0].message.content+this.terminationtoken);
+    }).catch(error => {
+    console.error(JSON.stringify(error));
+    });
+}
+}
+
+ser.handleGroq = function (msg) {
+  const output = config.outputFilter(msg);
+  this.io.to(this.socketId).emit("output", output);
+  this.runPiper(output);
+  if (output) {
+    clearTimeout(this.streamTimeout);
+  }
+  this.messageQueue.splice(0, 1);
+  this.isProcessing = false;
+  this.processMessageQueue();
+};
+
+
+ser.handleLlama = function (msg) {
+this.buffer += msg.toString("utf-8");
+let lastSpaceIndex = this.buffer.lastIndexOf(" ");
+if (lastSpaceIndex !== -1) {
+  let output = this.buffer.substring(0, lastSpaceIndex);
+  this.buffer = this.buffer.substring(lastSpaceIndex + 1);
+  output = config.outputFilter(output);
+  if (output) {
+    clearTimeout(this.streamTimeout);
+  }
+  this.io.to(this.socketId).emit("output", output);
+  this.runPiper(output);
+  if (output.includes(this.terminationtoken)) {
+    this.messageQueue.splice(0, 1);
+    this.isProcessing = false;
+    this.processMessageQueue();
+  }
+}
 };
 
 ser.loggedIn = function (req, res, next) {
@@ -270,17 +328,10 @@ ser.open = function () {
   exec(start + ' ' + url);
 };
 
-ser.webseach = async function(input){
-  const ddg = new DDG({limit:4});
-  var ggsearch = [];
-  for await (const result of ddg.text(input)) {
-      if(result && result.content!=null){
-          // console.log(result);
-          ggsearch.push(result);
-      }
-    }
-  
-  return ggsearch;
+ser.webseach = async function(query){
+  const goog = new GOOG();
+  const results = await goog.searchGoogle(query, config.google.APIkey, config.google.SearchEngineID, 4)
+  return results;
 }
 
 
@@ -306,28 +357,7 @@ ser.runPiper = function (output) {
   }
 };
 
-ser.handleLlama = function (msg) {
-  this.buffer += msg.toString("utf-8");
-  let lastSpaceIndex = this.buffer.lastIndexOf(" ");
-  if (lastSpaceIndex !== -1) {
-    let output = this.buffer.substring(0, lastSpaceIndex);
-    this.buffer = this.buffer.substring(lastSpaceIndex + 1);
-    // output = parseOutput(output);
-    output = config.outputFilter(output);
-    // console.log(JSON.stringify(output));
-    if (output) {
-      clearTimeout(this.streamTimeout);
-    }
-    this.io.to(this.socketId).emit("output", output);
-    this.runPiper(output);
-    if (output.includes("\n\n>")) {
-      // console.log("Stopped");
-      this.messageQueue.splice(0, 1);
-      this.isProcessing = false;
-      this.processMessageQueue();
-    }
-  }
-};
+
 
 ser.processMessageQueue = function () {
   if (this.messageQueue.length === 0) {
@@ -340,10 +370,19 @@ ser.processMessageQueue = function () {
   this.socketId = socketId;
   this.piper_client_enabled = piper;
   // Send the message to the child process
-  this.llamachild.stdin.cork();
-  this.llamachild.stdin.write(`${input}`);
-  this.llamachild.stdin.write("\n");
-  this.llamachild.stdin.uncork();
+  if (config.AI.llamacpp){ ;
+    this.llamachild.stdin.cork();
+    this.llamachild.stdin.write(`${input}`);
+    this.llamachild.stdin.write("\n");
+    this.llamachild.stdin.uncork();
+  } else if(config.AI.groq) {
+    if (config.groqParameters.APIkey.length > 0) {
+      this.runGroq(input);
+    } else {
+      this.io.to(this.socketId).emit("output", 'Groq API key is missing or incorrect. Go to https://console.groq.com/keys to get your API key. Set your API key in the config.js file or using environment variables. On Unix/Linux/MacOS: export GROQ_API_KEY="your_api_key" On Windows: set GROQ_API_KEY="your_api_key"');
+    }
+    this.runGroq(input);
+  }
 };
 
 ser.handleTimeout = function () {
@@ -392,7 +431,7 @@ ser.handleSocketConnection = async function (socket) {
       if (data.embedding.db) {
           embedobj = embedobj.concat(await vdb.init(input));
       }
-      if(config.embedding.WebSearch && data.embedding.web && input.length < 100){
+      if(config.embedding.WebSearch && data.embedding.web && input.length < 200){
           const searchRes = await ser.webseach(input);
           embedobj = embedobj.concat(searchRes);
       }
@@ -452,7 +491,10 @@ ser.start = function () {
 
 
 async function run() {
-  await ser.modelinit();
+  if(config.AI.llamacpp){
+    await ser.modelinit();
+  }
+ 
   ser.init();
 }
 run();

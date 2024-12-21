@@ -1,6 +1,5 @@
 import axios from "axios";
 
-
 // Utility functions
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -57,9 +56,11 @@ class DDG {
 
           const body = this.normalizeHtml(row.a);
           if (body) {
-            contentFetchPromises.push(this.fetchContent(href).then((fullContent) => {
-              return this.mapTextResult(row, body, fullContent);
-            }));
+            contentFetchPromises.push(
+              this.fetchContent(href).then((fullContent) => {
+                return this.mapTextResult(row, body, fullContent);
+              })
+            );
 
             count++;
             if (count >= this.limitRead) break;
@@ -78,7 +79,10 @@ class DDG {
 
   async fetchContent(url) {
     try {
-      const response = await axios.get(url, { timeout: 4000 });
+      const response = await axios.get(url, {
+        timeout: 5000,
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; DDG-Bot/1.0)" },
+      });
       const data = response.data;
       const abstract = this.extractAbstract(data);
       return abstract;
@@ -140,63 +144,12 @@ class DDG {
     };
   }
 
-  async *images(keywords, options = {}) {
-    if (!keywords) throw new Error("Keywords are mandatory");
-
-    const vqd = await this.getVqd(keywords);
-    if (!vqd) throw new Error("Error in getting vqd");
-
-    const payload = this.buildPayload(keywords, vqd, options, true);
-    const cache = new Set();
-    let count = 0;
-
-    for (let attempt = 0; attempt < 10; attempt++) {
-      const response = await this.getUrl("GET", "https://duckduckgo.com/i.js", payload);
-      if (!response) break;
-
-      const { results, next } = response.data || {};
-      if (!results) break;
-
-      for (const row of results) {
-        if (count >= this.limit) return;
-        const imageUrl = row.image;
-        if (imageUrl && !cache.has(imageUrl)) {
-          cache.add(imageUrl);
-          yield this.mapImageResult(row);
-          count++;
-        }
-      }
-
-      if (!next) break;
-
-      payload.s = this.extractNextPosition(next);
-    }
-  }
-
-  async getUrl(method, url, params) {
-    for (let i = 0; i < 3; i++) {
-      try {
-        const response = await axios.request({
-          method,
-          url,
-          [method === "GET" ? "params" : "data"]: params,
-        });
-        if (this.isServerError(response.config.url) || response.status === 202) {
-          throw new HTTPError("Server Error");
-        }
-        if (response.status === 200) return response;
-      } catch (error) {
-        this.logger.warn(`_getUrl() ${url} ${error.name}: ${error.message}`);
-        if (i >= 2 || error.message.includes("418")) throw error;
-      }
-      await sleep(3000);
-    }
-    return null;
-  }
-
   async getVqd(keywords) {
     try {
-      const response = await this.getUrl("GET", "https://duckduckgo.com", { q: keywords });
+      const response = await this.getUrl("GET", "https://duckduckgo.com", {
+        q: keywords,
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; DDG-Bot/1.0)" },
+      });
       if (response) {
         for (const [startTag, endTag] of [
           ['vqd="', '"'],
@@ -214,17 +167,31 @@ class DDG {
     return null;
   }
 
+  async getUrl(method, url, params) {
+    for (let i = 0; i < 3; i++) {
+      try {
+        const response = await axios.request({
+          method,
+          url,
+          [method === "GET" ? "params" : "data"]: params,
+          headers: { "User-Agent": "Mozilla/5.0 (compatible; DDG-Bot/1.0)" },
+        });
+        if (response.status === 200) return response;
+      } catch (error) {
+        this.logger.warn(`_getUrl() ${url} ${error.name}: ${error.message}`);
+        if (i >= 2 || error.message.includes("418")) throw error;
+      }
+      await sleep(5000);
+    }
+    return null;
+  }
+
   buildPayload(keywords, vqd, options, isImageSearch) {
     const safesearchBase = { on: 1, moderate: 1, off: -1 };
     const {
       region = "wt-wt",
       safesearch = "moderate",
       timelimit = null,
-      size = null,
-      color = null,
-      type_image = null,
-      layout = null,
-      license_image = null,
     } = options;
 
     return {
@@ -233,29 +200,8 @@ class DDG {
       s: 0,
       q: keywords,
       vqd,
-      f: [
-        timelimit && `time:${timelimit}`,
-        size && `size:${size}`,
-        color && `color:${color}`,
-        type_image && `type:${type_image}`,
-        layout && `layout:${layout}`,
-        license_image && `license:${license_image}`,
-      ]
-        .filter(Boolean)
-        .join(","),
+      f: timelimit && `time:${timelimit}`,
       p: safesearchBase[safesearch.toLowerCase()],
-    };
-  }
-
-  mapImageResult(row) {
-    return {
-      title: row.title,
-      image: this.normalizeUrl(row.image),
-      thumbnail: this.normalizeUrl(row.thumbnail),
-      url: this.normalizeUrl(row.url),
-      height: row.height,
-      width: row.width,
-      source: row.source,
     };
   }
 
@@ -266,14 +212,18 @@ class DDG {
   normalizeUrl(url) {
     return url ? unquoteUrl(url) : "";
   }
-
-  extractNextPosition(nextUrl) {
-    return nextUrl.split("s=")[1]?.split("&")[0];
-  }
-
-  isServerError(url) {
-    return url.includes("500");
-  }
 }
+
+
+// const ddg = new DDG({limit:4});
+// var ggsearch = [];
+// for await (const result of ddg.text("Elon Musk")) {
+//     if(result && result.content!=null){
+//       console.log(result);
+//     }
+//     console.log(result);
+// }
+
+
 
 export default DDG;

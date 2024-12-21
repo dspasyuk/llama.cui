@@ -10,15 +10,41 @@ const Hash = new hash();
 
 const config = {};
 
+config.AI = {llamacpp:true, groq:false}
+
 config.modelrepo = "bartowski/Qwen2.5-7B-Instruct-GGUF";
 config.modeldirectory = path.resolve('./models');
 config.modelname = "Qwen2.5-7B-Instruct-Q4_0.gguf"; 
-
-// Model Setting //Llama.cpp settings
 config.systemPrompt = fs.readFileSync('./Alice.txt', 'utf8');
-// config.systemPrompt= fs.readFileSync('Science.txt', 'utf8');
 
-config.params = {
+
+config.groqParameters = {
+  data:{
+    messages: [{
+      "role": "system",
+      "content": `'${config.systemPrompt}'`
+    },{
+        "role": "user",
+        "content": "", 
+    }],
+    model: "llama-3.3-70b-versatile",
+    temperature: 0.3,
+    max_tokens: 8*1024,
+    top_p: 1,
+    stream: false,
+    stop: null},
+  APIkey: process.env.GROQ_API_KEY || ""
+}
+
+// create project, get api key and add Custom Search API to the project at https://console.cloud.google.com/
+// create programable search engine, get ID https://programmablesearchengine.google.com
+
+config.google = {
+  APIkey: process.env.GOOGLE_API_KEY || "",
+  SearchEngineID:  process.env.GOOGLE_SEARCH_ENGINE_ID || "",
+}
+
+config.llamaParams = {
   "--model": path.join(config.modeldirectory, config.modelname),
   "--n-gpu-layers": 33, // remove if using CPU
   "-cnv": "",
