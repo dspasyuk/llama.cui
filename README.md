@@ -78,9 +78,9 @@ config.google = {
 
 or in terminal:  
 
-`export GOOGLE_API_KEY="YOUR_API_KEY_HERE"
+`export GOOGLE_API_KEY="YOUR_API_KEY_HERE"`
 
-export GOOGLE_SEARCH_ENGINE_ID="YOUR_SEARCH_ENGINE_ID_HERE"`
+`export GOOGLE_SEARCH_ENGINE_ID="YOUR_SEARCH_ENGINE_ID_HERE"`
 
 </details>
 
