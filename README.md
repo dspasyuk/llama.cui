@@ -76,9 +76,11 @@ config.google = {
   SearchEngineID:  process.env.GOOGLE_SEARCH_ENGINE_ID || "",
 }
 
-or in terminal  
-export GOOGLE_API_KEY="YOUR_API_KEY_HERE"
-export GOOGLE_SEARCH_ENGINE_ID="YOUR_SEARCH_ENGINE_ID_HERE"
+or in terminal:  
+
+`export GOOGLE_API_KEY="YOUR_API_KEY_HERE"
+
+export GOOGLE_SEARCH_ENGINE_ID="YOUR_SEARCH_ENGINE_ID_HERE"`
 
 </details>
 
