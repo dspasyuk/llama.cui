@@ -33,6 +33,46 @@ In order to use Groq API with Llama.cui you will need to obtain Groq API ( https
 
 or just run in terminal before running server: export GROQ_API_KEY="Your API key"; 
 </details>
+
+<details><summary> <H1> Using Google Search API (Web Search) </H1></summary>
+
+In order to use Google Search API with Llama.cui you will need:
+Step 1: Create a Project in Google Cloud Console https://console.cloud.google.com/
+
+    Go to the Google Cloud Console and sign in with your Google account.
+    Click on the "Select a project" dropdown menu and click on "New Project".
+    Enter a project name and click on "Create".
+
+Step 2: Get an API Key
+
+    In the sidebar, click on "APIs & Services" and then click on "Dashboard".
+    Click on "Enable APIs and Services" and search for "Custom Search API".
+    Click on "Custom Search API" and click on the "Enable" button.
+    Click on "Create credentials" and then click on "API key".
+    Choose "Web API key" and enter a name for the API key.
+    Click on "Create" and copy the API key.
+
+Step 3: Add Custom Search API to the Project
+
+    Go to the Google Cloud Console and select the project you created earlier.
+    Click on "APIs & Services" and then click on "Dashboard".
+    Click on "Enable APIs and Services" and search for "Custom Search API".
+    Click on "Custom Search API" and click on the "Enable" button.
+
+Step 4: Create a Programmable Search Engine 
+
+    Go to the Programmable Search Engine website https://programmablesearchengine.google.com
+    Sign in with your Google account.
+    Click on "New search engine" and enter a name for the search engine.
+    Enter a site to search (e.g. a website or a domain) and click on "Create".
+    Copy the Search engine ID.
+
+Step 5: Use the Custom Search API
+
+You can now use the Custom Search API to search the web using your custom search engine. You can use the API key and search engine ID to make API requests.
+</details>
+
+
 <details><summary> <H1> Manual Installation </H1></summary>
 
 1. Clone the repository:
