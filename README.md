@@ -24,6 +24,14 @@ Starting from version 0.24 model will be downloaded automatically.
 #### Change  "--n-gpu-layers" in config.js file depending on the type of architecture used and available VRAM. For the default model (Llama3-instruct) this should be equal to 35, for compatibility it is currently set to 25, you will need at least 6Gb of VRAM to run the model, so Nvidia GTX1060 and above is a must.  
 </details>
 
+<details><summary> <H1> Using Groq API (no llama.cpp required) </H1></summary>
+
+In order to use Groq API with Llama.cui you will need to obtain Groq API ( https://console.groq.com/keys ) key and add it to config.js file or set it as environment variable
+
+`config.groqParameters = {
+  ...
+  APIkey: process.env.GROQ_API_KEY || "YOUR_KEY_HERE " // or just run export GROQ_API_KEY="Your API key" in terminal; 
+}`
 
 <details><summary> <H1> Manual Installation </H1></summary>
 
