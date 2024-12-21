@@ -69,7 +69,17 @@ Step 4: Create a Programmable Search Engine https://programmablesearchengine.goo
 
 Step 5: Use the Custom Search API
 
-You can now use the Custom Search API to search the web using your custom search engine. You can use the API key and search engine ID to make API requests.
+You can now use the Custom Search API to search the web using your custom search engine. You will need to set Api key and Progammable Search Engine ID in config.js file or set GOOGLE_API_KEY and GOOGLE_SEARCH_ENGINE_ID in your environment:
+
+config.google = {
+  APIkey: process.env.GOOGLE_API_KEY || "",
+  SearchEngineID:  process.env.GOOGLE_SEARCH_ENGINE_ID || "",
+}
+
+or in terminal  
+export GOOGLE_API_KEY="YOUR_API_KEY_HERE"
+export GOOGLE_SEARCH_ENGINE_ID="YOUR_SEARCH_ENGINE_ID_HERE"
+
 </details>
 
 
