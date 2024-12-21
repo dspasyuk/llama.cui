@@ -30,8 +30,10 @@ In order to use Groq API with Llama.cui you will need to obtain Groq API ( https
 
 `config.groqParameters = {
   ...
-  APIkey: process.env.GROQ_API_KEY || "YOUR_KEY_HERE " // or just run export GROQ_API_KEY="Your API key" in terminal; 
+  APIkey: process.env.GROQ_API_KEY || "YOUR_KEY_HERE " 
 }`
+
+or just run in terminal before running server: export GROQ_API_KEY="Your API key"; 
 </details>
 <details><summary> <H1> Manual Installation </H1></summary>
 
