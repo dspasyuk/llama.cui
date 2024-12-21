@@ -59,9 +59,9 @@ Step 3: Add Custom Search API to the Project
     Click on "Enable APIs and Services" and search for "Custom Search API".
     Click on "Custom Search API" and click on the "Enable" button.
 
-Step 4: Create a Programmable Search Engine 
+Step 4: Create a Programmable Search Engine https://programmablesearchengine.google.com
 
-    Go to the Programmable Search Engine website https://programmablesearchengine.google.com
+    Go to the Programmable Search Engine website 
     Sign in with your Google account.
     Click on "New search engine" and enter a name for the search engine.
     Enter a site to search (e.g. a website or a domain) and click on "Create".
