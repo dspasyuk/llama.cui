@@ -28,9 +28,7 @@ Starting from version 0.24 model will be downloaded automatically.
 
 In order to use Groq API with Llama.cui you will need to obtain Groq API ( https://console.groq.com/keys ) key and add it to config.js file or set it as environment variable
 
-`config.groqParameters = {
-  ...
-  APIkey: process.env.GROQ_API_KEY || "YOUR_KEY_HERE " 
+`config.groqParameters = {APIkey: process.env.GROQ_API_KEY || "YOUR_KEY_HERE " 
 }`
 
 or just run in terminal before running server: export GROQ_API_KEY="Your API key"; 
