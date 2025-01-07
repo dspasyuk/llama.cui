@@ -23,6 +23,9 @@ config.groqParameters = {
     messages: [{
       "role": "system",
       "content": `'${config.systemPrompt}'`
+    },{
+        "role": "user",
+        "content": "", 
     }],
     model: "llama-3.3-70b-versatile",
     temperature: 0.1,
