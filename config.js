@@ -23,14 +23,11 @@ config.groqParameters = {
     messages: [{
       "role": "system",
       "content": `'${config.systemPrompt}'`
-    },{
-        "role": "user",
-        "content": "", 
     }],
     model: "llama-3.3-70b-versatile",
-    temperature: 0.3,
-    max_tokens: 8*1024,
-    top_p: 1,
+    temperature: 0.1,
+    max_tokens: 16*1024,
+    top_p: 0.1,
     stream: false,
     stop: null},
   APIkey: process.env.GROQ_API_KEY || ""
