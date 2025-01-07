@@ -52,7 +52,6 @@ ser.init = function (error) {
   this.socketId = null;
   this.messageQueue = []; // Queue to store messages from clients
   this.isProcessing = false; // Flag to track if a message is being processed
-  this.chatGroqHistory = new Map();
   if (config.AI.llamacpp) this.runLLamaChild();
   this.piper_client_enabled = true;
   if (config.piper.enabled) {
@@ -230,42 +229,24 @@ ser.runLLamaChild = function () {
 };
 
 ser.runGroq = function (input, socketId) {
-  if (input.length === 0) return;
-  if (!this.chatGroqHistory.has(socketId)) {
-    // Clone the initial config messages
-    this.chatGroqHistory.set(socketId, config.groqParameters.data.messages);
-  }
-  const history = this.chatGroqHistory.get(socketId);
-  // Add user message
-  history.push({ role: "user", content: input });
-
-  // Keep history manageable (e.g., last 10 messages)
-  if (history.length > 10) {
-    history.shift(); // Remove oldest message
-  }
-
-  // Prepare request payload without modifying original config
-  const requestData = {  ...config.groqParameters.data, messages: history, user: socketId };
+  if(input.length!=0){
+  config.groqParameters.data.messages[1].content = input;
+  config.groqParameters.data.user = socketId;
   axios.post('https://api.groq.com/openai/v1/chat/completions', 
-    JSON.stringify(requestData),
+    JSON.stringify(config.groqParameters.data),
     {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${config.groqParameters.APIkey}`,
       }
     }).then(response => {
-      const botResponse = response.data.choices[0].message.content + this.terminationtoken;
-      console.log("Groq response:", botResponse);
-      // Add AI response to history
-      history.push({ role: "assistant", content: botResponse });
-      // Emit response to client
-      this.handleGroq(botResponse);
+    // console.log(JSON.stringify(response.data));
+    this.handleGroq(response.data.choices[0].message.content+this.terminationtoken);
     }).catch(error => {
-      console.error(JSON.stringify(error));
+    console.error(JSON.stringify(error));
     });
-};
-
-
+}
+}
 
 ser.handleGroq = function (msg) {
   const output = config.outputFilter(msg);
@@ -401,7 +382,7 @@ ser.processMessageQueue = function () {
     } else {
       this.io.to(this.socketId).emit("output", 'Groq API key is missing or incorrect. Go to https://console.groq.com/keys to get your API key. Set your API key in the config.js file or using environment variables. On Unix/Linux/MacOS: export GROQ_API_KEY="your_api_key" On Windows: set GROQ_API_KEY="your_api_key"');
     }
-    //this.runGroq(input, socketId);
+    this.runGroq(input, socketId);
   }
 };
 
