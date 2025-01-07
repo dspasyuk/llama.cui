@@ -231,13 +231,11 @@ ser.runLLamaChild = function () {
 
 ser.runGroq = function (input, socketId) {
   if (input.length === 0) return;
-
   if (!this.chatGroqHistory.has(socketId)) {
-    // Clone the initial config messages instead of an empty array
+    // Clone the initial config messages
     this.chatGroqHistory.set(socketId, config.groqParameters.data.messages);
   }
   const history = this.chatGroqHistory.get(socketId);
-  
   // Add user message
   history.push({ role: "user", content: input });
 
@@ -248,7 +246,6 @@ ser.runGroq = function (input, socketId) {
 
   // Prepare request payload without modifying original config
   const requestData = {  ...config.groqParameters.data, messages: history, user: socketId };
-  console.log("Request data:", requestData);
   axios.post('https://api.groq.com/openai/v1/chat/completions', 
     JSON.stringify(requestData),
     {
