@@ -28,7 +28,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const MemoryStore = MemoryStoreModule(session);
 const memStore = new MemoryStore();
-const version = 0.331; //changed public and server and config
+const version = 0.340; //changed public and server and config
 
 function ser() {}
 
