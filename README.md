@@ -18,7 +18,9 @@ You will need to obtain Groq API ( https://console.groq.com/keys ) key and add i
 
 ## Linux Nvidia GPU
 
-`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; cmake -B build -DGGML_CUDA=ON; cmake --build build --config Release; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js` ## you might want to set a specific cuda archetecture if the native does not work -DCMAKE_CUDA_ARCHITECTURES="52;60;61;62;70;72;75;80;86" 
+`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; cmake -B build -DGGML_CUDA=ON; cmake --build build --config Release; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js` 
+
+you might want to set a specific cuda archetecture if the native does not work -DCMAKE_CUDA_ARCHITECTURES="52;60;61;62;70;72;75;80;86" 
 
 ## Linux CPU
 
