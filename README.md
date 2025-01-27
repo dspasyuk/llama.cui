@@ -9,6 +9,11 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
 Starting from version 0.24 model will be downloaded automatically. 
 
+## Groq Install (no llama cpp needed):
+git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
+You will need to obtain Groq API ( https://console.groq.com/keys ) key and add it to config.js file or set it as environment variable 
+`export GROQ_API_KEY="Your API key"`
+
 ## Linux Nvidia GPU
 
 `git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; cmake -DCMAKE_CUDA_ARCHITECTURES="52;60;61;62;70;72;75;80;86" -B build -DGGML_CUDA=ON; cmake --build build --config Release; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
