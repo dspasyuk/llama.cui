@@ -268,7 +268,7 @@ cui.loadMessage = function (chat) {
 };
 //new message
 cui.onNewChart = function () {
-  cui.currentTile = null;
+  cui.currentTile = {};
   cui.messageId = "";
   cui.currentChat = cui.getcurrentChat();
   const chatMessages = document.getElementById("chatMessages");
@@ -289,7 +289,7 @@ cui.socketInit = function () {
   });
 
   
-  cui.currentTile = null; // Reference to the current tile element
+  cui.currentTile = {}; // Reference to the current tile element
   this.socket.on("output", (response) => {
 
     if(typeof response === 'object' && response !== null) {
@@ -301,7 +301,10 @@ cui.socketInit = function () {
        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
     else{
-    if (response.includes(cui.terminationTocken)) {
+    if (response.includes(cui.terminationTocken) && response != "") {
+      if (!cui.currentTile ) {
+        cui.createBotTile(cui.bufferText);
+      }
       cui.currentTile.textContent += " " + response.replace(cui.terminationTocken, "");
       cui.bufferText += " " + response;
       cui.currentTile.innerHTML = cui.md.render(cui.bufferText);
@@ -310,7 +313,7 @@ cui.socketInit = function () {
       // console.log("message", message);
       cui.setMessage(message);
       cui.createSVG(cui.currentTile);
-      cui.currentTile = null;
+      cui.currentTile = {};
       userScrolledManually = false;
       cui.hideStop();
     } else {
@@ -411,10 +414,11 @@ cui.piperToggle = function(){
 }
 
 cui.createSVG = function (ell) {
-  var extractedSvg = svgme.extractSvgFromText(ell.innerText);
+  if (ell.innerText) {
+   var extractedSvg = svgme.extractSvgFromText(ell.innerText);
   if (extractedSvg) {
     svgme.convertSvgToHtml(ell,extractedSvg);
-  }
+  }}
 };
 
 cui.createHTML = function (ell) {
@@ -561,7 +565,6 @@ cui.createTile = function (content, tileClass, embed = []) {
   tileElement.appendChild(contentElement);
   chatMessages.appendChild(tileElement);
   cui.currentTile = contentElement;
-
   if (tileClass === "bot-tile") {
       cui.createSVG(tileElement);
   }
@@ -605,8 +608,7 @@ cui.sendMessage = function () {
   const input = cui.messageInput.value.trim(); // Get the message content
   const embedcheck = document.getElementById("embedcheck");
   const webembed = document.getElementById("webembedcheck");
-  console.log("embedcheck", webembed.checked);
-  cui.currentTile = null;
+  cui.currentTile = {};
   if (input !== "") {
     this.userMessages.push(input);
     cui.socket.emit("message", {

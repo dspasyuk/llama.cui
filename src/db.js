@@ -2,23 +2,21 @@ import Hive from "./hive.js";
 import path from "path";
 import config from "../config.js";
 import { exec } from "child_process";
-import { fileURLToPath } from "url";
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(path.dirname(__filename)); // remove
-console.log(__dirname);
+
+
 function vdb() {}
 
 vdb.init = async function (
   query = "Human Factors Workscope",
 ) {
   vdb.pipeline;
-  this.dbFile = path.join(__dirname, "/db/Documents/db.json");
+  this.dbFile = "./db/Documents/db.json";
   this.index = {};
   this.useLlamaEmbedding = false;
   this.dataChannel = new Map();
   this.dataChannel.set("Documents", {
     datastream: "Documents", 
-    datafolder: path.join(__dirname, "docs"),
+    datafolder: "./docs",
     slice: 1024,
     vectordb: "Documents.js"
   });
@@ -36,8 +34,8 @@ vdb.init = async function (
   return await vdb.query(query);
 };
 
-vdb.initVectorDB = async function (type = "text") {
-    await Hive.init({type:type, pathToDB:this.dbFile, pathToDocs:this.dataChannel.get("Documents").datafolder});
+vdb.initVectorDB = async function (type = "Documents") {
+    await Hive.init(type, this.dbFile, this.dataChannel.get(type).datafolder);
 };
 
 vdb.query = async function (query, database = "Documents") {

@@ -1,5 +1,6 @@
 import axios from "axios";
 
+
 // Utility functions
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -215,14 +216,14 @@ class DDG {
 }
 
 
-// const ddg = new DDG({limit:4});
-// var ggsearch = [];
-// for await (const result of ddg.text("Elon Musk")) {
-//     if(result && result.content!=null){
-//       console.log(result);
-//     }
-//     console.log(result);
-// }
+const ddg = new DDG({limit:3});
+var ggsearch = [];
+for await (const result of ddg.text("Elon Musk")) {
+    if(result && result.content!=null){
+      console.log(result);
+    }
+    console.log(result);
+}
 
 
 
