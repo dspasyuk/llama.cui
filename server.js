@@ -28,7 +28,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const MemoryStore = MemoryStoreModule(session);
 const memStore = new MemoryStore();
-const version = 0.340; //changed public and server and config
+const version = 0.350; //changed public and server and config
 
 function ser() {}
 
@@ -52,6 +52,7 @@ ser.init = function (error) {
   this.socketId = null;
   this.messageQueue = []; // Queue to store messages from clients
   this.isProcessing = false; // Flag to track if a message is being processed
+  this.chatGroqHistory = new Map();
   if (config.AI.llamacpp) this.runLLamaChild();
   this.piper_client_enabled = true;
   if (config.piper.enabled) {
@@ -216,7 +217,6 @@ ser.runLLamaChild = function () {
   this.llamachild.stdin.setEncoding("utf-8");
   this.llamachild.stdout.setEncoding("utf-8");
   this.llamachild.stdout.on("data", (msg) => this.handleLlama(msg));
-
   this.llamachild.on("exit", (code, signal) => {
     if (code !== null) {
       console.log(`Child process exited with code ${code}`);
@@ -228,25 +228,48 @@ ser.runLLamaChild = function () {
   });
 };
 
+ser.lengthLimit = function (history) {
+   let total = "";
+   for (let i = 0; i < history.length; i++) {
+     total += history[i].content;
+   }
+   return ser.tokenCount(total);
+};
+
 ser.runGroq = function (input, socketId) {
-  if(input.length!=0){
-  config.groqParameters.data.messages[1].content = input;
-  config.groqParameters.data.user = socketId;
+  if (input.length === 0) return;
+  if (!this.chatGroqHistory.has(socketId)) {
+    // Clone the initial config messages
+    this.chatGroqHistory.set(socketId, config.groqParameters.data.messages);
+  }
+  const history = this.chatGroqHistory.get(socketId);
+  // Add user message
+  history.push({ role: "user", content: input });
+  // Keep history manageable 
+  console.log(ser.lengthLimit(history)[1]);
+  if (history.length > config.groqParameters.historyLimit || config.groqParameters.data.max_tokens > ser.lengthLimit(history)[1]) {
+    history.shift(); // Remove oldest message
+  }
+  // Prepare request payload without modifying original config
+  const requestData = {  ...config.groqParameters.data, messages: history, user: socketId };
+  // console.log(JSON.stringify(requestData));
   axios.post('https://api.groq.com/openai/v1/chat/completions', 
-    JSON.stringify(config.groqParameters.data),
+    JSON.stringify(requestData),
     {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${config.groqParameters.APIkey}`,
       }
     }).then(response => {
-    // console.log(JSON.stringify(response.data));
-    this.handleGroq(response.data.choices[0].message.content+this.terminationtoken);
+      const botResponse = response.data.choices[0].message.content + this.terminationtoken;
+      history.push({ role: "assistant", content: botResponse });
+      // Emit response to client
+      this.handleGroq(botResponse);
     }).catch(error => {
-    console.error(JSON.stringify(error));
+      console.error(JSON.stringify(error));
     });
-}
-}
+};
+
 
 ser.handleGroq = function (msg) {
   const output = config.outputFilter(msg);
@@ -335,7 +358,6 @@ ser.webseach = async function(query){
   return results;
 }
 
-
 ser.runPiper = function (output) {
   if (config.piper.enabled) {
     
@@ -378,18 +400,22 @@ ser.processMessageQueue = function () {
     this.llamachild.stdin.uncork();
   } else if(config.AI.groq) {
     if (config.groqParameters.APIkey.length > 0) {
-      this.runGroq(input, socketId);
+      this.runGroq(input);
     } else {
       this.io.to(this.socketId).emit("output", 'Groq API key is missing or incorrect. Go to https://console.groq.com/keys to get your API key. Set your API key in the config.js file or using environment variables. On Unix/Linux/MacOS: export GROQ_API_KEY="your_api_key" On Windows: set GROQ_API_KEY="your_api_key"');
     }
-    this.runGroq(input, socketId);
+    this.runGroq(input);
   }
 };
 
 ser.handleTimeout = function () {
   console.log("Timeout");
   ser.isProcessing = false;
-  ser.llamachild.kill("SIGINT");
+  if(config.AI.llamacpp){
+    ser.llamachild.kill("SIGINT");
+  }else if(config.AI.groq) {
+    console.log("No response from Groq");
+  }
 };
 
 ser.tokenCount = function (text) {
@@ -432,7 +458,7 @@ ser.handleSocketConnection = async function (socket) {
       if (data.embedding.db) {
           embedobj = embedobj.concat(await vdb.init(input));
       }
-      if(config.embedding.WebSearch && data.embedding.web && input.length < 200){
+      if(config.embedding.WebSearch && data.embedding.web && input.length < 100){
           const searchRes = await ser.webseach(input);
           embedobj = embedobj.concat(searchRes);
       }

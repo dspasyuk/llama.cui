@@ -10,13 +10,13 @@ const Hash = new hash();
 
 const config = {};
 
-config.AI = {llamacpp:true, groq:false}
+config.AI = {llamacpp:false, groq:true}
 
 config.modelrepo = "bartowski/Qwen2.5-7B-Instruct-GGUF";
 config.modeldirectory = path.resolve('./models');
 config.modelname = "Qwen2.5-7B-Instruct-Q4_0.gguf"; 
 config.systemPrompt = fs.readFileSync('./Alice.txt', 'utf8');
-
+// config.systemPrompt= fs.readFileSync('Science.txt', 'utf8');
 
 config.groqParameters = {
   data:{
@@ -27,18 +27,18 @@ config.groqParameters = {
         "role": "user",
         "content": "", 
     }],
-    model: "llama-3.3-70b-versatile",
-    temperature: 0.1,
-    max_tokens: 16*1024,
+    model: "deepseek-r1-distill-llama-70b",
+    temperature: 0.2,
+    max_tokens: 1024*16,
     top_p: 0.1,
     stream: false,
-    stop: null},
+    stop: null
+} ,
+  historyLimit: 30,
   APIkey: process.env.GROQ_API_KEY || ""
 }
-
-// create project, get api key and add Custom Search API to the project at https://console.cloud.google.com/
+// create project get api key add Custom Search API to the project https://console.cloud.google.com/
 // create programable search engine, get ID https://programmablesearchengine.google.com
-
 config.google = {
   APIkey: process.env.GOOGLE_API_KEY || "",
   SearchEngineID:  process.env.GOOGLE_SEARCH_ENGINE_ID || "",
@@ -91,7 +91,7 @@ config.embedding = {MongoDB:false, Documents: true, WebSearch: true };
 config.maxTokens = 8000;
 
 config.filter = function (output) {
-  return output.replace(/<\|.*?\|>/g, '');
+  return output.replace(/<\|.*?\|>/g, '').replace(/<think>.*?<\/think>/gs, '').trim();
 };
 
 // Adjust model prompt
