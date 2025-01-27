@@ -11,15 +11,15 @@ Starting from version 0.24 model will be downloaded automatically.
 
 ## Linux Nvidia GPU
 
-`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && LLAMA_CUDA=1 make -j 6; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
+`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; cmake -DCMAKE_CUDA_ARCHITECTURES="52;60;61;62;70;72;75;80;86" -B build -DGGML_CUDA=ON; cmake --build build --config Release; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
 ## Linux CPU
 
-`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && make -j 6; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
+`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; cmake -B build; cmake --build build --config Release; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
 ## OSX
 
-`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; sed -i 's/-arch=native/-arch=all/g' Makefile; make clean && make -j 6; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
+`git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; cmake -B build; cmake --build build --config Release; cd ..; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
 #### Change  "--n-gpu-layers" in config.js file depending on the type of architecture used and available VRAM. For the default model (Llama3-instruct) this should be equal to 35, for compatibility it is currently set to 25, you will need at least 6Gb of VRAM to run the model, so Nvidia GTX1060 and above is a must.  
 </details>
