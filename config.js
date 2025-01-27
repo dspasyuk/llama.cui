@@ -61,7 +61,7 @@ config.llamaParams = {
   "-p": `'${config.systemPrompt}'`
 };
 
-config.llamacpp = "../llama.cpp/llama-cli";
+config.llamacpp = "../llama.cpp/build/llama-cli";
 
 // Llama.cui settings
 config.PORT = { client: "7777", server: "7777" };
