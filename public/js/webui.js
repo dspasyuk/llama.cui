@@ -268,7 +268,7 @@ cui.loadMessage = function (chat) {
 };
 //new message
 cui.onNewChart = function () {
-  cui.currentTile = {};
+  cui.currentTile = null;
   cui.messageId = "";
   cui.currentChat = cui.getcurrentChat();
   const chatMessages = document.getElementById("chatMessages");
@@ -289,7 +289,7 @@ cui.socketInit = function () {
   });
 
   
-  cui.currentTile = {}; // Reference to the current tile element
+  cui.currentTile = null; // Reference to the current tile element
   this.socket.on("output", (response) => {
 
     if(typeof response === 'object' && response !== null) {
@@ -301,10 +301,7 @@ cui.socketInit = function () {
        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
     else{
-    if (response.includes(cui.terminationTocken) && response != "") {
-      if (!cui.currentTile ) {
-        cui.createBotTile(cui.bufferText);
-      }
+    if (response.includes(cui.terminationTocken)) {
       cui.currentTile.textContent += " " + response.replace(cui.terminationTocken, "");
       cui.bufferText += " " + response;
       cui.currentTile.innerHTML = cui.md.render(cui.bufferText);
@@ -313,7 +310,7 @@ cui.socketInit = function () {
       // console.log("message", message);
       cui.setMessage(message);
       cui.createSVG(cui.currentTile);
-      cui.currentTile = {};
+      cui.currentTile = null;
       userScrolledManually = false;
       cui.hideStop();
     } else {
@@ -414,11 +411,10 @@ cui.piperToggle = function(){
 }
 
 cui.createSVG = function (ell) {
-  if (ell.innerText) {
-   var extractedSvg = svgme.extractSvgFromText(ell.innerText);
+  var extractedSvg = svgme.extractSvgFromText(ell.innerText);
   if (extractedSvg) {
     svgme.convertSvgToHtml(ell,extractedSvg);
-  }}
+  }
 };
 
 cui.createHTML = function (ell) {
@@ -565,6 +561,7 @@ cui.createTile = function (content, tileClass, embed = []) {
   tileElement.appendChild(contentElement);
   chatMessages.appendChild(tileElement);
   cui.currentTile = contentElement;
+
   if (tileClass === "bot-tile") {
       cui.createSVG(tileElement);
   }
@@ -608,7 +605,8 @@ cui.sendMessage = function () {
   const input = cui.messageInput.value.trim(); // Get the message content
   const embedcheck = document.getElementById("embedcheck");
   const webembed = document.getElementById("webembedcheck");
-  cui.currentTile = {};
+  console.log("embedcheck", webembed.checked);
+  cui.currentTile = null;
   if (input !== "") {
     this.userMessages.push(input);
     cui.socket.emit("message", {
@@ -751,7 +749,7 @@ cui.handleKeydown = function (event) {
   const messageField = document.getElementById("messageInput");
   let currentIndex = parseInt(messageField.getAttribute('data-current-index')) || this.userMessages.length;
 
-  if (event.key === "ArrowDown") {
+  if (event.ctrlKey && event.key === "ArrowDown") {
     // Show the previous message
     if (currentIndex > 0) {
       currentIndex--;
@@ -759,7 +757,7 @@ cui.handleKeydown = function (event) {
       autoResize(messageField);
     }
     event.preventDefault(); // Prevent cursor from moving in text field
-  } else if (event.key === "ArrowUp") {
+  } else if (event.ctrlKey && event.key === "ArrowUp") {
     // Show the next message
     if (currentIndex < this.userMessages.length) {
       currentIndex++;
