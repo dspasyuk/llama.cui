@@ -229,45 +229,56 @@ ser.runLLamaChild = function () {
 };
 
 ser.lengthLimit = function (history) {
-   let total = "";
-   for (let i = 0; i < history.length; i++) {
-     total += history[i].content;
-   }
-   return ser.tokenCount(total);
+  let totalTokens = 0;
+  let totalMessages = 0;
+  for (let message of history) {
+      totalMessages++;
+      totalTokens += message.content.length;
+  }
+  return [totalTokens, totalMessages];
 };
 
 ser.runGroq = function (input, socketId) {
   if (input.length === 0) return;
   if (!this.chatGroqHistory.has(socketId)) {
-    // Clone the initial config messages
-    this.chatGroqHistory.set(socketId, config.groqParameters.data.messages);
+      // Clone the initial config messages
+      this.chatGroqHistory.set(socketId, config.groqParameters.data.messages);
   }
   const history = this.chatGroqHistory.get(socketId);
   // Add user message
   history.push({ role: "user", content: input });
-  // Keep history manageable 
-  console.log(ser.lengthLimit(history)[1]);
-  if (history.length > config.groqParameters.historyLimit || config.groqParameters.data.max_tokens > ser.lengthLimit(history)[1]) {
-    history.shift(); // Remove oldest message
+
+  // Check token limit and history length
+  const [tokenCount, messageCount] = ser.lengthLimit(history);
+  // Remove old messages if token limit is exceeded
+  while (tokenCount > config.groqParameters.data.max_tokens && history.length > 1) {
+      history.shift();
+      const newTokenCount = ser.lengthLimit(history)[0];
+      if (newTokenCount <= config.groqParameters.data.max_tokens) {
+          break;
+      }
+  }
+  // Ensure history doesn't exceed the maximum number of messages
+  while (history.length > config.groqParameters.historyLimit) {
+      history.shift();
   }
   // Prepare request payload without modifying original config
   const requestData = {  ...config.groqParameters.data, messages: history, user: socketId };
-  // console.log(JSON.stringify(requestData));
   axios.post('https://api.groq.com/openai/v1/chat/completions', 
-    JSON.stringify(requestData),
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.groqParameters.APIkey}`,
-      }
-    }).then(response => {
-      const botResponse = response.data.choices[0].message.content + this.terminationtoken;
-      history.push({ role: "assistant", content: botResponse });
-      // Emit response to client
-      this.handleGroq(botResponse);
-    }).catch(error => {
-      console.error(JSON.stringify(error));
-    });
+      JSON.stringify(requestData),
+      {
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${config.groqParameters.APIkey}`,
+          }
+      }).then(response => {
+          const botResponse = response.data.choices[0].message.content + this.terminationtoken;
+          history.push({ role: "assistant", content: botResponse });
+          // Emit response to client
+          this.handleGroq(botResponse);
+      }).catch(error => {
+          console.error(JSON.stringify(error));
+      });
 };
 
 
