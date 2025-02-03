@@ -21,6 +21,7 @@ import session from 'express-session';
 import MemoryStoreModule from 'memorystore';
 import hash from "./src/hash.js";
 import axios from "axios";
+import Groq from "groq-sdk";
 const Hash = new hash();
 import config from './config.js';
 
@@ -262,6 +263,7 @@ ser.runGroq = function (input, socketId) {
   while (history.length > config.groqParameters.historyLimit) {
       history.shift();
   }
+  console.log("history", ser.lengthLimit(history));
   // Prepare request payload without modifying original config
   const requestData = {  ...config.groqParameters.data, messages: history, user: socketId };
   axios.post('https://api.groq.com/openai/v1/chat/completions', 
@@ -277,9 +279,76 @@ ser.runGroq = function (input, socketId) {
           // Emit response to client
           this.handleGroq(botResponse);
       }).catch(error => {
+          this.handleGroqError(error);
           console.error(JSON.stringify(error));
       });
 };
+
+
+
+// ser.runGroq = async function (input, socketId) {
+//   if (input.length === 0) return;
+
+//   // Initialize Groq client
+//   const groq = new Groq({ apiKey: config.groqParameters.APIkey });
+
+//   // Check if history exists for the socketId
+//   if (!this.chatGroqHistory.has(socketId)) {
+//     // Clone the initial config messages
+//     this.chatGroqHistory.set(socketId, config.groqParameters.data.messages);
+//   }
+//   const history = this.chatGroqHistory.get(socketId);
+  
+//   // Add user message
+//   history.push({ role: "user", content: input });
+
+//   // Check token limit and history length
+//   const [tokenCount, messageCount] = ser.lengthLimit(history);
+  
+//   // Remove old messages if token limit is exceeded
+//   while (tokenCount > config.groqParameters.data.max_tokens && history.length > 1) {
+//     history.shift();
+//     const newTokenCount = ser.lengthLimit(history)[0];
+//     if (newTokenCount <= config.groqParameters.data.max_tokens) {
+//       break;
+//     }
+//   }
+
+//   // Ensure history doesn't exceed the maximum number of messages
+//   while (history.length > config.groqParameters.historyLimit) {
+//     history.shift();
+//   }
+
+//   try {
+//     // Prepare request parameters with streaming enabled
+//     const requestParams = {
+//       messages: history,
+//       ...config.groqParameters.data
+//     };
+
+//     // Create the stream
+//     const stream = await groq.chat.completions.create(requestParams);
+
+//     // Process the stream chunks
+//     let botResponse = '';
+    
+//     for await (const chunk of stream) {
+//       // Concatenate each chunk of the response
+//       botResponse += chunk.choices[0]?.delta?.content || '';
+//       this.handleGroq(botResponse);
+//     }
+//     // Add bot response to history
+//     history.push({ role: "assistant", content: botResponse + this.terminationtoken });
+//     // Emit response to client
+  
+//   } catch (error) {
+//     console.error("Groq API error:", error);
+//   } finally {
+//     // Optional: Any cleanup operations can go here
+//   }
+// }
+
+
 
 
 ser.handleGroq = function (msg) {
@@ -294,6 +363,37 @@ ser.handleGroq = function (msg) {
   this.processMessageQueue();
 };
 
+ser.handleGroqError = function (error) {
+switch (error.response.status) {
+  case 400:
+     this.handleGroq("Bad Request: Invalid request syntax. Review the request format and ensure it is correct.");
+      break;
+  case 401:
+     this.handleGroq("Unauthorized: Invalid API key or authentication credentials. Ensure the request includes the necessary authentication credentials and the API key is valid.");
+      break;
+  case 404:
+     this.handleGroq("Not Found: The requested resource could not be found. Check the request URL and the existence of the resource.");
+      break;
+  case 422:
+     this.handleGroq("Unprocessable Entity: The request was well-formed but could not be followed due to semantic errors. Verify the data provided for correctness and completeness.");
+      break;
+  case 429:
+     this.handleGroq("Too many requests were sent in a given timeframe.");
+      // Implement retry logic with exponential backoff
+
+      break;
+  case 498:
+     this.handleGroq("The flex tier is at capacity and the request won't be processed. Try again later.");
+      // Implement retry logic with exponential backoff
+     
+      break;
+  case 499:
+     this.handleGroq("Request Cancelled: The request was cancelled by the caller.");
+      break;
+  default:
+     this.handleGroq("Groq API error:", error);
+    }
+  }
 
 ser.handleLlama = function (msg) {
 this.buffer += msg.toString("utf-8");
@@ -365,7 +465,7 @@ ser.open = function () {
 
 ser.webseach = async function(query){
   const goog = new GOOG();
-  const results = await goog.searchGoogle(query, config.google.APIkey, config.google.SearchEngineID, 4)
+  const results = await goog.searchAndScrape(query, config.google.APIkey, config.google.SearchEngineID, 4)
   return results;
 }
 
