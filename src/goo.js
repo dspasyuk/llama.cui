@@ -37,20 +37,39 @@ class GOOG {
 
   async searchAndScrape(keywords, apiKey, SearchEngineID, num = 4) {
     const searchResults = await this.searchGoogle(keywords, apiKey, SearchEngineID, num);
-    
-    for (let result of searchResults) {
-      try {
-        const scraper = new Scraper(result.url);
-        const extractedText = await scraper.scrape();
-        result.extractedContent = extractedText;
-      } catch (err) {
-        console.error(`Failed to scrape ${result.url}:`, err.message);
-        result.extractedContent = 'Scraping failed.';
-      }
-    }
+    // Calculate maximum tokens per entry
+    const maxTokens = 2000;
+    const maxTokensPerEntry = Math.floor(maxTokens / num);
+    let tokenCount = 0;
 
+    for (let result of searchResults) {
+        try {
+            const scraper = new Scraper(result.url);
+            const extractedText = await scraper.scrape();
+            
+            // Calculate tokens in the extracted text
+            const tokens = extractedText.split(/\s+/);
+            const tokenLength = tokens.length;
+            
+            // Check if we've exceeded the total token limit
+            if (tokenCount + tokenLength > maxTokens) {
+                const remainingTokens = maxTokens - tokenCount;
+                const truncatedContent = tokens.slice(0, remainingTokens).join(' ');
+                result.extractedContent = truncatedContent;
+                tokenCount = maxTokens; // Set tokenCount to maxTokens to prevent further additions
+            } else {
+                // Apply per-entry token limit
+                const limitedContent = tokens.slice(0, maxTokensPerEntry).join(' ');
+                result.extractedContent = limitedContent;
+                tokenCount += tokenLength;
+            }
+        } catch (err) {
+            console.error(`Failed to scrape ${result.url}:`, err.message);
+            result.extractedContent = 'Scraping failed.';
+        }
+    }
     return searchResults;
-  }
+}
 }
 
 export default GOOG;
