@@ -28,7 +28,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const MemoryStore = MemoryStoreModule(session);
 const memStore = new MemoryStore();
-const version = 0.355; //changed public and server and config
+const version = 0.360; //changed public and server and config
 
 function ser() {}
 
@@ -366,31 +366,37 @@ ser.handleGroqError = function (error) {
 switch (error.response.status) {
   case 400:
      this.handleGroq("Bad Request: Invalid request syntax. Review the request format and ensure it is correct.");
+     this.isProcessing = false;
       break;
   case 401:
      this.handleGroq("Unauthorized: Invalid API key or authentication credentials. Ensure the request includes the necessary authentication credentials and the API key is valid.");
-      break;
+     this.isProcessing = false; 
+     break;
   case 404:
      this.handleGroq("Not Found: The requested resource could not be found. Check the request URL and the existence of the resource.");
-      break;
+     this.isProcessing = false; 
+     break;
   case 422:
      this.handleGroq("Unprocessable Entity: The request was well-formed but could not be followed due to semantic errors. Verify the data provided for correctness and completeness.");
-      break;
+     this.isProcessing = false; 
+     break;
   case 429:
      this.handleGroq("Too many requests were sent in a given timeframe.");
       // Implement retry logic with exponential backoff
-
+      this.isProcessing = false;
       break;
   case 498:
      this.handleGroq("The flex tier is at capacity and the request won't be processed. Try again later.");
       // Implement retry logic with exponential backoff
-     
+      this.isProcessing = false;
       break;
   case 499:
      this.handleGroq("Request Cancelled: The request was cancelled by the caller.");
-      break;
+     this.isProcessing = false; 
+     break;
   default:
      this.handleGroq("Groq API error:", error);
+     this.isProcessing = false;
     }
   }
 
@@ -464,7 +470,8 @@ ser.open = function () {
 
 ser.webseach = async function(query){
   const goog = new GOOG();
-  const results = await goog.searchAndScrape(query, config.google.APIkey, config.google.SearchEngineID, 4)
+  const results = await goog.searchAndScrape(query, config.google.APIkey, config.google.SearchEngineID, 4, 4000);
+  console.log(results);
   return results;
 }
 
