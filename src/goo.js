@@ -1,22 +1,22 @@
 import axios from 'axios';
+import Scraper from './webscraper.js';
 
 class GOOG {
-    constructor() {
-        this.baseUrl = 'https://www.googleapis.com/customsearch/v1';
-      }
+  constructor() {
+    this.baseUrl = 'https://www.googleapis.com/customsearch/v1';
+  }
 
-async searchGoogle(keywords, apiKey, SearchEngineID, num = 4) {
+  async searchGoogle(keywords, apiKey, SearchEngineID, num = 4) {
     const params = {
       key: apiKey,
       cx: SearchEngineID,
       q: keywords,
-      num: num, 
-      numCharacters: 200
+      num: num,
     };
     try {
       const response = await axios.get(this.baseUrl, { params });
       const data = response.data;
-  
+
       if (data.items) {
         const searchResults = data.items.map((item) => ({
           title: item.title,
@@ -24,7 +24,6 @@ async searchGoogle(keywords, apiKey, SearchEngineID, num = 4) {
           url: item.link,
           content: item.snippet,
         }));
-        console.log(JSON.stringify(searchResults))
         return searchResults;
       } else {
         console.log('No search results found');
@@ -32,16 +31,26 @@ async searchGoogle(keywords, apiKey, SearchEngineID, num = 4) {
       }
     } catch (error) {
       console.error('Error searching Google:', error);
-      if (error.response) {
-        console.log('Error response:', error.response.data);
-        console.log('Error status:', error.response.status);
-        console.log('Error headers:', error.response.headers);
-      } else {
-        console.log('Error:', error.message);
-      }
       return [];
     }
   }
+
+  async searchAndScrape(keywords, apiKey, SearchEngineID, num = 4) {
+    const searchResults = await this.searchGoogle(keywords, apiKey, SearchEngineID, num);
+    
+    for (let result of searchResults) {
+      try {
+        const scraper = new Scraper(result.url);
+        const extractedText = await scraper.scrape();
+        result.extractedContent = extractedText;
+      } catch (err) {
+        console.error(`Failed to scrape ${result.url}:`, err.message);
+        result.extractedContent = 'Scraping failed.';
+      }
+    }
+
+    return searchResults;
+  }
 }
 
-export default GOOG; 
+export default GOOG;
