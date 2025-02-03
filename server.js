@@ -21,7 +21,6 @@ import session from 'express-session';
 import MemoryStoreModule from 'memorystore';
 import hash from "./src/hash.js";
 import axios from "axios";
-import Groq from "groq-sdk";
 const Hash = new hash();
 import config from './config.js';
 
@@ -29,7 +28,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const MemoryStore = MemoryStoreModule(session);
 const memStore = new MemoryStore();
-const version = 0.350; //changed public and server and config
+const version = 0.355; //changed public and server and config
 
 function ser() {}
 
