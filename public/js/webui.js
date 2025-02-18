@@ -751,7 +751,7 @@ cui.handleKeydown = function (event) {
   const messageField = document.getElementById("messageInput");
   let currentIndex = parseInt(messageField.getAttribute('data-current-index')) || this.userMessages.length;
 
-  if (event.key === "ArrowDown") {
+  if (event.ctrlKey && event.key === "ArrowDown") {
     // Show the previous message
     if (currentIndex > 0) {
       currentIndex--;
@@ -759,7 +759,7 @@ cui.handleKeydown = function (event) {
       autoResize(messageField);
     }
     event.preventDefault(); // Prevent cursor from moving in text field
-  } else if (event.key === "ArrowUp") {
+  } else if (event.ctrlKey && event.key === "ArrowUp") {
     // Show the next message
     if (currentIndex < this.userMessages.length) {
       currentIndex++;
