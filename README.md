@@ -253,6 +253,8 @@ HTML/CSS/JS code preview
 ![Code_highlight](https://github.com/user-attachments/assets/69bdb5ca-3f7a-48b0-be19-f0dc3682d3d8)
 
 ![Using Web for Embedding](https://github.com/user-attachments/assets/36434a86-39dd-4f8a-8913-bfe43d0cc792)
+![MathJax support](https://github.com/user-attachments/assets/c2a41b15-d476-436f-99f1-03667532453e)
+
 
 
 
