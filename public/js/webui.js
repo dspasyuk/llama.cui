@@ -253,17 +253,21 @@ cui.deleteButtons = function (theid) {
 
 cui.loadMessage = function (chat) {
   let messages = Object.values(cui.getMessageTree(chat));
-  // console.log("adsdas", chat);
   cui.currentChat = chat;
   const chatMessages = document.getElementById("chatMessages");
   chatMessages.innerHTML = "";
   for (let m = 0; m < messages.length; m++) {
     cui.createUserTile(cui.md.render(messages[m].user));
-    if(messages[m].embedding!=undefined){
+    if (messages[m].embedding != undefined) {
       cui.createBotTile(messages[m].bot, messages[m].embedding);
-    }else{
+    } else {
       cui.createBotTile(messages[m].bot);
     }
+  }
+
+  // Render MathJax after messages are added
+  if (window.MathJax && MathJax.typesetPromise) {
+    MathJax.typesetPromise();
   }
 };
 //new message
@@ -310,7 +314,10 @@ cui.socketInit = function () {
       cui.currentTile.innerHTML = cui.md.render(cui.bufferText);
       message = cui.getMessageById(cui.messageId);
       message.bot = cui.md.render(cui.bufferText);
-      // console.log("message", message);
+        // Render MathJax after messages are added
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise();
+      }
       cui.setMessage(message);
       cui.createSVG(cui.currentTile);
       cui.currentTile = {};
@@ -326,7 +333,11 @@ cui.socketInit = function () {
         cui.currentTile.textContent += " " + response;
         cui.bufferText += " " + response;
         cui.currentTile.innerHTML = cui.md.render(cui.bufferText);
-        
+          // Render MathJax after messages are added
+        if (window.MathJax && MathJax.typesetPromise) {
+          MathJax.typesetPromise();
+        }
+              
       }
     }
     if (!userScrolledManually) {
@@ -621,8 +632,10 @@ cui.sendMessage = function () {
     cui.createUserTile(cui.md.render(input));// Create a new user tile for the question
     cui.messageId = cui.get_random_id();
     cui.setMessage({ id: cui.messageId, user: input, bot: "" });
-    // console.log("empty");
-    // cui.createBotTile("");
+    // Render MathJax after messages are added
+    if (window.MathJax && MathJax.typesetPromise) {
+      MathJax.typesetPromise();
+    }
     cui.bufferText ="";
     cui.listGenerate();
     cui.showStop();

@@ -796,3 +796,9 @@ input:checked + .slider:before {
   color: #6d6c6c;
   padding: 3px;
 }
+
+.think {
+  color: #666; /* Change color */
+  font-style: italic; /* Change font style */
+  /* Add other font properties as needed */
+}
