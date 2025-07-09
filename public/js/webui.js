@@ -80,6 +80,53 @@ cui.toggleEscapeHtml = function(scrollableElement, codeBlock) {
   scrollableElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
+cui.thinkPlugin = function(md) {
+  function thinkBlock(state, startLine, endLine, silent) {
+    const startPos = state.bMarks[startLine] + state.tShift[startLine];
+    const maxPos = state.eMarks[startLine];
+    const line = state.src.slice(startPos, maxPos).trim();
+
+    if (line !== "<think>") return false;
+
+    let nextLine = startLine + 1;
+    let found = false;
+    let content = [];
+
+    while (nextLine < endLine) {
+      const lineStart = state.bMarks[nextLine] + state.tShift[nextLine];
+      const lineEnd = state.eMarks[nextLine];
+      const lineText = state.src.slice(lineStart, lineEnd).trim();
+
+      if (lineText === "</think>") {
+        found = true;
+        break;
+      }
+
+      content.push(state.src.slice(lineStart, lineEnd));
+      nextLine++;
+    }
+
+    if (!found) return false;
+
+    if (silent) return true;
+
+    state.line = nextLine + 1;
+
+    const token = state.push("think_block", "div", 0);
+    token.content = content.join("\n");
+    token.map = [startLine, state.line];
+    token.block = true;
+
+    return true;
+  }
+
+  md.block.ruler.before("fence", "think_block", thinkBlock);
+
+  md.renderer.rules.think_block = function(tokens, idx) {
+    const content = tokens[idx].content;
+    return `<div class="think-block">${md.utils.escapeHtml(content)}</div>\n`;
+  };
+};
 
 
 
@@ -105,9 +152,11 @@ cui.init = function (iphostname, port, piper, testQs, ebabledEmbedding) {
     },
   });
 
-
+  
   cui.md.use(cui.mcopyplugin);
+  cui.md.use(cui.thinkPlugin);
   cui.md.use(cui.disableHeaderPlugin);
+  
   cui.bufferText = "";
   this.player = cui.PCMplayer();
   cui.terminationTocken = "\n\n>";
@@ -323,13 +372,15 @@ cui.socketInit = function () {
       cui.currentTile = {};
       userScrolledManually = false;
       cui.hideStop();
+      console.log(response);
     } else {
       if (!cui.currentTile || cui.currentTile.classList.contains("user-tile")) {
         cui.bufferText = response;
-        // console.log("lalalallal ");
+        console.log(response);
         cui.createBotTile(cui.bufferText);
        
       } else {
+        // console.log(response);
         cui.currentTile.textContent += " " + response;
         cui.bufferText += " " + response;
         cui.currentTile.innerHTML = cui.md.render(cui.bufferText);
