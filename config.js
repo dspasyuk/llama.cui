@@ -85,7 +85,7 @@ config.llamacpp = "../llama.cpp/build/bin/llama-cli";
 
 //###########################################GENERAL###############################################
 // Llama.cui settings
-config.PORT = { client: "7000", server: "7000" };
+config.PORT = { client: "7777", server: "7777" };
 config.IP = { client: "localhost", server: "localhost" };
 config.login = false;
 config.timeout = 50000;
