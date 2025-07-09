@@ -6,18 +6,16 @@ import prmt from "./src/prompt.js";
 import fs from "fs";
 import hash from "./src/hash.js";
 const Hash = new hash();
-
-
 const config = {};
+config.AI = {llamacpp:false, groq:false, ollama:true}
 
-config.AI = {llamacpp:false, groq:true}
-
-config.modelrepo = "bartowski/Qwen2.5-7B-Instruct-GGUF";
-config.modeldirectory = path.resolve('./models');
-config.modelname = "Qwen2.5-7B-Instruct-Q4_0.gguf"; 
+config.modelrepo = "Qwen/Qwen2.5-Coder-14B-Instruct-GGUF";
+config.modeldirectory = path.resolve('../models');
+config.modelname = "qwen2.5-coder-14b-instruct-q5_k_m.gguf"; 
 config.systemPrompt = fs.readFileSync('./Alice.txt', 'utf8');
-// config.systemPrompt= fs.readFileSync('Science.txt', 'utf8');
 
+
+//###########################################GROQ###########################################
 config.groqParameters = {
   data:{
     messages: [{
@@ -27,7 +25,7 @@ config.groqParameters = {
         "role": "user",
         "content": "", 
     }],
-    model: "deepseek-r1-distill-llama-70b",
+    model: "qwen-qwq-32b",
     temperature: 0.2,
     max_tokens: 1024*16,
     top_p: 0.1,
@@ -37,6 +35,27 @@ config.groqParameters = {
   historyLimit: 30,
   APIkey: process.env.GROQ_API_KEY || ""
 }
+
+//###########################################OLLAMA###########################################
+config.ollamaParameters = {
+  data:{
+    messages: [{
+      "role": "system",
+      "content": `'${config.systemPrompt}'`
+    },{
+        "role": "user",
+        "content": "", 
+    }],
+    model: "qwen3:14b",
+    temperature: 0.1,
+    max_tokens: 1024*10,
+    top_p: 0.1,
+    stream: true,
+    stop: null
+} ,
+  historyLimit: 30,
+}
+
 // create project get api key add Custom Search API to the project https://console.cloud.google.com/
 // create programable search engine, get ID https://programmablesearchengine.google.com
 config.google = {
@@ -44,9 +63,10 @@ config.google = {
   SearchEngineID:  process.env.GOOGLE_SEARCH_ENGINE_ID || "",
 }
 
+//###########################################LLAMA.CPP###########################################
 config.llamaParams = {
   "--model": path.join(config.modeldirectory, config.modelname),
-  "--n-gpu-layers": 33, // remove if using CPU
+  "--n-gpu-layers": 50, // remove if using CPU
   "-cnv": "",
   "--simple-io": "",
   "-b": 512*4,
@@ -61,10 +81,11 @@ config.llamaParams = {
   "-p": `'${config.systemPrompt}'`
 };
 
-config.llamacpp = "../llama.cpp/build/llama-cli";
+config.llamacpp = "../llama.cpp/build/bin/llama-cli";
 
+//###########################################GENERAL###############################################
 // Llama.cui settings
-config.PORT = { client: "7777", server: "7777" };
+config.PORT = { client: "7000", server: "7000" };
 config.IP = { client: "localhost", server: "localhost" };
 config.login = false;
 config.timeout = 50000;
