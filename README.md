@@ -19,8 +19,10 @@ You will need to obtain Groq API ( https://console.groq.com/keys ) key and add i
 ## Ollama support (no llama.cpp needed):
 `git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
-You will need to Ollama installed for this option to work. And defult inference engine set to Ollama:true in config file
-
+You will need to have Ollama installed and defult inference engine set to Ollama:true in config.js file for this option to work.  
+  `curl -fsSL https://ollama.com/install.sh | sh`  
+  `ollama run gemma3:4b` # or see the list of models available https://ollama.com/search  
+   then you can start the Lllama.cui server by running: node server.js 
 
 ## Linux Nvidia GPU
 
@@ -50,6 +52,14 @@ In order to use Groq API with Llama.cui you will need to obtain Groq API ( https
 
 or just run in terminal before running server: export GROQ_API_KEY="Your API key"; 
 </details>
+
+<details><summary><H1> Using Ollama  (no llama.cpp needed) </H1></summary>  
+    
+You will need to have Ollama installed and defult inference engine set to Ollama:true in config.js file for this option to work.  
+  `curl -fsSL https://ollama.com/install.sh | sh`  
+  `ollama run gemma3:4b` # or see the list of models available https://ollama.com/search  
+   then you can start the Lllama.cui server by running: node server.js 
+
 
 <details><summary> <H1> Using Google Search API (Web Search) </H1></summary>
 
