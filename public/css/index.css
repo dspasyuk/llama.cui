@@ -104,6 +104,33 @@ html {
   border-radius: 10px;
 }
 
+.think-block {
+  background-color: #262627;
+  border-left: 4px solid #535353;
+  padding-left: 10px;
+  padding:5px;
+  margin: 16px 0;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #acabab;
+  overflow: hidden;
+}
+
+.think-summary {
+  cursor: pointer;
+  padding: 10px 15px;
+  font-weight: bold;
+  color: #22507e;
+  background-color: #dbefff;
+  border-bottom: 1px solid #c0e0ff;
+}
+
+.think-content {
+  padding: 12px 15px;
+  color: #003366;
+  font-style: italic;
+}
+
 input:focus,
 button {
   outline: none !important;
