@@ -16,6 +16,12 @@ You will need to obtain Groq API ( https://console.groq.com/keys ) key and add i
 
 `export GROQ_API_KEY="Your API key"`
 
+## Ollama support (no llama.cpp needed):
+`git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
+
+You will need to Ollama installed for this option to work. And defult inference engine set to Ollama:true in config file
+
+
 ## Linux Nvidia GPU
 
 `git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; cmake -B build -DGGML_CUDA=ON; cmake --build build --config Release; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js` 
