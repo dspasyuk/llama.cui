@@ -28,7 +28,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const MemoryStore = MemoryStoreModule(session);
 const memStore = new MemoryStore();
-const version = 0.360; //changed public and server and config
+const version = 0.370; //changed public and server and config
 
 function ser() {}
 
@@ -53,6 +53,7 @@ ser.init = function (error) {
   this.messageQueue = []; // Queue to store messages from clients
   this.isProcessing = false; // Flag to track if a message is being processed
   this.chatGroqHistory = new Map();
+  this.chatOllamaHistory = new Map();
   if (config.AI.llamacpp) this.runLLamaChild();
   this.piper_client_enabled = true;
   if (config.piper.enabled) {
@@ -283,70 +284,188 @@ ser.runGroq = function (input, socketId) {
       });
 };
 
-
-
-// ser.runGroq = async function (input, socketId) {
-//   if (input.length === 0) return;
-
-//   // Initialize Groq client
-//   const groq = new Groq({ apiKey: config.groqParameters.APIkey });
-
-//   // Check if history exists for the socketId
-//   if (!this.chatGroqHistory.has(socketId)) {
-//     // Clone the initial config messages
-//     this.chatGroqHistory.set(socketId, config.groqParameters.data.messages);
-//   }
-//   const history = this.chatGroqHistory.get(socketId);
-  
-//   // Add user message
-//   history.push({ role: "user", content: input });
-
-//   // Check token limit and history length
-//   const [tokenCount, messageCount] = ser.lengthLimit(history);
-  
-//   // Remove old messages if token limit is exceeded
-//   while (tokenCount > config.groqParameters.data.max_tokens && history.length > 1) {
-//     history.shift();
-//     const newTokenCount = ser.lengthLimit(history)[0];
-//     if (newTokenCount <= config.groqParameters.data.max_tokens) {
-//       break;
-//     }
-//   }
-
-//   // Ensure history doesn't exceed the maximum number of messages
-//   while (history.length > config.groqParameters.historyLimit) {
-//     history.shift();
-//   }
-
-//   try {
-//     // Prepare request parameters with streaming enabled
-//     const requestParams = {
-//       messages: history,
-//       ...config.groqParameters.data
-//     };
-
-//     // Create the stream
-//     const stream = await groq.chat.completions.create(requestParams);
-
-//     // Process the stream chunks
-//     let botResponse = '';
+ser.runOllama = async function (input, socketId) {
+    if (input.length === 0) return;
     
-//     for await (const chunk of stream) {
-//       // Concatenate each chunk of the response
-//       botResponse += chunk.choices[0]?.delta?.content || '';
-//       this.handleGroq(botResponse);
-//     }
-//     // Add bot response to history
-//     history.push({ role: "assistant", content: botResponse + this.terminationtoken });
-//     // Emit response to client
-  
-//   } catch (error) {
-//     console.error("Groq API error:", error);
-//   } finally {
-//     // Optional: Any cleanup operations can go here
-//   }
-// }
-
+    if (!this.chatOllamaHistory.has(socketId)) {
+        this.chatOllamaHistory.set(socketId, [...config.ollamaParameters.data.messages]);
+    }
+    
+    const history = this.chatOllamaHistory.get(socketId);
+    history.push({ role: "user", content: input });
+    
+    let [tokenCount, messageCount] = ser.lengthLimit(history);
+    while (tokenCount > config.ollamaParameters.data.max_tokens && history.length > 1) {
+        history.shift();
+        tokenCount = ser.lengthLimit(history)[0];
+    }
+    
+    while (history.length > config.ollamaParameters.historyLimit) {
+        history.shift();
+    }
+    
+    const requestData = {
+        ...config.ollamaParameters.data,
+        messages: history,
+        stream: true,
+    };
+    
+    const response = await fetch('http://localhost:11434/api/chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData),
+    });
+    
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let fullResponse = '';
+    
+    // Smart buffering system
+    let outputBuffer = '';
+    let lastEmitTime = Date.now();
+    let inCodeBlock = false;
+    let inHtmlTag = false;
+    let htmlTagBuffer = '';
+    
+    // Function to detect content type and determine buffering strategy
+    const analyzeContent = (content) => {
+        // Check for code block markers
+        if (content.includes('```')) {
+            inCodeBlock = !inCodeBlock;
+        }
+        
+        // Check for HTML tag start
+        if (content.includes('<') && !inCodeBlock) {
+            inHtmlTag = true;
+            htmlTagBuffer = '';
+        }
+        
+        // Check for HTML tag end
+        if (inHtmlTag && content.includes('>')) {
+            inHtmlTag = false;
+            htmlTagBuffer = '';
+        }
+        
+        if (inHtmlTag) {
+            htmlTagBuffer += content;
+        }
+    };
+    
+    // Smart emit logic
+    const shouldEmitBuffer = (buffer) => {
+        const now = Date.now();
+        const timeSinceLastEmit = now - lastEmitTime;
+        
+        // Never emit if we're in the middle of an HTML tag
+        if (inHtmlTag) return false;
+        
+        // In code blocks, emit at line breaks or after reasonable chunks
+        if (inCodeBlock) {
+            return buffer.includes('\n') || buffer.length > 50;
+        }
+        
+        // For regular text, emit at sentence boundaries or word boundaries
+        if (buffer.length > 80) return true; // Prevent huge buffers
+        
+        // Emit at sentence endings
+        if (/[.!?]\s/.test(buffer) || buffer.endsWith('\n')) return true;
+        
+        // Emit after complete words if enough time has passed
+        if (timeSinceLastEmit > 100 && buffer.length > 15 && /\s\w+\s/.test(buffer)) {
+            return true;
+        }
+        
+        // Emit after reasonable time with minimum content
+        if (timeSinceLastEmit > 200 && buffer.length > 5) return true;
+        
+        return false;
+    };
+    
+    // Emit buffer with smart chunking
+    const emitBuffer = () => {
+        if (outputBuffer.length > 0) {
+            let toEmit = outputBuffer;
+            
+            // If we're not in a code block or HTML tag, try to emit at word boundaries
+            if (!inCodeBlock && !inHtmlTag) {
+                // Find the last complete word
+                const lastSpaceIndex = toEmit.lastIndexOf(' ');
+                if (lastSpaceIndex > toEmit.length * 0.7) { // Only if the space is in the latter part
+                    const completeWords = toEmit.substring(0, lastSpaceIndex + 1);
+                    const remainder = toEmit.substring(lastSpaceIndex + 1);
+                    
+                    if (completeWords.trim().length > 0) {
+                        this.io.to(socketId).emit("output", completeWords);
+                        outputBuffer = remainder;
+                        lastEmitTime = Date.now();
+                        return;
+                    }
+                }
+            }
+            
+            // Emit the whole buffer
+            this.io.to(socketId).emit("output", toEmit);
+            outputBuffer = '';
+            lastEmitTime = Date.now();
+        }
+    };
+    
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        let lines = buffer.split('\n');
+        buffer = lines.pop(); // save any partial line
+        
+        for (const line of lines) {
+            if (!line.trim()) continue;
+            
+            try {
+                const parsed = JSON.parse(line);
+                const content = parsed?.message?.content;
+                
+                if (content !== undefined) {
+                    fullResponse += content;
+                    outputBuffer += content;
+                    
+                    // Analyze the content to update our state
+                    analyzeContent(content);
+                    
+                    // Check if we should emit the buffer
+                    if (shouldEmitBuffer(outputBuffer)) {
+                        emitBuffer();
+                    }
+                    
+                    if (content.trim()) {
+                        clearTimeout(this.streamTimeout);
+                    }
+                }
+            } catch (err) {
+                console.error("JSON parse error:", err, "Line:", line);
+            }
+        }
+    }
+    
+    // Emit any remaining buffer content
+    emitBuffer();
+    
+    history.push({ role: "assistant", content: fullResponse});
+    
+    // Call cleanup without re-emitting
+    this.cleanupAfterOllama(fullResponse);
+}
+// Cleanup function for streaming responses (no emission)
+ser.cleanupAfterOllama = function (msg) {
+    this.runPiper(msg);
+    this.io.to(this.socketId).emit("output", this.terminationtoken);
+    this.messageQueue.splice(0, 1);
+    this.isProcessing = false;
+    this.processMessageQueue();
+};
 
 
 
@@ -362,6 +481,9 @@ ser.handleGroq = function (msg) {
   this.processMessageQueue();
 };
 
+ser.handleOllamaError = function (error) {
+   console.log(error);
+}
 ser.handleGroqError = function (error) {
 switch (error.response.status) {
   case 400:
@@ -522,6 +644,8 @@ ser.processMessageQueue = function () {
       this.io.to(this.socketId).emit("output", 'Groq API key is missing or incorrect. Go to https://console.groq.com/keys to get your API key. Set your API key in the config.js file or using environment variables. On Unix/Linux/MacOS: export GROQ_API_KEY="your_api_key" On Windows: set GROQ_API_KEY="your_api_key"');
     }
     this.runGroq(input);
+  }else if(config.AI.ollama) {
+    this.runOllama(input, socketId);
   }
 };
 
@@ -575,7 +699,8 @@ ser.handleSocketConnection = async function (socket) {
       if (data.embedding.db) {
           embedobj = embedobj.concat(await vdb.init(input));
       }
-      if(config.embedding.WebSearch && data.embedding.web && input.length < 100){
+      if(config.embedding.WebSearch && data.embedding.web && input.length < 500){
+          
           const searchRes = await ser.webseach(input);
           embedobj = embedobj.concat(searchRes);
       }

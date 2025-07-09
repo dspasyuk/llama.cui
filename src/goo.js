@@ -16,7 +16,7 @@ class GOOG {
     try {
       const response = await axios.get(this.baseUrl, { params });
       const data = response.data;
-
+      console.log(data);
       if (data.items) {
         const searchResults = data.items.map((item) => ({
           title: item.title,
@@ -41,7 +41,7 @@ class GOOG {
     const maxTokens = 2000;
     const maxTokensPerEntry = Math.floor(maxTokens / num);
     let tokenCount = 0;
-
+   
     for (let result of searchResults) {
         try {
             const scraper = new Scraper(result.url);
@@ -71,5 +71,10 @@ class GOOG {
     return searchResults;
 }
 }
+
+// import config from '../config.js';
+// const goog = new GOOG();
+// const results = await goog.searchAndScrape("scan beamline at the CLS", config.google.APIkey, config.google.SearchEngineID, 4, 4000);
+// console.log(results);
 
 export default GOOG;
