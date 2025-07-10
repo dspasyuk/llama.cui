@@ -60,7 +60,7 @@ You will need to have Ollama installed and defult inference engine set to Ollama
   `ollama run gemma3:4b` # or see the list of models available https://ollama.com/search  
    then you can start the Lllama.cui server by running: node server.js 
 
-
+</details>
 <details><summary> <H1> Using Google Search API (Web Search) </H1></summary>
 
 In order to use Google Search API with Llama.cui you will need:
