@@ -215,15 +215,15 @@ cui.loadModels = async function () {
       select.disabled = true;
       return;
     }
-    const current = data.current;
+    const current = data.models.includes(data.current) ? data.current : data.models[0];
     let options = data.models.map(
       (m) => `<option value="${m}"${m === current ? " selected" : ""}>${m}</option>`
     ).join("");
-    if (!data.models.includes(current) && current) {
-      options = `<option value="${current}" selected>${current} (not pulled)</option>` + options;
-    }
     if (!options) options = "<option>no models found</option>";
     select.innerHTML = options;
+    if (current && current !== data.current && data.models.length > 0) {
+      cui.setModel(current);
+    }
     select.addEventListener("change", function () {
       cui.setModel(this.value);
     });
