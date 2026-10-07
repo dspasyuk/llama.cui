@@ -35,7 +35,7 @@ config.providers = {
   // Local Ollama server over HTTP.
   ollama: {
     host: process.env.OLLAMA_HOST || "http://localhost:11434",
-    model: "qwen3.8:27b-q4_0",
+    model: "qwen3.8:27b-q8_0",
     topP: 0.1,
     showThinking: true,
     // How long Ollama keeps the model loaded after a request. Ollama's default

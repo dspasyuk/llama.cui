@@ -19,9 +19,9 @@ You will need to obtain Groq API ( https://console.groq.com/keys ) key and add i
 ## Ollama support (no llama.cpp needed):
 `git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
-You will need to have Ollama installed and the Ollama provider selected in config.js (config.provider = "ollama") for this option to work. The default model is qwen3.8:27b-q4_0, pull it once before starting the server:  
+You will need to have Ollama installed and the Ollama provider selected in config.js (config.provider = "ollama") for this option to work. The default model is qwen3.8:27b-q8_0, pull it once before starting the server:  
   `curl -fsSL https://ollama.com/install.sh | sh`  
-  `ollama pull qwen3.8:27b-q4_0` # or see the list of models available https://ollama.com/search  
+  `ollama pull qwen3.8:27b-q8_0` # or see the list of models available https://ollama.com/search  
    then you can start the Lllama.cui server by running: node server.js 
 
 ## Linux Nvidia GPU
@@ -55,9 +55,9 @@ or just run in terminal before running server: export GROQ_API_KEY="Your API key
 
 <details><summary><H1> Using Ollama  (no llama.cpp needed) </H1></summary>  
     
-You will need to have Ollama installed and the Ollama provider selected in config.js (config.provider = "ollama") for this option to work. The default model is qwen3.8:27b-q4_0, pull it once before starting the server:  
+You will need to have Ollama installed and the Ollama provider selected in config.js (config.provider = "ollama") for this option to work. The default model is qwen3.8:27b-q8_0, pull it once before starting the server:  
   `curl -fsSL https://ollama.com/install.sh | sh`  
-  `ollama pull qwen3.8:27b-q4_0` # or see the list of models available https://ollama.com/search  
+  `ollama pull qwen3.8:27b-q8_0` # or see the list of models available https://ollama.com/search  
    then you can start the Lllama.cui server by running: node server.js 
 
 </details>
