@@ -588,6 +588,10 @@ ser.handleSocketConnection = async function (socket) {
     }
   });
 
+  socket.on("newchat", (data) => {
+    this.chatOllamaHistory.delete(data.socketid);
+  });
+
   socket.on(
     "tosound",
     async (data) => {

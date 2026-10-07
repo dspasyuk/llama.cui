@@ -390,6 +390,7 @@ cui.onNewChart = function () {
   cui.currentChat = cui.getcurrentChat();
   const chatMessages = document.getElementById("chatMessages");
   chatMessages.innerHTML = "";
+  if (cui.socket) cui.socket.emit("newchat", { socketid: cui.socketid });
 };
 
 cui.socketInit = function () {
