@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/bootstrap.min.css?v=<%= version %>" />
+  <link rel="stylesheet" href="css/index.css?v=<%= version %>" />
+  <link rel="stylesheet" href="css/fontawesome/css/all.min.css?v=<%= version %>" />
+  <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png">
+  <link rel="manifest" href="img/site.webmanifest">
+  <link rel="mask-icon" href="img/safari-pinned-tab.svg" color="#5bbad5">
+  <meta name="msapplication-TileColor" content="#da532c">
+  <meta name="theme-color" content="#ffffff">
+  <script type="text/javascript" src="/js/socket.io.js"></script>
+  <link rel="stylesheet" href="/css/default.min.css">
+  <script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    },
+    svg: {
+      fontCache: 'global'
+    }
+  };
+  </script>
+  <script src="/js/tex-mml-chtml.js"></script>
+  <script src="/js/highlight.min.js"></script>
+  <script src="/js/svgme.js"></script>
+  <script src="/js/pcm-player.js"></script>
+  <script src="/js/markdown-it.min.js"></script>
+  <script type="text/javascript" src="js/webui.js?v=<%= version %>"></script>
+  <title>
+    <%= title %>
+  </title>
+</head>
+
+<body>
+  <div class="container-main">
+  <nav class="navbar navbar-expand-lg themenav navbar-dark justify-content-between flex-nowrap flex-row">
+    <div class="footerbar nav navbar-nav flex-row float-right">
+      <button id="sidebar-toggle" class="btn theme sidebar-toggle float-left"> <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <div class="footerbar nav navbar-nav flex-row float-right" id="modelholder" <%= providerName !== "ollama" ? "style=\"display:none\"" : "" %>>
+      <i class="fas fa-microchip modelicon"></i>
+      <select id="modelselect" class="modelselect" title="Ollama model"></select>
+    </div>
+    <div class="footerbar nav navbar-nav flex-row float-right">
+      <button class="btn theme" onclick="window.location.href='/logout'" title="Log Out" type="button"><i class="fa fa-sign-out-alt"></i></button>
+    </div>
+  </nav>
+  <!-- <audio id="audioElement" controls></audio> -->
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Left Sidebar -->
+      <div class="col-md-3 left-sidebar" id="left-sidebar">
+        <div class="toolbar">
+          <button title="New Chart" onclick="cui.onNewChart()" style="width:calc(100% - 50px)" class="btn theme"> <i class="fas fa-file"></i></button>
+          <button title="Delete All" onclick="cui.deleteMessages()" type="button" class="btn theme "><i class="fas fa-trash "></i></button>
+        </div>
+        <div class="sidebar">
+          <button type="button" class="btn collapsible theme">Chats</button>
+          <div class="content" id="accordion">
+            <!-- CARD One -->
+            <div>
+              <ul class="list-group" id="savedChats"></ul>
+            </div>
+          </div>
+        </div>
+        <!-- <div style="display: none;" class="bottom-left">
+          <div class="tester" id="wiki">  
+            <div class="embed theme">
+              <input class="embed-check" id="embed" type="checkbox" name="embedding" value="">
+              <span class="embed-icon" title="Enable Database Search"> <i class="fas fa-server"></i></span>
+            </div>  
+            <div class="embed theme" id="piper-container" style="display:none">
+              <input class="embed-check" id="piper" type="checkbox" name="piper" value="" onclick="cui.piperToggle()">
+              <span class="embed-icon" title="Enable Piper TTS"> <i class="fas fa-music"></i></span>
+            </div>   
+            <div class="embed theme" id="tester"><button id="testgenerator" title="Run default model exam" onclick="cui.defaultTest()" type="button" class="exam">Exam</button></div>  
+          </div> 
+        </div> -->
+      </div>
+  
+      <!-- Main Chat Container -->
+      <div id="chatcontainer" class="col-md-9 chat-container d-flex flex-column">
+        <div class="chat-messages flex-grow-1" id="chatMessages"></div>
+        <div class="input-wrapper">
+          <div id="switchholder" class="switchholder">
+            <label id ="webembedcheckcon" class="switch">
+              <input id = "webembedcheck" type="checkbox" />
+              <span class="slider round" title="Enable Web Search">
+                <i class="switchicon fas fa-globe"></i>
+              </span>
+            </label>
+            <label id = "embedcheckcon" class="switch">
+              <input id = "embedcheck" type="checkbox" />
+              <span class="slider round" title="Enable Document Search">
+                <i class="switchicon fas fa-file"></i>
+              </span>
+            </label>
+            <label id = "dbembedcheckcon" class="switch">
+              <input id = "dbembedcheck" type="checkbox" />
+              <span class="slider round" title="Enable Database Search">
+                <i class="switchicon fas fa-database"></i>
+              </span>
+            </label>
+            <label id="piper-container" class="switch">
+              <input  onclick="cui.piperToggle()" id="piper" type="checkbox" />
+              <span class="slider round" title="Enable TTS">
+                <i class="switchicon fas fa-music"></i>
+              </span>
+            </label>
+            <!-- <label class="switch"> -->
+              <button class="exam" type="button" onclick="cui.defaultTest()" title="Run Exam"> <i class="fas fa-list-alt"></i></button>
+            <!-- </label> -->
+          </div>          
+          <div class="input-container" data-max-height="300">
+            <textarea id="messageInput" placeholder="Ask a question" class="form-control grow-wrap" oninput="autoResize(this)" data-current-index = 0></textarea>
+            <button id="stopgenerator" onclick="cui.stopGenerating()" type="button" class="btn btn-outline-secondary stopper"><i class="fas fa-stop"></i></button>
+            <button style="width: 65px" id="sendMessage" type="button" class="btn sendmessage"><i class="fas fa-play"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let iphostname = <%- JSON.stringify(hostname) %>;
+    let port = <%- JSON.stringify(port) %>;
+    let piper = <%- JSON.stringify(piper) %>;
+    let testQs = <%- JSON.stringify(testQs) %>;
+    let sessionID = <%- JSON.stringify(sessionID) %>;
+    let ebabledEmbedding = <%- JSON.stringify(embedding) %>;
+    cui.init(iphostname, port, piper, testQs, ebabledEmbedding);
+    
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const leftSidebar = document.getElementById('left-sidebar');
+    const chatContainer = document.querySelector('.chat-container');
+    
+    sidebarToggle.addEventListener('click', () => {
+      leftSidebar.classList.toggle('open');
+      chatContainer.classList.toggle('open');
+    });
+
+    function autoResize(textarea) {
+      console.log("autoResize called");
+      var maxHeight = parseInt(textarea.parentNode.getAttribute('data-max-height')) || 300;
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
+      adjustChatMessagesHeight();
+    }
+
+    function adjustChatMessagesHeight() {
+      const chatMessages = document.getElementById('chatMessages');
+      const inputContainer = document.querySelector('.input-container');
+      const inputWrapper = document.querySelector('.input-wrapper');
+      const inputHeight = inputWrapper.offsetHeight;
+      chatMessages.style.maxHeight = `calc(100vh - ${inputHeight + 140}px)`;
+    }
+
+    window.addEventListener('resize', adjustChatMessagesHeight);
+    document.getElementById('messageInput').addEventListener('input', adjustChatMessagesHeight);
+
+    adjustChatMessagesHeight(); // Initial adjustment on page load
+  </script>
+  </div>
+</body>
+</html>

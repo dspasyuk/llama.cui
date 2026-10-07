@@ -1,0 +1,12 @@
+node_modules/
+.opencode/
+docs/
+db/
+models/
+main.log
+state.json
+terminal.js
+GIT/
+.DS_Store
+._*
+credentials.json
