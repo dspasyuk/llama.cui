@@ -364,6 +364,31 @@ code {
   font-style: normal;
 }
 
+.tilebody table {
+  border-collapse: collapse;
+  margin: 10px 0;
+  width: auto;
+  max-width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+.tilebody table th,
+.tilebody table td {
+  border: 1px solid var(--border, #8884);
+  padding: 6px 12px;
+  text-align: left;
+  word-wrap: normal;
+}
+
+.tilebody table th {
+  font-weight: 600;
+}
+
+.tilebody table tr:nth-child(even) {
+  background: var(--table-stripe, #0000000d);
+}
+
 .sendmessage {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
