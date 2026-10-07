@@ -9,13 +9,6 @@ This project provides a Node.js server for a chat user interface (UI) that inter
 
 Starting from version 0.24 model will be downloaded automatically. 
 
-## Groq Install (no llama.cpp needed):
-`git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
-
-You will need to obtain Groq API ( https://console.groq.com/keys ) key and add it to config.js file or set it as environment variable 
-
-`export GROQ_API_KEY="Your API key"`
-
 ## Ollama support (no llama.cpp needed):
 `git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
@@ -40,17 +33,7 @@ you might want to set a specific cuda archetecture if the native does not work
 
 `git clone https://github.com/ggerganov/llama.cpp.git; cd llama.cpp; cmake -B build; cmake --build build --config Release; cd ..; cd ..; git clone https://github.com/dspasyuk/llama.cui; cd llama.cui; npm install; node server.js`
 
-#### Change  "--n-gpu-layers" in config.js file depending on the type of architecture used and available VRAM. For the default model (Llama3-instruct) this should be equal to 35, for compatibility it is currently set to 25, you will need at least 6Gb of VRAM to run the model, so Nvidia GTX1060 and above is a must.  
-</details>
-
-<details><summary> <H1> Using Groq API (no llama.cpp required) </H1></summary>
-
-In order to use Groq API with Llama.cui you will need to obtain Groq API ( https://console.groq.com/keys ) key and add it to config.js file or set it as environment variable
-
-`config.groqParameters = {APIkey: process.env.GROQ_API_KEY || "YOUR_KEY_HERE " 
-}`
-
-or just run in terminal before running server: export GROQ_API_KEY="Your API key"; 
+#### Change "gpuLayers" in config.js depending on the type of architecture used and available VRAM. The default model is Qwen3-4B-Thinking-2507 (auto-downloaded if missing); it is set to 50 GPU layers for a fully offloaded 4B model.  
 </details>
 
 <details><summary><H1> Using Ollama  (no llama.cpp needed) </H1></summary>  
@@ -61,54 +44,13 @@ You will need to have Ollama installed and the Ollama provider selected in confi
    then you can start the Lllama.cui server by running: node server.js 
 
 </details>
-<details><summary> <H1> Using Google Search API (Web Search) </H1></summary>
+<details><summary> <H1> Web Search (Exa) </H1></summary>
 
-In order to use Google Search API with Llama.cui you will need:
-Step 1: Create a Project in Google Cloud Console https://console.cloud.google.com/
+Web search is powered by Exa (src/exa.js). It works keyless out of the box against the hosted endpoint; set EXA_API_KEY for higher rate limits. Optionally set PARALLEL_API_KEY to enable the Parallel fallback if Exa is unavailable.
 
-    Go to the Google Cloud Console and sign in with your Google account.
-    Click on the "Select a project" dropdown menu and click on "New Project".
-    Enter a project name and click on "Create".
+`export EXA_API_KEY="YOUR_API_KEY"`   # optional
 
-Step 2: Get an API Key
-
-    In the sidebar, click on "APIs & Services" and then click on "Dashboard".
-    Click on "Enable APIs and Services" and search for "Custom Search API".
-    Click on "Custom Search API" and click on the "Enable" button.
-    Click on "Create credentials" and then click on "API key".
-    Choose "Web API key" and enter a name for the API key.
-    Click on "Create" and copy the API key.
-
-Step 3: Add Custom Search API to the Project
-
-    Go to the Google Cloud Console and select the project you created earlier.
-    Click on "APIs & Services" and then click on "Dashboard".
-    Click on "Enable APIs and Services" and search for "Custom Search API".
-    Click on "Custom Search API" and click on the "Enable" button.
-
-Step 4: Create a Programmable Search Engine https://programmablesearchengine.google.com
-
-    Go to the Programmable Search Engine website 
-    Sign in with your Google account.
-    Click on "New search engine" and enter a name for the search engine.
-    Enter a site to search (e.g. a website or a domain) and click on "Create".
-    Copy the Search engine ID.
-
-Step 5: Use the Custom Search API
-
-You can now use the Custom Search API to search the web using your custom search engine. You will need to set Api key and Progammable Search Engine ID in config.js file or set GOOGLE_API_KEY and GOOGLE_SEARCH_ENGINE_ID in your environment:
-
-config.google = {
-  APIkey: process.env.GOOGLE_API_KEY || "",
-  SearchEngineID:  process.env.GOOGLE_SEARCH_ENGINE_ID || "",
-}
-
-or in terminal:  
-
-`export GOOGLE_API_KEY="YOUR_API_KEY_HERE"`
-
-`export GOOGLE_SEARCH_ENGINE_ID="YOUR_SEARCH_ENGINE_ID_HERE"`
-
+To turn web search on/off see `config.embedding.WebSearch` in config.js.
 </details>
 
 
@@ -120,40 +62,29 @@ or in terminal:
 
 2. Build Lllama.cpp with GPU or CPU support
 
-   `cd llama.cpp`
+    `cd llama.cpp`
 
-   `sed -i 's/-arch=native/-arch=all/g' Makefile` # could be skipped if native arch works
+    `cmake -B build -DGGML_CUDA=ON && cmake --build build --config Release` # for GPU CUDA version
 
-   `make clean && LLAMA_CUDA=1 make -j 4`   # for GPU CUDA version
-   `make clean && LLAMA_CUBLAS=1 make -j 4` # for GPU cuBLAS version
+    or
 
-   or
-   
-   `make` # for CPU version
+    `cmake -B build && cmake --build build --config Release` # for CPU version
+
 
 4. Clone llama.cui
    
    `git clone https://github.com/dspasyuk/llama.cui`
 
-5. Download LLM model from [hugging face](https://huggingface.co/) in GGUF format, for example:
-   
-   a. Meta-Llama-3-8B-Instruct: https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF   
-     or https://huggingface.co/dspasyuk/Meta-Llama-3-8B-Instruct-Q5_K_S-GGUF/blob/main/Meta-Llama-3-8B-Instruct-Q5_K_S.gguf
-   
-   b. Dolphin-Mistral 7B:       https://huggingface.co/TheBloke/dolphin-2.1-mistral-7B-GGUF/blob/main/dolphin-2.1-mistral-7b.Q5_0.gguf
-   
-   c. Einstein-v4-7B:           https://huggingface.co/LoneStriker/Einstein-v4-7B-GGUF
+5. The default model (Qwen3-4B-Thinking-2507-UD-Q6_K_XL.gguf) is downloaded automatically on first run if it is not present in the models directory. Alternatively download any GGUF model from [hugging face](https://huggingface.co/) and set `config.providers.llamacpp.model.file` / `model.directory` in config.js.
 
-   d. Qwen2-7B-Instruct Models: https://huggingface.co/Qwen/Qwen2-7B-Instruct-GGUF/tree/main (will need flash attentioon enabled in config.js e.g. -fa) (Default) 
-
-7. Install the project and set your configuration parameters
-  
-   `cd llama.cui
-
-   npm install`
-
-   Open config.js and change the hostname, port, path to llama.cpp main file, and the model name/path
+6. Install the project and set your configuration parameters
    
+    `cd llama.cui
+
+    npm install`
+
+    Open config.js and change the provider, hostname, port, path to llama.cpp binary, and the model name/path as needed.
+    
 </details>
    
 <details><summary> <H1> Usage </H1></summary>
@@ -253,11 +184,11 @@ export DYLD_LIBRARY_PAT=/PIPER_ROOT_DEER/piper-phonemize/lib:$DYLD_LIBRARY_PATH`
 </details>
 <details><summary> <H1> Embeddings: Local Documents and Web</H1></summary>
 
-llama.cui supports embeddings from a text file (see the docs folder), MongoDB, and Web (duckduckgo). 
+llama.cui supports embeddings from a text file (see the docs folder), MongoDB, and Web (Exa search). 
 
 You will need to delete the existing DB folder before running llama.cui. The new database will be generated on the next request for embedding (select use database in the bottom left corner of the UI interface to generate the database)  
 
-For data format convention, llama.cui uses the anytotext.js library. You can place any doc, xlsx, docx, txt, or other text files into "docs" directory to create your vector database. All embeddings are treated localy using all-MiniLM-L6-v2 model. 
+You can place doc, docx, xlsx, pdf, or txt files into the "docs" directory to create your vector database (parsed locally via src/doc2txt.js). All embeddings are treated locally using the all-MiniLM-L6-v2 model. 
 
 </details>
 
