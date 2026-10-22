@@ -340,6 +340,55 @@ textarea::placeholder {
   margin-top: -3px;
 }
 
+.tps-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: #8a8f98;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  padding: 4px 9px;
+  white-space: nowrap;
+  user-select: none;
+  cursor: default;
+}
+
+.tps-badge .fa-gauge-high {
+  font-size: 10px;
+}
+
+.tps-badge.live {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.08);
+  animation: tps-pulse 1.2s ease-in-out infinite;
+}
+
+.tps-badge.live .fa-gauge-high {
+  animation: tps-spin 1.6s linear infinite;
+}
+
+.tps-detail {
+  opacity: 0.65;
+  font-weight: 400;
+}
+
+@keyframes tps-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes tps-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .tilebody{
   padding-top: 10px;
   padding-bottom: 10px;

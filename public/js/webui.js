@@ -376,6 +376,7 @@ cui.loadMessage = function (chat) {
     } else {
       cui.createBotTile(messages[m].bot);
     }
+    if (messages[m].stats) cui.updateTpsBadge(messages[m].stats);
   }
 
   // Render MathJax after messages are added
@@ -408,6 +409,17 @@ cui.socketInit = function () {
 
   
   cui.currentTile = {}; // Reference to the current tile element
+  cui.lastBotTile = null; // Last finalized bot tile (holds the TPS badge)
+  this.socket.on("stats", (stats) => {
+    cui.updateTpsBadge(stats);
+    if (!stats.live) {
+      const message = cui.getMessageById(cui.messageId);
+      if (message && message.id) {
+        message.stats = stats;
+        cui.setMessage(message);
+      }
+    }
+  });
   this.socket.on("output", (response) => {
 
     if(typeof response === 'object' && response !== null) {
@@ -420,9 +432,10 @@ cui.socketInit = function () {
     }
     else{
     if (response.includes(cui.terminationTocken) && response != "") {
-      if (!cui.currentTile ) {
+      if (!cui.currentTile || !cui.currentTile.classList) {
         cui.createBotTile(cui.bufferText);
       }
+      cui.lastBotTile = cui.currentTile.closest(".bot-tile");
       cui.currentTile.textContent += response.replace(cui.terminationTocken, "");
       cui.bufferText += response;
       cui.currentTile.innerHTML = cui.md.render(cui.bufferText);
@@ -439,11 +452,14 @@ cui.socketInit = function () {
       cui.hideStop();
       console.log(response);
     } else {
-      if (!cui.currentTile || cui.currentTile.classList.contains("user-tile")) {
+      // A new bot tile is needed when nothing is streaming yet or the last
+      // tile belongs to the user (currentTile points at its body element).
+      if (!cui.currentTile || !cui.currentTile.classList ||
+          cui.currentTile.closest(".user-tile")) {
         cui.bufferText = response;
         console.log(response);
         cui.createBotTile(cui.bufferText);
-       
+
       } else {
         // console.log(response);
         cui.currentTile.textContent += response;
@@ -521,6 +537,35 @@ cui.sendTextToSpeech = function (textFromTileBody) {
 
 cui.createBotTile = function (content, embed) {
   this.createTile(content, "bot-tile", embed); //prettyprint
+};
+
+// Show generation speed in the bot tile header. While the model streams the
+// badge pulses with the live tokens/s; the final update (live:false) freezes
+// it into a quiet stats chip with the full breakdown in the tooltip.
+cui.updateTpsBadge = function (stats) {
+  const tile =
+    (cui.currentTile instanceof Element && cui.currentTile.closest(".bot-tile")) ||
+    cui.lastBotTile;
+  const header = tile ? tile.querySelector(".tileheader") : null;
+  if (!header) return;
+
+  let badge = header.querySelector(".tps-badge");
+  if (!badge) {
+    badge = document.createElement("span");
+    badge.className = "tps-badge";
+    badge.title = "Generation speed";
+    header.appendChild(badge);
+  }
+
+  if (stats.live) {
+    badge.classList.add("live");
+    badge.title = "Generating…";
+    badge.innerHTML = `<i class="fas fa-gauge-high"></i> ${stats.tps} tok/s`;
+  } else {
+    badge.classList.remove("live");
+    badge.title = `${stats.tokens} tokens in ${stats.seconds}s`;
+    badge.innerHTML = `<i class="fas fa-gauge-high"></i> ${stats.tps} tok/s <span class="tps-detail">· ${stats.tokens} tok · ${stats.seconds}s</span>`;
+  }
 };
 
 cui.createUserTile = function (content) {

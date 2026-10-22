@@ -76,6 +76,8 @@ ser.init = function () {
   this.isProcessing = false;
   this.chatOllamaHistory = new Map();
   this.buffer = ""; // llama.cpp output buffer
+  this.genStart = 0; // ms timestamp of the current generation
+  this.genTokens = 0; // tokens produced so far in the current generation
 
   if (isLlamaCpp) this.runLLamaChild();
 
@@ -132,6 +134,7 @@ ser.init = function () {
 
   this.app.post("/stopper", async (req, res) => {
     console.log("STOPPING");
+    this.emitStats(this.socketId, false);
     if (isLlamaCpp) {
       ser.llamachild.kill("SIGINT");
       this.messageQueue.splice(0, 1);
@@ -270,6 +273,7 @@ ser.handleLlama = function (msg) {
       this.io.to(this.socketId).emit("output", output);
       this.runPiper(output);
     }
+    this.emitStats(this.socketId, false);
     this.messageQueue.splice(0, 1);
     this.isProcessing = false;
     this.processMessageQueue();
@@ -277,6 +281,7 @@ ser.handleLlama = function (msg) {
   }
 
   // Emit complete words WITH their trailing space (the client concatenates as-is).
+  // Each emitted chunk is one word, so it doubles as a token counter.
   const lastSpaceIndex = this.buffer.lastIndexOf(" ");
   if (lastSpaceIndex !== -1) {
     const output = config.outputFilterNoTrim(this.buffer.substring(0, lastSpaceIndex + 1));
@@ -285,8 +290,32 @@ ser.handleLlama = function (msg) {
       clearTimeout(this.streamTimeout);
       this.io.to(this.socketId).emit("output", output);
       this.runPiper(output);
+      this.genTokens++;
+      this.emitStats(this.socketId, true);
     }
   }
+};
+
+//###########################################GENERATION STATS (TPS)###########################################
+ser.startGeneration = function () {
+  this.genStart = Date.now();
+  this.genTokens = 0;
+  this.lastStatsEmit = 0;
+};
+
+// Emit current tokens/s to the client. Live updates are throttled to ~4/s;
+// the final stats message (live:false) is always sent.
+ser.emitStats = function (socketId, live = true) {
+  const elapsed = (Date.now() - this.genStart) / 1000;
+  if (this.genTokens <= 0 || elapsed <= 0) return;
+  if (live && Date.now() - this.lastStatsEmit < 250) return;
+  this.lastStatsEmit = Date.now();
+  this.io.to(socketId).emit("stats", {
+    tps: Math.round((this.genTokens / elapsed) * 10) / 10,
+    tokens: this.genTokens,
+    seconds: Math.round(elapsed * 10) / 10,
+    live,
+  });
 };
 
 //###########################################LENGTH LIMITER###########################################
@@ -333,6 +362,8 @@ ser.runOllama = async function (input, socketId) {
     keep_alive: provider.keepAlive,
   };
 
+  this.startGeneration();
+
   try {
     const response = await fetch(
       `${provider.host}/api/chat`,
@@ -355,6 +386,7 @@ ser.runOllama = async function (input, socketId) {
     let idleStart = Date.now();
     let thinkingStarted = false;
     let thinkingClosed = false;
+    let lastEvalCount = 0;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -378,6 +410,17 @@ ser.runOllama = async function (input, socketId) {
           if (thinking || content) {
             idleStart = Date.now();
             clearTimeout(this.streamTimeout);
+          }
+
+          // Count generated tokens (Ollama reports a cumulative eval_count;
+          // fall back to one token per chunk when it is absent) and report
+          // live tokens/s to the client.
+          if (thinking || content) {
+            const evalCount = typeof parsed.eval_count === "number" ? parsed.eval_count : 0;
+            const delta = evalCount - lastEvalCount;
+            lastEvalCount = evalCount;
+            this.genTokens += delta > 0 ? delta : 1;
+            this.emitStats(socketId, true);
           }
 
           // Stream reasoning (thinking models like Qwen3) if enabled
@@ -428,6 +471,7 @@ ser.runOllama = async function (input, socketId) {
 ser.cleanupAfterOllama = function (msg) {
   clearTimeout(this.streamTimeout);
   this.runPiper(msg);
+  this.emitStats(this.socketId, false);
   this.io.to(this.socketId).emit("output", this.terminationtoken);
   this.messageQueue.splice(0, 1);
   this.isProcessing = false;
@@ -484,6 +528,7 @@ ser.processMessageQueue = function () {
   this.piper_client_enabled = piper;
 
   if (isLlamaCpp) {
+    this.startGeneration();
     // Send to llama.cpp child process
     this.llamachild.stdin.cork();
     this.llamachild.stdin.write(`${input}\n`);
