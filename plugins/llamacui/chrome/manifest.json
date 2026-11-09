@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Llama.cui",
+  "version": "1.0.0",
+  "description": "Chat with your local llama.cui model from any browser tab",
+
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "contextMenus",
+    "scripting",
+    "activeTab",
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+  ],
+
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
+  "omnibox": { "keyword": "c" },
+
+  "icons": {
+    "16": "icon-16.png",
+    "32": "icon-32.png"
+  },
+
+  "action": {
+    "default_title": "Llama.cui",
+    "default_icon": {
+      "16": "icon-16.png",
+      "32": "icon-32.png"
+    }
+  },
+
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+
+  "background": {
+    "service_worker": "service_worker.js"
+  }
+}

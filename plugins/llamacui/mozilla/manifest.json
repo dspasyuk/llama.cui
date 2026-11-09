@@ -1,0 +1,50 @@
+{
+  "manifest_version": 2,
+  "name": "Llama.cui",
+  "version": "1.0.0",
+  "description": "Chat with your local llama.cui model from any browser tab",
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "llamacui@local",
+      "strict_min_version": "78.0"
+    }
+  },
+
+  "permissions": [
+    "activeTab",
+    "storage",
+    "contextMenus",
+    "tabs",
+    "webRequest",
+    "webRequestBlocking",
+    "<all_urls>"
+  ],
+
+  "omnibox": { "keyword": "c" },
+
+  "icons": {
+    "16": "icon-16.png",
+    "32": "icon-32.png",
+    "64": "icon-64.svg"
+  },
+
+  "browser_action": {
+    "default_title": "Llama.cui",
+    "default_icon": {
+      "16": "icon-16.png",
+      "32": "icon-32.png"
+    }
+  },
+
+  "sidebar_action": {
+    "default_title": "Llama.cui",
+    "default_panel": "floating.html",
+    "default_icon": "icon.svg"
+  },
+
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  }
+}

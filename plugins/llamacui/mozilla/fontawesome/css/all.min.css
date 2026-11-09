@@ -1,0 +1,34 @@
+/*!
+ *  Font Awesome 5 subset — solid style only, icons used by the llama.cui panel
+ *  (trimmed from the full Font Awesome 5 bundle to keep the extension small).
+ *  License: SIL OFL 1.1 (fonts) / MIT (css) — © Fonticons, Inc.
+ */
+.fa,.fas,.fa-solid{font-family:"Font Awesome 5 Free";font-weight:900;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;text-rendering:auto;line-height:1}
+.fa-bars:before{content:"\f0c9"}
+.fa-user:before{content:"\f007"}
+.fa-robot:before{content:"\f544"}
+.fa-play:before{content:"\f04b"}
+.fa-stop:before{content:"\f04d"}
+.fa-file:before{content:"\f15b"}
+.fa-trash:before{content:"\f1f8"}
+.fa-brain:before{content:"\f5dc"}
+.fa-music:before{content:"\f001"}
+.fa-globe:before{content:"\f0ac"}
+.fa-database:before{content:"\f1c0"}
+.fa-server:before{content:"\f233"}
+.fa-list-alt:before{content:"\f022"}
+.fa-tachometer-alt:before{content:"\f3fd"}
+.fa-sync:before{content:"\f021"}
+.fa-copy:before{content:"\f0c5"}
+.fa-sign-out-alt:before{content:"\f2f5"}
+.fa-microchip:before{content:"\f2db"}
+.fa-cog:before{content:"\f013"}
+.fa-times:before{content:"\f00d"}
+.fa-info-circle:before{content:"\f05a"}
+.fa-paper-plane:before{content:"\f1d8"}
+.fa-comment-dots:before{content:"\f4ad"}
+.fa-bolt:before{content:"\f0e7"}
+.fa-wifi:before{content:"\f1eb"}
+.fa-ban:before{content:"\f05e"}
+@font-face{font-family:"Font Awesome 5 Free";font-style:normal;font-weight:900;font-display:block;src:url("../webfonts/fa-solid-900.woff2") format("woff2"),url("../webfonts/fa-solid-900.woff") format("woff")}
+.fas{font-family:"Font Awesome 5 Free";font-weight:900}

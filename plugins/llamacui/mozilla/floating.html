@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="hljs.css">
+  <link rel="stylesheet" href="style.css">
+  <title>Llama.cui</title>
+</head>
+<body>
+  <div id="app">
+    <!-- Top nav bar -->
+    <nav class="themenav">
+      <div class="nav-group">
+        <button id="sidebar-toggle" class="btn" title="Chats"><i class="fas fa-bars"></i></button>
+        <span class="brand">Llama.cui</span>
+      </div>
+      <div class="nav-group">
+        <span id="conn" class="conn"><span class="dot"></span><span id="conn-label">offline</span></span>
+      </div>
+      <div class="nav-group">
+        <i class="fas fa-microchip modelicon" id="modelicon" title="Model"></i>
+        <select id="modelselect" class="modelselect" title="Ollama model"></select>
+        <button id="settings-btn" class="btn" title="Settings"><i class="fas fa-cog"></i></button>
+      </div>
+    </nav>
+
+    <!-- Main chat area -->
+    <div id="main">
+      <!-- Chat list slide-over -->
+      <div id="chatlist">
+        <div class="toolbar">
+          <button id="new-chat" class="btn" title="New Chat"><i class="fas fa-file"></i></button>
+          <button id="delete-all" class="btn danger" title="Delete All"><i class="fas fa-trash"></i></button>
+        </div>
+        <div class="chatlist-title">Chats</div>
+        <ul id="savedChats"></ul>
+      </div>
+
+      <!-- Messages -->
+      <div class="chat-messages" id="chatMessages">
+        <div class="empty-chat" id="emptyChat">
+          <i class="fas fa-comment-dots"></i>
+          Ask a question to start a chat.
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="input-wrapper">
+        <div class="switchholder">
+          <label class="switch" id="webembedcheckcon" title="Enable Web Search">
+            <input id="webembedcheck" type="checkbox" />
+            <span class="slider"><i class="fas fa-globe switchicon"></i></span>
+          </label>
+          <label class="switch" id="embedcheckcon" title="Enable Document Search">
+            <input id="embedcheck" type="checkbox" />
+            <span class="slider"><i class="fas fa-file switchicon"></i></span>
+          </label>
+          <button class="exam" id="exam-btn" title="Run Exam"><i class="fas fa-list-alt"></i></button>
+        </div>
+        <div class="input-container" data-max-height="240">
+          <textarea id="messageInput" placeholder="Ask a question" rows="1"></textarea>
+          <button id="stopgenerator" title="Stop"><i class="fas fa-stop"></i></button>
+          <button id="sendMessage" title="Send"><i class="fas fa-play"></i></button>
+        </div>
+      </div>
+
+      <!-- Settings overlay -->
+      <div class="overlay" id="settings">
+        <div class="overlay-inner">
+          <h1>Settings</h1>
+          <div class="sub">Stored locally in this browser</div>
+
+          <div class="section">Ollama</div>
+          <div class="field">
+            <label>Server URL</label>
+            <input type="text" id="cfg-ollama-url" placeholder="http://localhost:11434" />
+          </div>
+          <div class="field">
+            <label>Model</label>
+            <div class="row">
+              <select id="cfg-models"></select>
+              <button id="cfg-models-refresh" class="btn-ghost" title="Refresh models"><i class="fas fa-sync"></i></button>
+            </div>
+          </div>
+          <div class="field">
+            <label>System prompt</label>
+            <textarea id="cfg-system" rows="4" placeholder="Persona / instructions"></textarea>
+          </div>
+          <div class="row">
+            <div class="field"><label>Temperature</label><input type="number" id="cfg-temp" min="0" max="2" step="0.1" /></div>
+            <div class="field"><label>Top P</label><input type="number" id="cfg-topp" min="0" max="1" step="0.05" /></div>
+            <div class="field"><label>Keep alive</label><input type="text" id="cfg-keepalive" placeholder="1h" /></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>Num draft</label><input type="number" id="cfg-numdraft" min="0" step="1" /></div>
+            <div class="field"><label>Speculative</label><input type="text" id="cfg-spec" placeholder="draft-mtp" /></div>
+            <div class="field"><label>Thinking</label>
+              <select id="cfg-thinking">
+                <option value="">off</option>
+                <option value="low">low</option>
+                <option value="medium">medium</option>
+                <option value="high">high</option>
+              </select>
+            </div>
+          </div>
+          <label class="checkline"><input type="checkbox" id="cfg-showthinking" /> Show thinking blocks</label>
+
+          <div class="section">Document search (Hive)</div>
+          <div class="field">
+            <label>Hive URL</label>
+            <input type="text" id="cfg-hive-url" placeholder="http://localhost:3030 (blank = off)" />
+          </div>
+          <div class="row">
+            <div class="field"><label>Username</label><input type="text" id="cfg-hive-user" autocomplete="off" /></div>
+            <div class="field"><label>Password</label><input type="password" id="cfg-hive-pass" autocomplete="off" /></div>
+          </div>
+          <div class="field">
+            <label>Databases</label>
+            <input type="text" id="cfg-hive-db" placeholder="* = all accessible" />
+          </div>
+
+          <div class="section">Web search (Exa)</div>
+          <div class="field">
+            <label>API key (optional)</label>
+            <input type="password" id="cfg-exa-key" placeholder="keyless by default" autocomplete="off" />
+          </div>
+
+          <div class="row">
+            <button id="cfg-test" class="btn-ghost">Test</button>
+            <button id="cfg-save" class="btn-primary">Save</button>
+          </div>
+          <div id="cfg-status" class="status"></div>
+          <button id="cfg-close" class="btn-ghost">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="markdown-it.min.js"></script>
+  <script src="highlight.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
