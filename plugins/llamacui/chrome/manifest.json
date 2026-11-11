@@ -10,12 +10,29 @@
     "contextMenus",
     "scripting",
     "activeTab",
+    "audioCapture",
     "declarativeNetRequest",
     "declarativeNetRequestWithHostAccess"
   ],
 
   "host_permissions": [
     "<all_urls>"
+  ],
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://outlook.office.com/*",
+        "https://outlook.live.com/*",
+        "https://outlook.com/*",
+        "https://web.outlook.com/*",
+        "https://outlook.office365.com/*",
+        "https://*.cloud.microsoft/*"
+      ],
+      "js": ["browser-polyfill.js", "context_menu.js"],
+      "all_frames": true,
+      "run_at": "document_idle"
+    }
   ],
 
   "omnibox": { "keyword": "c" },

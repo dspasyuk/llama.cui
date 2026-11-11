@@ -31,6 +31,11 @@ const DEFAULTS = {
   hiveDb: "*", // "*" = all accessible databases
   exaKey: "", // optional; keyless endpoint by default
   webResults: 5,
+  voiceLoop: true, // keep listening after each spoken reply (continuous mode)
+  ttsSource: "model", // "model" = lfm3-audio /v1/audio/speech, "browser" = speechSynthesis
+  ttsModelVoice: "female", // female | male | <gender>-<language>
+  ttsVoice: "", // browser mode: speechSynthesis voiceURI; "" = default
+  ttsRate: 1.0, // browser mode: speaking rate
 };
 
 const state = {
@@ -42,7 +47,7 @@ const state = {
   lastBotTile: null,
   userScrolled: false,
   generating: false,
-  pendingReplace: null, // { replace, label } when a context-menu reply should replace the page selection
+  pendingReplace: null, // { replace, mode, label } — what to do with the reply: "replace" the selection, or "insert-top" into the reply box
   abort: null, // AbortController for the in-flight Ollama request
   genStart: 0,
   genTokens: 0,
@@ -169,18 +174,20 @@ function saveConfig() {
 // ─────────────── Ollama client ───────────────
 const base = (url) => (url || "").replace(/\/+$/, "");
 
+// Returns full model entries ({ name, capabilities, ... }) — capabilities
+// is what the voice feature checks ("audio") to find a usable model.
 async function ollamaTags() {
   const res = await fetch(base(state.cfg.ollamaUrl) + "/api/tags");
   if (!res.ok) throw new Error(`Ollama API error: ${res.status}`);
   const data = await res.json();
-  return (data.models || []).map((m) => m.name);
+  return data.models || [];
 }
 
 async function refreshModels() {
   const select = $("modelselect");
   const icon = $("modelicon");
   try {
-    const models = await ollamaTags();
+    const models = (await ollamaTags()).map((m) => m.name);
     setConn(true);
     if (models.length === 0) { select.style.display = "none"; icon.style.display = "none"; return; }
     // No model chosen yet, or the configured one no longer exists — default
@@ -656,6 +663,7 @@ function randomId() {
 }
 
 function newChat() {
+  if (voiceState.active) stopVoiceSession(); // turns would land in the old chat
   state.currentTile = {};
   state.messageId = "";
   state.currentChat = "C" + randomId();
@@ -747,6 +755,7 @@ function deleteChat(id, btn) {
 }
 
 function loadChat(id) {
+  if (voiceState.active) stopVoiceSession();
   state.currentChat = id;
   state.lastBotTile = null;
   const msgs = getChats()[id] || {};
@@ -783,6 +792,7 @@ function sendMessage() {
   const input = $("messageInput");
   const text = input.value.trim();
   if (!text || state.generating) return;
+  if (voiceState.active) { flashStatus("Voice is on — tap the mic to stop"); return; }
 
   state.currentTile = {};
   createUserTile(renderMarkdown(text));
@@ -859,6 +869,579 @@ function stopGenerating() {
 function showStop() { $("stopgenerator").style.display = "block"; }
 function hideStop() { $("stopgenerator").style.display = "none"; }
 
+// ─────────────── voice conversation ───────────────
+// Gemini-style real-time voice chat. The mic is captured in the panel,
+// downsampled to 16 kHz mono PCM, and an energy VAD auto-sends the
+// utterance when the user stops talking. Audio goes out through Ollama's
+// OpenAI endpoint (/v1/chat/completions, `input_audio` part) — the only
+// path the fork actually ingests; the native /api/chat silently drops
+// audio. The fork returns no audio output, so replies are streamed into
+// the tile AND read aloud by the browser's speechSynthesis, sentence by
+// sentence. Half-duplex: we only listen while not speaking, so the TTS
+// never reaches the VAD.
+const VOICE_PROMPT_SUFFIX =
+  " You are in a real-time voice conversation with the user. Keep replies short (one to three sentences) and conversational. " +
+  "Output plain text only: no markdown, no lists, no code blocks, no emojis — your words will be spoken aloud.";
+
+const VOICE = {
+  sampleRate: 16000,
+  vadThreshold: 0.01, // RMS (float -1..1) considered speech
+  minSpeechMs: 600,   // speech duration before silence may end the turn
+  endSilenceMs: 900,  // trailing silence that ends a turn
+  maxTurnMs: 30000,   // hard cap on one captured turn
+  minSendMs: 300,     // manual send: shorter than this = discarded
+  preBlocks: 6,       // ~0.5 s of pre-speech context kept
+};
+
+const voiceState = {
+  active: false,      // session on (mic open)
+  listening: false,   // VAD running
+  awaitingTts: false, // stream done, TTS still talking
+  turnFinished: true, // guards finishVoiceTurn()
+  audioCtx: null,
+  mediaStream: null,
+  processor: null,
+  pcm: new Int16Array(0), // current utterance, 16 kHz mono
+  pre: [],                // ring of pre-speech blocks
+  speechStarted: false,
+  speechMs: 0,
+  silenceMs: 0,
+};
+
+const tts = {
+  queue: [],
+  buffer: "",
+  speaking: false,
+  busy: false,    // model mode: /v1/audio/speech request in flight
+  streamDone: true,
+  gen: 0,        // bumped on stopTTS() so stale callbacks die
+  keepAlive: null, // browser mode: speechSynthesis stall nudge
+  audio: null,     // model mode: current BufferSource
+  playCtx: null,   // model mode: fallback AudioContext when no session ctx
+};
+
+// Voices the fork's /v1/audio/speech accepts: female | male, optionally
+// suffixed with a language (female-british-english, male-french, ...).
+const TTS_LANGUAGES = [
+  "", "american-english", "arabic", "british-english", "chinese", "danish",
+  "dutch", "english", "finnish", "french", "german", "greek", "hebrew",
+  "italian", "japanese", "korean", "polish", "portuguese", "spanish",
+  "swedish", "turkish",
+];
+
+function setVoiceUI(mode) {
+  const btn = $("voice-btn");
+  if (!btn) return;
+  btn.classList.remove("listening", "thinking", "speaking");
+  let icon, title;
+  if (mode === "listening") {
+    btn.classList.add("listening");
+    icon = "fa-microphone";
+    title = "Listening — tap to send, tap again to stop";
+  } else if (mode === "thinking") {
+    btn.classList.add("thinking");
+    icon = "fa-circle-notch fa-spin";
+    title = "Thinking — tap to stop";
+  } else if (mode === "speaking") {
+    btn.classList.add("speaking");
+    icon = "fa-volume-up";
+    title = "Speaking — tap to stop";
+  } else {
+    icon = "fa-microphone";
+    title = "Start voice conversation";
+  }
+  btn.querySelector("i").className = "fas " + icon;
+  btn.title = title;
+}
+
+// Mic tap: idle → start; listening → send now (or stop if nothing said);
+// thinking/speaking → stop the whole session.
+function onVoiceButton() {
+  if (!voiceState.active) { startVoice(); return; }
+  if (voiceState.listening) {
+    if (voiceState.speechMs >= VOICE.minSendMs) onUtteranceEnd();
+    else stopVoiceSession();
+    return;
+  }
+  voiceState.active = false;
+  if (state.abort) { try { state.abort.abort(); } catch (e) {} }
+  stopTTS();
+  finishVoiceTurn();
+}
+
+async function startVoice() {
+  if (state.generating) { flashStatus("Wait for the current reply"); return; }
+  let models;
+  try {
+    models = await ollamaTags();
+  } catch (e) {
+    flashStatus("Ollama unreachable");
+    return;
+  }
+  const audioModels = models.filter((m) => (m.capabilities || []).includes("audio"));
+  if (!audioModels.length) { flashStatus("No audio-capable model found"); return; }
+  // Voice needs an audio model — auto-switch to the first one that has it.
+  const cur = models.find((m) => m.name === state.cfg.model);
+  if (!cur || !(cur.capabilities || []).includes("audio")) {
+    state.cfg.model = audioModels[0].name;
+    saveConfig();
+    refreshModels();
+    flashStatus("Voice: using " + state.cfg.model);
+  }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    });
+  } catch (e) {
+    flashStatus("Mic: " + e.message);
+    return;
+  }
+  voiceState.active = true;
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    voiceState.audioCtx = new Ctx(); // created inside the click gesture
+    await voiceState.audioCtx.resume();
+    const src = voiceState.audioCtx.createMediaStreamSource(stream);
+    const proc = voiceState.audioCtx.createScriptProcessor(4096, 1, 1);
+    const mute = voiceState.audioCtx.createGain();
+    mute.gain.value = 0; // the processor must reach the destination to run, but stay silent
+    src.connect(proc);
+    proc.connect(mute);
+    mute.connect(voiceState.audioCtx.destination);
+    proc.onaudioprocess = handleVoiceBlock;
+    voiceState.mediaStream = stream;
+    voiceState.processor = proc;
+  } catch (e) {
+    stream.getTracks().forEach((t) => t.stop());
+    voiceState.active = false;
+    flashStatus("Audio: " + e.message);
+    return;
+  }
+  startListening();
+  flashStatus("Listening — speak now");
+}
+
+function concatInt16(arrays) {
+  let n = 0;
+  for (const a of arrays) n += a.length;
+  const out = new Int16Array(n);
+  let off = 0;
+  for (const a of arrays) { out.set(a, off); off += a.length; }
+  return out;
+}
+
+// Decimate device-rate float32 to 16 kHz Int16 (moving average; the same
+// conversion the model was verified to hear correctly).
+function downsampleTo16k(float32, fromRate) {
+  const ratio = fromRate / VOICE.sampleRate;
+  const len = Math.floor(float32.length / ratio);
+  const out = new Int16Array(len);
+  for (let i = 0; i < len; i++) {
+    const start = Math.floor(i * ratio);
+    const end = Math.min(Math.floor((i + 1) * ratio), float32.length);
+    let sum = 0;
+    for (let j = start; j < end; j++) sum += float32[j];
+    const s = sum / (end - start || 1);
+    out[i] = Math.max(-32768, Math.min(32767, Math.round(s * 32767)));
+  }
+  return out;
+}
+
+// One ~85 ms capture block: VAD bookkeeping + utterance accumulation.
+function handleVoiceBlock(e) {
+  if (!voiceState.active || !voiceState.listening) return;
+  const input = e.inputBuffer.getChannelData(0);
+  let sum = 0;
+  for (let i = 0; i < input.length; i++) sum += input[i] * input[i];
+  const rms = Math.sqrt(sum / input.length);
+  const pcm = downsampleTo16k(input, voiceState.audioCtx.sampleRate);
+  const dur = (input.length / voiceState.audioCtx.sampleRate) * 1000;
+
+  if (!voiceState.speechStarted) {
+    voiceState.pre.push(pcm);
+    if (voiceState.pre.length > VOICE.preBlocks) voiceState.pre.shift();
+    if (rms > VOICE.vadThreshold) {
+      voiceState.speechStarted = true;
+      voiceState.pcm = concatInt16(voiceState.pre); // keep a bit of lead-in
+      voiceState.pre = [];
+      voiceState.speechMs = dur;
+      voiceState.silenceMs = 0;
+    }
+    return;
+  }
+
+  voiceState.pcm = concatInt16([voiceState.pcm, pcm]);
+  if (rms > VOICE.vadThreshold) {
+    voiceState.speechMs += dur;
+    voiceState.silenceMs = 0;
+  } else {
+    voiceState.silenceMs += dur;
+  }
+  if (voiceState.speechMs >= VOICE.minSpeechMs && voiceState.silenceMs >= VOICE.endSilenceMs) {
+    onUtteranceEnd();
+  } else if (voiceState.speechMs + voiceState.silenceMs >= VOICE.maxTurnMs) {
+    onUtteranceEnd();
+  }
+}
+
+function resetUtterance() {
+  voiceState.pcm = new Int16Array(0);
+  voiceState.pre = [];
+  voiceState.speechStarted = false;
+  voiceState.speechMs = 0;
+  voiceState.silenceMs = 0;
+}
+
+function startListening() {
+  if (!voiceState.active) return;
+  voiceState.listening = true;
+  resetUtterance();
+  setVoiceUI("listening");
+}
+
+function onUtteranceEnd() {
+  if (!voiceState.listening) return;
+  voiceState.listening = false;
+  const pcm = voiceState.pcm;
+  resetUtterance();
+  if (pcm.length < VOICE.sampleRate * (VOICE.minSendMs / 1000)) {
+    // Too short to be speech — keep listening for the real thing.
+    if (voiceState.active) startListening();
+    return;
+  }
+  runVoiceTurn(pcm);
+}
+
+// 16 kHz mono 16-bit PCM → WAV → base64 (the format the model hears).
+function pcmToWavB64(int16) {
+  const n = int16.length;
+  const w = new ArrayBuffer(44 + n * 2);
+  const v = new DataView(w);
+  const str = (off, s) => { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+  str(0, "RIFF");
+  v.setUint32(4, 36 + n * 2, true);
+  str(8, "WAVE");
+  str(12, "fmt ");
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);   // PCM
+  v.setUint16(22, 1, true);   // mono
+  v.setUint32(24, 16000, true);
+  v.setUint32(28, 32000, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  str(36, "data");
+  v.setUint32(40, n * 2, true);
+  new Int16Array(w, 44).set(int16);
+  const bytes = new Uint8Array(w);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
+}
+
+async function runVoiceTurn(pcm) {
+  voiceState.turnFinished = false;
+  setVoiceUI("thinking");
+
+  createUserTile(renderMarkdown("*(voice message)*"));
+  state.messageId = randomId();
+  saveCurrentMessage({ id: state.messageId, user: "(voice message)", bot: "" });
+  state.bufferText = "";
+  state.genStart = performance.now();
+  state.genTokens = 0;
+  state.lastEval = 0;
+  state.doneInfo = null;
+  state.generating = true;
+  createBotTile("");
+
+  // Voice user turns persist as a placeholder — never the audio bytes.
+  pushHistory("user", "(voice message)");
+  const history = historyFor(state.currentChat);
+  const messages = [
+    { role: "system", content: state.cfg.systemPrompt + VOICE_PROMPT_SUFFIX },
+    ...history,
+  ];
+  // The last user turn carries the actual audio (audio-only content works;
+  // verified against the fork).
+  messages[messages.length - 1] = {
+    role: "user",
+    content: [{ type: "input_audio", input_audio: { data: pcmToWavB64(pcm), format: "wav" } }],
+  };
+
+  resetTTS();
+  const controller = new AbortController();
+  state.abort = controller;
+  try {
+    await streamVoiceOllama(messages, controller);
+  } catch (e) {
+    voiceState.active = false; // any failure ends the session
+    if (e.name === "AbortError") {
+      stopTTS();
+      finishVoiceTurn(); // keep the partial reply, stop talking
+    } else {
+      console.error("Voice error:", e.message);
+      state.bufferText += `\n\n**Error:** ${e.message}\n`;
+      paintTile(); // TTS may finish speaking the partial text
+    }
+  }
+
+  tts.streamDone = true;
+  feedTTS(""); // flush any trailing partial sentence
+  if (ttsPending()) {
+    voiceState.awaitingTts = true; // the TTS onend chain calls finishVoiceTurn()
+  } else {
+    finishVoiceTurn();
+  }
+}
+
+// SSE stream from the OpenAI-compatible endpoint (the native /api/chat
+// drops audio; this is the path Ollama's own tests use).
+async function streamVoiceOllama(messages, controller) {
+  const cfg = state.cfg;
+  const res = await fetch(base(cfg.ollamaUrl) + "/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: cfg.model,
+      messages,
+      stream: true,
+      temperature: cfg.temperature,
+      top_p: cfg.topP,
+      max_tokens: 512, // voice replies are short; guard against rambles
+      keep_alive: cfg.keepAlive,
+    }),
+    signal: controller.signal,
+  });
+  if (!res.ok) {
+    let detail = "";
+    try { detail = (await res.text() || "").slice(0, 300).trim(); } catch (e) {}
+    throw new Error(
+      `Ollama API error: ${res.status} ${res.statusText}${detail ? ` — ${detail}` : ""}`
+    );
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let buffer = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop(); // keep partial line
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t.startsWith("data:")) continue;
+      const p = t.slice(5).trim();
+      if (p === "[DONE]") continue;
+      let c;
+      try { c = JSON.parse(p); } catch (e) { continue; }
+      if (c.error) throw new Error(c.error.message || c.error);
+      const d = c.choices && c.choices[0] && c.choices[0].delta && c.choices[0].delta.content;
+      if (d) {
+        state.bufferText += d;
+        state.genTokens += 1; // /v1 exposes no eval_count — approximate
+        paintTile();
+        emitStats(true);
+        feedTTS(d);
+      }
+    }
+  }
+}
+
+// ── TTS (browser speechSynthesis), sentence by sentence ──
+function resetTTS() {
+  stopTTS();
+  tts.buffer = "";
+  tts.streamDone = false;
+}
+
+function feedTTS(text) {
+  if (voiceState.turnFinished) return;
+  tts.buffer += text;
+  let cut;
+  while ((cut = sentenceEnd(tts.buffer)) > 0) {
+    const s = tts.buffer.slice(0, cut).trim();
+    tts.buffer = tts.buffer.slice(cut);
+    if (s && /[a-z0-9]/i.test(s)) tts.queue.push(s); // skip punctuation-only slivers
+  }
+  if (tts.streamDone && tts.buffer.trim() && /[a-z0-9]/i.test(tts.buffer)) {
+    tts.queue.push(tts.buffer.trim());
+    tts.buffer = "";
+  }
+  pumpTTS();
+}
+
+// Index just past the first complete sentence in s, or 0 if none yet.
+// Anchored at 0 (the match must start at the beginning). A dot between two
+// digits is a decimal, not a sentence end ("version 2.0 shipped.").
+function sentenceEnd(s) {
+  const m = s.match(/^(?:[^.!?]|\.(?=\d))*[.!?]+["')\]]*(?:\s+|$)/);
+  return m ? m[0].length : 0;
+}
+
+function ttsPending() {
+  return tts.speaking || tts.busy || tts.queue.length > 0 || tts.buffer.trim().length > 0;
+}
+
+function pumpTTS() {
+  if (voiceState.turnFinished) return;
+  if (tts.speaking || tts.busy || tts.queue.length === 0) { checkTtsAllDone(); return; }
+  const text = tts.queue.shift();
+  if (state.cfg.ttsSource === "browser") speakBrowser(text);
+  else speakModel(text);
+}
+
+// Model voice: fetch a WAV from the fork's TTS endpoint and play it through
+// WebAudio. Playback goes through the mic's AudioContext — it was created
+// inside the mic-tap gesture and is already running, so it is exempt from
+// the autoplay policy that would silently block a plain <audio> element.
+// Generation speed is server-side; the first call may pay a model load.
+async function speakModel(text) {
+  tts.busy = true;
+  const gen = tts.gen;
+  try {
+    const res = await fetch(base(state.cfg.ollamaUrl) + "/v1/audio/speech", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: state.cfg.model,
+        input: text,
+        voice: state.cfg.ttsModelVoice || "female",
+      }),
+    });
+    if (!res.ok) throw new Error("TTS HTTP " + res.status);
+    const arrayBuf = await res.arrayBuffer();
+    if (gen !== tts.gen) return; // stopped mid-generation
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = voiceState.audioCtx || (tts.playCtx = tts.playCtx || new Ctx());
+    if (ctx.state !== "running") await ctx.resume();
+    if (gen !== tts.gen) return;
+    const audioBuf = await ctx.decodeAudioData(arrayBuf);
+    if (gen !== tts.gen) return;
+    tts.busy = false;
+    tts.speaking = true;
+    if (voiceState.active) setVoiceUI("speaking");
+    const src = ctx.createBufferSource();
+    src.buffer = audioBuf;
+    src.connect(ctx.destination);
+    tts.audio = src;
+    const done = () => {
+      if (gen !== tts.gen) return; // stopTTS() happened — stale callback
+      tts.speaking = false;
+      tts.audio = null;
+      pumpTTS();
+    };
+    src.onended = done;
+    src.start();
+  } catch (e) {
+    if (gen !== tts.gen) return;
+    tts.busy = false;
+    console.error("Model TTS error:", e.message);
+    flashStatus("TTS: " + e.message); // don't fail silently — show it
+    pumpTTS(); // skip the failed sentence, keep going
+  }
+}
+
+// Browser voice: built-in speechSynthesis — instant but robotic on Linux.
+function speakBrowser(text) {
+  if (!("speechSynthesis" in window)) { pumpTTS(); return; }
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = Math.min(2, Math.max(0.5, state.cfg.ttsRate || 1));
+  if (state.cfg.ttsVoice) {
+    const v = speechSynthesis.getVoices().find((x) => x.voiceURI === state.cfg.ttsVoice);
+    if (v) u.voice = v;
+  }
+  const gen = tts.gen;
+  tts.speaking = true;
+  if (voiceState.active) setVoiceUI("speaking");
+  const done = () => {
+    if (gen !== tts.gen) return; // stopTTS() happened — stale callback
+    tts.speaking = false;
+    pumpTTS();
+  };
+  u.onend = done;
+  u.onerror = done;
+  speechSynthesis.speak(u);
+  if (!tts.keepAlive) {
+    // Chrome's speechSynthesis can stall on long queues; nudge it.
+    tts.keepAlive = setInterval(() => {
+      if (tts.speaking) { try { speechSynthesis.resume(); } catch (e) {} }
+    }, 5000);
+  }
+}
+
+function stopTTS() {
+  tts.gen++;
+  tts.speaking = false;
+  tts.busy = false;
+  tts.queue = [];
+  if (tts.keepAlive) { clearInterval(tts.keepAlive); tts.keepAlive = null; }
+  if (tts.audio) { try { tts.audio.stop(); } catch (e) {} tts.audio = null; } // BufferSource
+  try { speechSynthesis.cancel(); } catch (e) {}
+}
+
+// Stream finished and nothing left to say → close out the turn.
+function checkTtsAllDone() {
+  if (tts.streamDone && !ttsPending() && voiceState.awaitingTts) {
+    voiceState.awaitingTts = false;
+    finishVoiceTurn();
+  }
+}
+
+function finishVoiceTurn() {
+  if (voiceState.turnFinished) return;
+  voiceState.turnFinished = true;
+  voiceState.awaitingTts = false;
+  state.abort = null;
+  paintTile();
+  persistBotReply();
+  const reply = stripThinking(state.bufferText);
+  if (reply) pushHistory("assistant", reply);
+  state.lastBotTile =
+    (state.currentTile instanceof Element && state.currentTile.closest(".bot-tile")) ||
+    state.lastBotTile;
+  state.currentTile = {};
+  state.userScrolled = false;
+  state.generating = false;
+  hideStop();
+  emitStats(false);
+  if (voiceState.active) {
+    if (state.cfg.voiceLoop) startListening(); // continuous mode
+    else stopVoiceSession();
+  } else {
+    stopCapture();
+    setVoiceUI("idle");
+  }
+}
+
+function stopVoiceSession() {
+  voiceState.active = false;
+  voiceState.listening = false;
+  voiceState.awaitingTts = false;
+  stopTTS();
+  stopCapture();
+  setVoiceUI("idle");
+}
+
+function stopCapture() {
+  if (voiceState.processor) {
+    try { voiceState.processor.onaudioprocess = null; voiceState.processor.disconnect(); } catch (e) {}
+    voiceState.processor = null;
+  }
+  if (voiceState.mediaStream) {
+    voiceState.mediaStream.getTracks().forEach((t) => t.stop());
+    voiceState.mediaStream = null;
+  }
+  if (voiceState.audioCtx) {
+    const ctx = voiceState.audioCtx;
+    voiceState.audioCtx = null;
+    try { ctx.close(); } catch (e) {}
+  }
+  resetUtterance();
+}
+
 // ─────────────── settings ───────────────
 function openSettings() {
   const c = state.cfg;
@@ -877,9 +1460,50 @@ function openSettings() {
   $("cfg-hive-pass").value = c.hivePass;
   $("cfg-hive-db").value = c.hiveDb;
   $("cfg-exa-key").value = c.exaKey;
+  $("cfg-voiceloop").checked = !!c.voiceLoop;
+  $("cfg-ttssource").value = c.ttsSource;
+  populateTtsModelVoices();
+  $("cfg-ttsrate").value = c.ttsRate;
+  populateTtsVoices();
   $("cfg-status").className = "status";
   $("settings").classList.add("show");
   refreshCfgModels();
+}
+
+// The fork's /v1/audio/speech voice picker: female/male, optionally with
+// a language suffix (female-british-english, male-french, ...).
+function populateTtsModelVoices() {
+  const sel = $("cfg-ttsmodelvoice");
+  const opt = (v, label) =>
+    `<option value="${v}"${v === state.cfg.ttsModelVoice ? " selected" : ""}>${label}</option>`;
+  let html = opt("female", "Female") + opt("male", "Male");
+  for (const lang of TTS_LANGUAGES) {
+    if (!lang) continue;
+    const name = lang.replace(/-/g, " ");
+    html += opt("female-" + lang, "Female · " + name);
+    html += opt("male-" + lang, "Male · " + name);
+  }
+  sel.innerHTML = html;
+}
+
+// Fill the browser TTS voice picker from speechSynthesis. Voices may still
+// be loading when the form opens; onvoiceschanged (set in init) repopulates.
+function populateTtsVoices() {
+  const sel = $("cfg-ttsvoice");
+  if (!("speechSynthesis" in window)) {
+    sel.innerHTML = '<option value="">(not supported in this browser)</option>';
+    sel.disabled = true;
+    return;
+  }
+  sel.disabled = false;
+  const voices = speechSynthesis.getVoices() || [];
+  sel.innerHTML =
+    '<option value="">(default voice)</option>' +
+    voices
+      .map((v) =>
+        `<option value="${v.voiceURI}"${v.voiceURI === state.cfg.ttsVoice ? " selected" : ""}>${v.name} (${v.lang})</option>`
+      )
+      .join("");
 }
 
 async function refreshCfgModels() {
@@ -916,6 +1540,13 @@ async function saveSettings() {
   c.hivePass = $("cfg-hive-pass").value;
   c.hiveDb = $("cfg-hive-db").value.trim() || "*";
   c.exaKey = $("cfg-exa-key").value.trim();
+  c.voiceLoop = $("cfg-voiceloop").checked;
+  c.ttsSource = $("cfg-ttssource").value;
+  c.ttsModelVoice = $("cfg-ttsmodelvoice").value;
+  c.ttsRate = parseFloat($("cfg-ttsrate").value);
+  if (isNaN(c.ttsRate) || c.ttsRate < 0.5) c.ttsRate = 0.5;
+  if (c.ttsRate > 2) c.ttsRate = 2;
+  c.ttsVoice = $("cfg-ttsvoice").value;
   if (isNaN(c.temperature)) c.temperature = DEFAULTS.temperature;
   if (isNaN(c.topP)) c.topP = DEFAULTS.topP;
   await saveConfig();
@@ -978,7 +1609,7 @@ async function checkPendingPrompt() {
         return;
       }
       await browser.storage.local.remove(["llcuiPendingRequest", "llcuiPendingPrompt"]);
-      if (req.replace) state.pendingReplace = { replace: true, label: req.label || "Replace" };
+      if (req.replace || req.insert) state.pendingReplace = { replace: true, mode: req.insert || "replace", label: req.label || "Replace" };
       $("messageInput").value = req.prompt;
       sendMessage();
       return;
@@ -1013,13 +1644,13 @@ async function maybeReplaceSelection() {
   state.pendingReplace = null;
   if (!reply) return;
 
-  const r = await bg("REPLACE_SELECTION", { text: reply }).catch(() => ({ success: false }));
+  const r = await bg("REPLACE_SELECTION", { text: reply, mode: pr.mode || "replace" }).catch(() => ({ success: false }));
   if (r && r.success) {
-    flashStatus(pr.label + " applied");
+    flashStatus(pr.mode === "insert-top" ? pr.label + " — inserted at top of reply" : pr.label + " applied");
   } else {
     try {
       await navigator.clipboard.writeText(reply);
-      flashStatus(pr.label + " — copied to clipboard");
+      flashStatus(pr.mode === "insert-top" ? "No reply box found — copied to clipboard" : pr.label + " — copied to clipboard");
     } catch (e) {
       flashStatus(pr.label + " — see panel");
     }
@@ -1130,6 +1761,7 @@ function wire() {
   $("cfg-close").addEventListener("click", closeSettings);
   $("cfg-models-refresh").addEventListener("click", refreshCfgModels);
   $("exam-btn").addEventListener("click", () => { $("messageInput").value = EXAM_PROMPT; sendMessage(); });
+  $("voice-btn").addEventListener("click", onVoiceButton);
 
   const select = $("modelselect");
   select.onchange = () => {
@@ -1151,6 +1783,13 @@ async function init() {
   // events) and wait until its network rules are in place, so the first
   // local request goes out with the headers it expects. No-op in Firefox.
   try { await browser.runtime.sendMessage({ type: "READY" }); } catch (e) { /* no background */ }
+  if ("speechSynthesis" in window) {
+    // Voices load asynchronously; repopulate the picker if the settings
+    // form happens to be open when they arrive.
+    speechSynthesis.onvoiceschanged = () => {
+      if ($("settings").classList.contains("show")) populateTtsVoices();
+    };
+  }
   await loadConfig();
   newChat();
   listGenerate();

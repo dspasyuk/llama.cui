@@ -39,8 +39,10 @@ async function registerOriginStripRules() {
     addRules.push({
       id: id++,
       priority: 1,
-      action: { type: "modifyHeaders", headers: [{ header: "origin", operation: "remove" }] },
-      condition: { urlFilter: "||" + host, resourceTypes: ["xmlhttprequest"] },
+      // modifyHeaders uses `requestHeaders` (NOT `headers`) — the wrong field
+      // name makes updateDynamicRules throw on validation, so no rule lands.
+      action: { type: "modifyHeaders", requestHeaders: [{ header: "Origin", operation: "remove" }] },
+      condition: { urlFilter: "||" + host, resourceTypes: ["xmlhttprequest", "other"] },
     });
   }
   try {
@@ -85,10 +87,23 @@ async function getPageText(tabId) {
   }
 }
 
-// Runs a function in the active tab's page context.
-async function execInTab(tabId, func, args = []) {
-  const results = await browser.scripting.executeScript({ target: { tabId }, func, args });
-  return results && results[0] ? results[0].result : undefined;
+// Runs a function in the active tab's page context. With allFrames it runs in
+// every frame and returns the first frame where the op succeeded — that's the
+// frame holding the real selection (e.g. Outlook renders the email body in an
+// iframe, while the top frame only has a collapsed caret). When `pick` is
+// given, the frame with the highest pick(result) wins instead (used to find
+// the largest editor for insert-top).
+async function execInTab(tabId, func, args = [], allFrames = false, pick) {
+  const results = await browser.scripting.executeScript({ target: { tabId, allFrames }, func, args });
+  if (!results || results.length === 0) return undefined;
+  if (!allFrames) return results[0] ? results[0].result : undefined;
+  const ok = [];
+  for (const r of results) {
+    if (r && r.result && r.result.ok) ok.push(r.result);
+  }
+  if (ok.length === 0) return results[0] ? results[0].result : undefined;
+  if (!pick) return ok[0];
+  return ok.reduce((a, b) => (pick(b) > pick(a) ? b : a));
 }
 
 // Page-side helper. "save" stashes the current selection's Range on window so
@@ -97,9 +112,57 @@ async function execInTab(tabId, func, args = []) {
 function selectionOp(mode, text) {
   if (mode === "save") {
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return { ok: false };
+    // Only a real (non-collapsed) selection wins — with allFrames a bare caret
+    // in the top frame would otherwise beat the selection in an iframe. Frames
+    // without a selection get their stale range cleared so a later replace
+    // can't hit a selection from an older request.
+    if (!sel || sel.rangeCount === 0 || sel.toString().trim() === "") {
+      window.__llcuiRange = null;
+      return { ok: false };
+    }
     window.__llcuiRange = sel.getRangeAt(0).cloneRange();
     return { ok: true };
+  }
+  if (mode === "insert-top") {
+    // "Draft a reply": put the text at the very top of this frame's largest
+    // contenteditable — Outlook's reply box, above the signature and the
+    // quoted thread. `area` lets the background pick the biggest editor
+    // across frames.
+    const editors = Array.from(document.querySelectorAll('[contenteditable="true"]'));
+    let best = null, bestArea = 0;
+    for (const ed of editors) {
+      const r = ed.getBoundingClientRect();
+      const area = r.width * r.height;
+      if (area > bestArea) { bestArea = area; best = ed; }
+    }
+    if (!best) return { ok: false, error: "no-editor" };
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(best);
+      range.collapse(true); // very start of the editor
+      const frag = document.createDocumentFragment();
+      let last = null;
+      for (const line of text.split("\n")) {
+        const d = document.createElement("div");
+        d.textContent = line || " ";
+        frag.appendChild(d);
+        last = d;
+      }
+      const sep = document.createElement("div");
+      sep.textContent = " ";
+      frag.appendChild(sep);
+      range.insertNode(frag);
+      // Leave the caret just after the inserted block.
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      const cr = document.createRange();
+      cr.setStartAfter(last);
+      cr.collapse(true);
+      sel.addRange(cr);
+      return { ok: true, area: bestArea };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
   }
   const range = window.__llcuiRange;
   if (!range) return { ok: false, error: "no-saved-selection" };
@@ -124,13 +187,10 @@ function selectionOp(mode, text) {
 const ACTIONS = {
   "llcui-edit-grammar":  { id: "llcui-edit-grammar",  label: "Fix grammar",        group: "edit", replace: true,  coprompt: "Fix the grammar and spelling of the following text. Return ONLY the corrected text — no explanations, no quotes, no commentary.\n\n" },
   "llcui-edit-improve":  { id: "llcui-edit-improve",  label: "Grammar & improve",  group: "edit", replace: true,  coprompt: "Fix the grammar and spelling of the following text and improve its clarity and flow. Return ONLY the final text — no explanations or commentary.\n\n" },
-  "llcui-edit-rewrite":  { id: "llcui-edit-rewrite",  label: "Rewrite",            group: "edit", replace: true,  coprompt: "Rewrite the following text to make it clearer and more engaging while preserving its meaning. Return ONLY the rewritten text.\n\n" },
-  "llcui-edit-simplify": { id: "llcui-edit-simplify", label: "Simplify",           group: "edit", replace: true,  coprompt: "Simplify the following text so it is easy to understand, without losing the key meaning. Return ONLY the simplified text.\n\n" },
   "llcui-edit-shorten":  { id: "llcui-edit-shorten",  label: "Shorten",            group: "edit", replace: true,  coprompt: "Make the following text more concise while keeping the essential meaning. Return ONLY the shortened text.\n\n" },
-  "llcui-edit-continue": { id: "llcui-edit-continue", label: "Continue writing",   group: "edit", replace: false, coprompt: "Continue the following text, matching its style and tone. Return ONLY the continuation, starting where the text left off.\n\n" },
   "llcui-und-explain":   { id: "llcui-und-explain",   label: "Explain",            group: "und",  replace: false, coprompt: "Explain the following text clearly, in simple language, with examples where helpful.\n\n" },
-  "llcui-und-points":    { id: "llcui-und-points",    label: "Key points",         group: "und",  replace: false, coprompt: "List the key points of the following text as a concise bulleted list.\n\n" },
   "llcui-und-summarize": { id: "llcui-und-summarize", label: "Summarize",          group: "und",  replace: false, coprompt: "Summarize the following text in 2-3 sentences.\n\n" },
+  "llcui-mail-reply":    { id: "llcui-mail-reply",    label: "Draft a reply",      group: "mail", replace: false, insert: "top", coprompt: "TASK: Draft a REPLY to the email at the end of this message. You are the person who RECEIVED that email, writing back to its sender.\n\nThis is NOT an editing task. Do NOT correct, rewrite, shorten, or improve the email, and do NOT summarize or explain it. Your only job is to write the reply.\n\nThe reply should be short (2-5 sentences), professional, a direct response to what the email says or asks, and in the same language and tone as the email.\n\nOutput ONLY the reply text — no labels, no quotes of the original, no subject line, no meta-commentary.\n\nEMAIL:\n" },
 };
 // ─────────────── message handlers ───────────────
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -145,6 +205,17 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return { success: true };
         case "GET_SELECTION":
           return { success: true, text: await getSelection() };
+        case "GET_ACTIONS":
+          // The in-page menu (for pages that suppress the native context
+          // menu, e.g. Outlook) fetches the action list from here so the
+          // labels/prompts stay a single source of truth.
+          return { success: true, actions: Object.values(ACTIONS) };
+        case "OPEN_PANEL":
+          // In-page menu click: same pipeline as a native menu click. Pass the
+          // sender's window so sidePanel.open() runs before any await — the
+          // click's user gesture must still be fresh when it's called.
+          await openPanel(message.payload, sender && sender.tab ? sender.tab.windowId : undefined);
+          return { success: true };
         case "PENDING_PROMPT":
           // store a prompt (from context menu / omnibox) for the panel to send
           await browser.storage.local.set({ llcuiPendingPrompt: message.prompt });
@@ -157,7 +228,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const tabs = await browser.tabs.query({ active: true, currentWindow: true });
           const tab = tabs && tabs[0];
           if (!tab || !tab.id) return { success: false, error: "no-tab" };
-          const result = await execInTab(tab.id, selectionOp, ["replace", message.text]);
+          // allFrames: the saved range (or the reply box) may live in an
+          // iframe. insert-top picks the frame with the largest editor.
+          const mode = message.mode || "replace";
+          const pick = mode === "insert-top" ? (r) => (r && r.area) || 0 : undefined;
+          const result = await execInTab(tab.id, selectionOp, [mode, message.text], true, pick);
           return { success: !!(result && result.ok), error: result && result.error };
         }
         default:
@@ -171,25 +246,44 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // ─────────────── UI triggers ───────────────
-async function openPanel(payload) {
-  // payload: a plain string prompt, or a { prompt, replace } request object.
+// Open the side panel, optionally with a payload (a plain prompt string or a
+// { prompt, replace, ... } request object) the panel will pick up.
+//
+// chrome.sidePanel.open() only works while the triggering user gesture is
+// still fresh, and every await can let that transient activation lapse. So:
+//   1. start the storage write WITHOUT awaiting it,
+//   2. call sidePanel.open() immediately — using the caller's windowId when
+//      known, to avoid a tabs.query await before the call,
+//   3. await the storage write.
+// The panel's init() is slow (it fetches the model list) so the payload is
+// long since written by the time checkPendingPrompt() reads storage.
+async function openPanel(payload, windowId) {
+  let setPromise = null;
   if (payload) {
-    if (typeof payload === "string") {
-      await browser.storage.local.set({ llcuiPendingPrompt: payload });
-    } else {
-      await browser.storage.local.set({ llcuiPendingRequest: payload });
-    }
+    setPromise = (typeof payload === "string")
+      ? browser.storage.local.set({ llcuiPendingPrompt: payload })
+      : browser.storage.local.set({ llcuiPendingRequest: payload });
   }
-  const tabs = await browser.tabs.query({ active: true, lastFocusedWindow: true });
-  const windowId = tabs && tabs[0] ? tabs[0].windowId : await browser.windows.getCurrent().then((w) => w.id);
+  if (windowId == null) {
+    const tabs = await browser.tabs.query({ active: true, lastFocusedWindow: true });
+    windowId = tabs && tabs[0] ? tabs[0].windowId : (await browser.windows.getCurrent()).id;
+  }
   try {
     await chrome.sidePanel.open({ windowId });
   } catch (e) {
     console.error("sidePanel.open:", e);
   }
+  if (setPromise) {
+    try { await setPromise; } catch (e) {}
+  }
 }
 
-chrome.action.onClicked.addListener(() => openPanel());
+// A plain click on the toolbar icon opens the side panel directly. Let Chrome
+// handle it natively (openPanelOnActionClick) — it's more reliable than an
+// onClicked listener that calls sidePanel.open(), which can be dropped when
+// the wake-up + tabs.query await lets the user-gesture context lapse. The
+// payload flows (context menu, omnibox) still call openPanel() above.
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
 // Build the right-click menu: a flat list of actions (no nested submenus).
 // Each action is a top-level item; the browser auto-collapses several
@@ -221,7 +315,7 @@ async function buildMenus() {
     // parent, and the group is shown as a title prefix. (No `parentId` and no
     // `icons` — Chrome's contextMenus.create rejects both.)
     for (const a of Object.values(ACTIONS)) {
-      const group = a.group === "edit" ? "Edit" : "Understand";
+      const group = a.group === "edit" ? "Edit" : a.group === "mail" ? "Email" : "Understand";
       await safe({ id: a.id, title: `${group} — ${a.label}`, contexts: ["selection"] });
     }
     await safe({ id: "llcui-ask-selection", title: "Ask about this…", contexts: ["selection"] });
@@ -238,8 +332,8 @@ async function buildMenus() {
 
 // Build the menu on load FIRST — the primary path. It must run even if an
 // onInstalled/onStartup listener registration throws; an uncaught throw there
-// would halt the rest of this top-level script (including the onClicked handler
-// below) and no menu items would ever be created.
+// would halt the rest of this top-level script (including the context-menu
+// click handler below) and no menu items would ever be created.
 buildMenus().catch((e) => console.error("[llamacui] buildMenus error:", e));
 
 // Rebuild on install/startup too, when those events exist (covers a service
@@ -255,11 +349,16 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
     if (action) {
       const text = info.selectionText;
       if (!text || !text.trim()) return;
+      // Open the panel FIRST — sidePanel.open() needs the fresh user gesture,
+      // and the selection-save below would otherwise let it lapse.
+      const payload = { prompt: action.coprompt + text, replace: !!action.replace, label: action.label };
+      if (action.insert) payload.insert = action.insert;
+      await openPanel(payload, tab.windowId);
       if (action.replace) {
-        // Save the selection's Range now so the reply can replace it later.
-        await execInTab(tab.id, selectionOp, ["save"]);
+        // Save the selection's Range so the reply can replace it later.
+        // allFrames: the selection may live in an iframe (Outlook's email body).
+        await execInTab(tab.id, selectionOp, ["save"], true);
       }
-      await openPanel({ prompt: action.coprompt + text, replace: !!action.replace, label: action.label });
       return;
     }
 
@@ -267,14 +366,20 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
       const text = info.selectionText;
       if (!text || !text.trim()) return;
       // Put the selection in the input box so the user can ask anything.
-      await openPanel({ prompt: "About this text:\n\n" + text, replace: false, ask: true, label: "Ask" });
+      await openPanel({ prompt: "About this text:\n\n" + text, replace: false, ask: true, label: "Ask" }, tab.windowId);
       return;
     }
 
     if (id === "llcui-ask-page") {
+      // Open the panel first (while the gesture is fresh), then fetch the page
+      // text and store the request — the panel's slow init reads storage after
+      // we've written it (and watchPendingRequests covers the already-open case).
+      openPanel(null, tab.windowId);
       const text = await getPageText(tab.id);
       const snippet = text.length > 4000 ? text.slice(0, 4000) + "…" : text;
-      await openPanel({ prompt: "Summarize this page content:\n\n" + snippet, replace: false, label: "Summarize page" });
+      await browser.storage.local.set({
+        llcuiPendingRequest: { prompt: "Summarize this page content:\n\n" + snippet, replace: false, label: "Summarize page" },
+      });
     }
   })();
 });

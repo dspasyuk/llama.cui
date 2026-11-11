@@ -53,6 +53,16 @@ Web search is powered by Exa (src/exa.js). It works keyless out of the box again
 To turn web search on/off see `config.embedding.WebSearch` in config.js.
 </details>
 
+<details><summary> <H1> Browser extension (Chrome / Firefox) </H1></summary>
+
+A standalone browser extension lives in `plugins/llamacui`. It talks directly to Ollama (with optional Hive document search and Exa web search) — the llama.cui server and login are not required.
+
+- `plugins/llamacui/chrome` — Chrome (Manifest V3, side panel)
+- `plugins/llamacui/mozilla` — Firefox (Manifest V2, sidebar)
+
+Load it unpacked through `chrome://extensions` (enable Developer mode → Load unpacked) or `about:debugging` (Load Temporary Add-on), then point the settings at your local Ollama endpoint. The extension also adds text-selection tools (fix grammar, shorten, summarize, draft a reply), including in-place editing inside Outlook on the web.
+</details>
+
 
 <details><summary> <H1> Manual Installation </H1></summary>
 

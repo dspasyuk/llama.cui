@@ -41,10 +41,23 @@ async function getPageText(tabId) {
   }
 }
 
-// Runs a snippet in the active tab's page context (MV2 code execution).
-async function execInTab(tabId, code) {
-  const results = await browser.tabs.executeScript(tabId, { code });
-  return results && results[0] !== undefined ? results[0] : undefined;
+// Runs a snippet in the active tab's page context (MV2 code execution). With
+// allFrames it runs in every frame and returns the first frame where the op
+// succeeded — that's the frame holding the real selection (e.g. Outlook
+// renders the email body in an iframe, while the top frame only has a
+// collapsed caret). When `pick` is given, the frame with the highest
+// pick(result) wins instead (used to find the largest editor for insert-top).
+async function execInTab(tabId, code, allFrames = false, pick) {
+  const results = await browser.tabs.executeScript(tabId, { code, allFrames });
+  if (!results || results.length === 0) return undefined;
+  if (!allFrames) return results[0] !== undefined ? results[0] : undefined;
+  const ok = [];
+  for (const v of results) {
+    if (v && v.ok) ok.push(v);
+  }
+  if (ok.length === 0) return results[0];
+  if (!pick) return ok[0];
+  return ok.reduce((a, b) => (pick(b) > pick(a) ? b : a));
 }
 
 // Page-side helper. "save" stashes the current selection's Range on window so
@@ -53,9 +66,57 @@ async function execInTab(tabId, code) {
 function selectionOp(mode, text) {
   if (mode === "save") {
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return { ok: false };
+    // Only a real (non-collapsed) selection wins — with allFrames a bare caret
+    // in the top frame would otherwise beat the selection in an iframe. Frames
+    // without a selection get their stale range cleared so a later replace
+    // can't hit a selection from an older request.
+    if (!sel || sel.rangeCount === 0 || sel.toString().trim() === "") {
+      window.__llcuiRange = null;
+      return { ok: false };
+    }
     window.__llcuiRange = sel.getRangeAt(0).cloneRange();
     return { ok: true };
+  }
+  if (mode === "insert-top") {
+    // "Draft a reply": put the text at the very top of this frame's largest
+    // contenteditable — Outlook's reply box, above the signature and the
+    // quoted thread. `area` lets the background pick the biggest editor
+    // across frames.
+    const editors = Array.from(document.querySelectorAll('[contenteditable="true"]'));
+    let best = null, bestArea = 0;
+    for (const ed of editors) {
+      const r = ed.getBoundingClientRect();
+      const area = r.width * r.height;
+      if (area > bestArea) { bestArea = area; best = ed; }
+    }
+    if (!best) return { ok: false, error: "no-editor" };
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(best);
+      range.collapse(true); // very start of the editor
+      const frag = document.createDocumentFragment();
+      let last = null;
+      for (const line of text.split("\n")) {
+        const d = document.createElement("div");
+        d.textContent = line || " ";
+        frag.appendChild(d);
+        last = d;
+      }
+      const sep = document.createElement("div");
+      sep.textContent = " ";
+      frag.appendChild(sep);
+      range.insertNode(frag);
+      // Leave the caret just after the inserted block.
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      const cr = document.createRange();
+      cr.setStartAfter(last);
+      cr.collapse(true);
+      sel.addRange(cr);
+      return { ok: true, area: bestArea };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
   }
   const range = window.__llcuiRange;
   if (!range) return { ok: false, error: "no-saved-selection" };
@@ -75,18 +136,23 @@ function selectionOp(mode, text) {
   }
 }
 
+// MV2 executeScript takes a code string, so wrap the page-side helper.
+function selectionOpCode(mode, text) {
+  if (mode === "save") {
+    return "(function(){ " + selectionOp.toString() + "; return selectionOp('save'); })()";
+  }
+  return "(function(mode, text){ " + selectionOp.toString() + "; return selectionOp(mode, text); })(" + JSON.stringify(mode) + ", " + JSON.stringify(text) + ")";
+}
+
 // Context-menu actions. `replace: true` puts the model's output back over the
 // selected text; otherwise the answer is shown in the chat panel.
 const ACTIONS = {
   "llcui-edit-grammar":  { id: "llcui-edit-grammar",  label: "Fix grammar",        group: "edit", replace: true,  coprompt: "Fix the grammar and spelling of the following text. Return ONLY the corrected text — no explanations, no quotes, no commentary.\n\n" },
   "llcui-edit-improve":  { id: "llcui-edit-improve",  label: "Grammar & improve",  group: "edit", replace: true,  coprompt: "Fix the grammar and spelling of the following text and improve its clarity and flow. Return ONLY the final text — no explanations or commentary.\n\n" },
-  "llcui-edit-rewrite":  { id: "llcui-edit-rewrite",  label: "Rewrite",            group: "edit", replace: true,  coprompt: "Rewrite the following text to make it clearer and more engaging while preserving its meaning. Return ONLY the rewritten text.\n\n" },
-  "llcui-edit-simplify": { id: "llcui-edit-simplify", label: "Simplify",           group: "edit", replace: true,  coprompt: "Simplify the following text so it is easy to understand, without losing the key meaning. Return ONLY the simplified text.\n\n" },
   "llcui-edit-shorten":  { id: "llcui-edit-shorten",  label: "Shorten",            group: "edit", replace: true,  coprompt: "Make the following text more concise while keeping the essential meaning. Return ONLY the shortened text.\n\n" },
-  "llcui-edit-continue": { id: "llcui-edit-continue", label: "Continue writing",   group: "edit", replace: false, coprompt: "Continue the following text, matching its style and tone. Return ONLY the continuation, starting where the text left off.\n\n" },
   "llcui-und-explain":   { id: "llcui-und-explain",   label: "Explain",            group: "und",  replace: false, coprompt: "Explain the following text clearly, in simple language, with examples where helpful.\n\n" },
-  "llcui-und-points":    { id: "llcui-und-points",    label: "Key points",         group: "und",  replace: false, coprompt: "List the key points of the following text as a concise bulleted list.\n\n" },
   "llcui-und-summarize": { id: "llcui-und-summarize", label: "Summarize",          group: "und",  replace: false, coprompt: "Summarize the following text in 2-3 sentences.\n\n" },
+  "llcui-mail-reply":    { id: "llcui-mail-reply",    label: "Draft a reply",      group: "mail", replace: false, insert: "top", coprompt: "TASK: Draft a REPLY to the email at the end of this message. You are the person who RECEIVED that email, writing back to its sender.\n\nThis is NOT an editing task. Do NOT correct, rewrite, shorten, or improve the email, and do NOT summarize or explain it. Your only job is to write the reply.\n\nThe reply should be short (2-5 sentences), professional, a direct response to what the email says or asks, and in the same language and tone as the email.\n\nOutput ONLY the reply text — no labels, no quotes of the original, no subject line, no meta-commentary.\n\nEMAIL:\n" },
 };
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
@@ -94,6 +160,15 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       switch (message.type) {
         case "GET_SELECTION":
           return { success: true, text: await getSelection() };
+        case "GET_ACTIONS":
+          // The in-page menu (for pages that suppress the native context
+          // menu, e.g. Outlook) fetches the action list from here so the
+          // labels/prompts stay a single source of truth.
+          return { success: true, actions: Object.values(ACTIONS) };
+        case "OPEN_PANEL":
+          // In-page menu click: same pipeline as a native menu click.
+          openPanel(message.payload);
+          return { success: true };
         case "PENDING_PROMPT":
           // store a prompt (from context menu / omnibox) for the panel to send
           await browser.storage.local.set({ llcuiPendingPrompt: message.prompt });
@@ -106,9 +181,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const tabs = await browser.tabs.query({ active: true, currentWindow: true });
           const tab = tabs && tabs[0];
           if (!tab || !tab.id) return { success: false, error: "no-tab" };
-          const text = JSON.stringify(message.text);
-          const code = "(function(mode, text){ " + selectionOp.toString() + "; return selectionOp(mode, text); })('replace', " + text + ")";
-          const result = await execInTab(tab.id, code);
+          // allFrames: the saved range (or the reply box) may live in an
+          // iframe. insert-top picks the frame with the largest editor.
+          const mode = message.mode || "replace";
+          const pick = mode === "insert-top" ? (r) => (r && r.area) || 0 : undefined;
+          const result = await execInTab(tab.id, selectionOpCode(mode, message.text), true, pick);
           return { success: !!(result && result.ok), error: result && result.error };
         }
         default:
@@ -160,7 +237,7 @@ async function buildMenus() {
     };
 
     for (const a of Object.values(ACTIONS)) {
-      const group = a.group === "edit" ? "Edit" : "Understand";
+      const group = a.group === "edit" ? "Edit" : a.group === "mail" ? "Email" : "Understand";
       await safe({ id: a.id, title: `${group} — ${a.label}`, contexts: ["selection"] });
     }
     await safe({ id: "llcui-ask-selection", title: "Ask about this…", contexts: ["selection"] });
@@ -175,15 +252,13 @@ async function buildMenus() {
   }
 }
 
-// Build the menu on load FIRST — the primary path. It must run even if the
-// onInstall/onStartup listener registration throws; an uncaught throw there
-// would halt the rest of this top-level script (including the onClicked and
-// omnibox handlers below) and no menu items would ever be created.
+// Build the menu on load — the only path we need. Firefox reloads this
+// non-persistent background script on install and on every browser startup,
+// so a top-level buildMenus() covers all of them. (We deliberately do NOT
+// register runtime.onInstall/onStartup listeners: Firefox doesn't implement
+// runtime.onInstall, and even a guarded reference trips AMO's static
+// validator.)
 buildMenus().catch((e) => console.error("[llamacui] buildMenus error:", e));
-
-// Rebuild on install/startup too, when those events exist.
-if (browser.runtime.onInstall) browser.runtime.onInstall.addListener(buildMenus);
-if (browser.runtime.onStartup) browser.runtime.onStartup.addListener(buildMenus);
 
 browser.contextMenus.onClicked.addListener((info, tab) => {
   (async () => {
@@ -195,10 +270,12 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
       if (!text || !text.trim()) return;
       if (action.replace) {
         // Save the selection's Range now so the reply can replace it later.
-        const code = "(function(){ " + selectionOp.toString() + "; return selectionOp('save'); })()";
-        await execInTab(tab.id, code);
+        // allFrames: the selection may live in an iframe (Outlook's email body).
+        await execInTab(tab.id, selectionOpCode("save"), true);
       }
-      await openPanel({ prompt: action.coprompt + text, replace: !!action.replace, label: action.label });
+      const payload = { prompt: action.coprompt + text, replace: !!action.replace, label: action.label };
+      if (action.insert) payload.insert = action.insert;
+      await openPanel(payload);
       return;
     }
 

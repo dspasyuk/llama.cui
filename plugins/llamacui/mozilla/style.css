@@ -298,6 +298,32 @@ input:checked + .slider:before { transform: translateX(20px); }
   display: inline-flex; align-items: center; gap: 4px;
 }
 .exam:hover { color: var(--white); }
+/* Voice (mic) button — sits in the input row, left of Send. */
+#voice-btn {
+  width: 40px; align-self: center; margin-right: 4px;
+  background: none; border: 1px solid var(--btn-stop); color: var(--light);
+  border-radius: 8px; height: 36px; cursor: pointer; font-size: 14px;
+}
+#voice-btn:hover { background: var(--btn-outline); color: var(--white); }
+#voice-btn.listening {
+  color: #f87171; border-color: rgba(248, 113, 113, 0.5);
+  animation: voicePulse 1.4s ease-in-out infinite;
+}
+#voice-btn.speaking {
+  color: #4ade80; border-color: rgba(74, 222, 128, 0.5);
+  animation: voicePulse 1.4s ease-in-out infinite;
+}
+#voice-btn.thinking { color: #8ab4f8; border-color: rgba(138, 180, 248, 0.5); }
+@keyframes voicePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+/* Voice settings block: one flex column so the overlay's 12px gap applies
+   between its children. */
+#voice-settings { display: flex; flex-direction: column; gap: 12px; }
+
+/* ── Voice conversation temporarily DISABLED ──
+   All voice code stays in app.js; remove this single rule to re-enable
+   the mic button and the Voice settings section. */
+#voice-btn, #voice-settings { display: none !important; }
 
 .input-container {
   display: flex; align-items: stretch;
@@ -369,6 +395,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   font-size: 13px; color: var(--white);
 }
 .checkline input { accent-color: #2d6cdf; }
+.hint { font-size: 11.5px; color: var(--light); line-height: 1.4; }
 .row .btn-ghost { flex: 0 0 auto; padding: 6px 10px; }
 .row { display: flex; gap: 8px; }
 .row > * { flex: 1 1 0; }

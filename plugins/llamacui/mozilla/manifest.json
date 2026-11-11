@@ -7,7 +7,10 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "llamacui@local",
-      "strict_min_version": "78.0"
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
     }
   },
 
@@ -19,6 +22,22 @@
     "webRequest",
     "webRequestBlocking",
     "<all_urls>"
+  ],
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://outlook.office.com/*",
+        "https://outlook.live.com/*",
+        "https://outlook.com/*",
+        "https://web.outlook.com/*",
+        "https://outlook.office365.com/*",
+        "https://*.cloud.microsoft/*"
+      ],
+      "js": ["browser-polyfill.js", "context_menu.js"],
+      "all_frames": true,
+      "run_at": "document_idle"
+    }
   ],
 
   "omnibox": { "keyword": "c" },

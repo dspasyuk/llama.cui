@@ -62,6 +62,7 @@
         <div class="input-container" data-max-height="240">
           <textarea id="messageInput" placeholder="Ask a question" rows="1"></textarea>
           <button id="stopgenerator" title="Stop"><i class="fas fa-stop"></i></button>
+          <button id="voice-btn" title="Start voice conversation"><i class="fas fa-microphone"></i></button>
           <button id="sendMessage" title="Send"><i class="fas fa-play"></i></button>
         </div>
       </div>
@@ -125,6 +126,27 @@
           <div class="field">
             <label>API key (optional)</label>
             <input type="password" id="cfg-exa-key" placeholder="keyless by default" autocomplete="off" />
+          </div>
+
+          <div id="voice-settings">
+            <div class="section">Voice</div>
+            <div class="row">
+              <div class="field"><label>Voice source</label>
+                <select id="cfg-ttssource">
+                  <option value="model">Model (lfm3-audio)</option>
+                  <option value="browser">Browser (fast)</option>
+                </select>
+              </div>
+              <div class="field"><label>Model voice</label><select id="cfg-ttsmodelvoice"></select></div>
+            </div>
+            <label class="checkline"><input type="checkbox" id="cfg-voiceloop" /> Keep listening after replies</label>
+            <div class="row">
+              <div class="field"><label>Browser voice</label><select id="cfg-ttsvoice"></select></div>
+              <div class="field"><label>Rate</label><input type="number" id="cfg-ttsrate" min="0.5" max="2" step="0.1" /></div>
+            </div>
+            <div class="field">
+              <div class="hint">Model voice is spoken by lfm3-audio itself — natural, but generation speed depends on your Ollama server (the first call may pay a model load). Browser voice is instant but robotic. The mic auto-selects the first audio-capable model.</div>
+            </div>
           </div>
 
           <div class="row">
