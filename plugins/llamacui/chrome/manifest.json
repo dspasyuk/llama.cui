@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Llama.cui",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Chat with your local llama.cui model from any browser tab",
 
   "permissions": [
