@@ -13,7 +13,9 @@ const DEFAULT_SYSTEM_PROMPT =
   "Output Formatting: Use /n/n```language /n``` formatting for programming code.";
 
 const DEFAULTS = {
+  backend: "ollama", // "ollama" | "llamacpp" — llama.cpp's llama-server (OpenAI-compatible API)
   ollamaUrl: "http://localhost:11434",
+  llamaCppUrl: "http://localhost:9931", // default llama-server --port
   model: "",
   systemPrompt: DEFAULT_SYSTEM_PROMPT,
   temperature: 0.7,
@@ -183,33 +185,144 @@ async function ollamaTags() {
   return data.models || [];
 }
 
+// Model catalog for the configured backend, as { name, display } pairs.
+// name is what we send in requests; display is what the picker shows
+// (llama.cpp ids are often full filesystem paths to the .gguf).
+// override: partial cfg { backend, ollamaUrl, llamaCppUrl } — the settings
+// form passes its unsaved field values so Refresh reflects them.
+async function listModels(override) {
+  const c = { ...state.cfg, ...(override || {}) };
+  if (c.backend === "llamacpp") {
+    const res = await fetch(base(c.llamaCppUrl) + "/v1/models");
+    if (!res.ok) throw new Error(`llama.cpp API error: ${res.status}`);
+    const data = await res.json();
+    return (data.data || []).map((m) => ({
+      name: m.id,
+      display: String(m.id).split(/[\\/]/).pop(),
+    }));
+  }
+  const res = await fetch(base(c.ollamaUrl) + "/api/tags");
+  if (!res.ok) throw new Error(`Ollama API error: ${res.status}`);
+  const data = await res.json();
+  return (data.models || []).map((m) => ({ name: m.name, display: m.name }));
+}
+
 async function refreshModels() {
   const select = $("modelselect");
   const icon = $("modelicon");
   try {
-    const models = (await ollamaTags()).map((m) => m.name);
+    const models = await listModels();
     setConn(true);
     if (models.length === 0) { select.style.display = "none"; icon.style.display = "none"; return; }
     // No model chosen yet, or the configured one no longer exists — default
     // to the first available so the first message works out of the box.
-    if (!models.includes(state.cfg.model)) {
-      state.cfg.model = models[0];
+    if (!models.some((m) => m.name === state.cfg.model)) {
+      state.cfg.model = models[0].name;
       saveConfig();
     }
     const current = state.cfg.model;
     select.style.display = "";
     icon.style.display = "";
     select.innerHTML = models
-      .map((m) => `<option value="${m}"${m === current ? " selected" : ""}>${m}</option>`)
+      .map((m) => `<option value="${m.name}"${m.name === current ? " selected" : ""}>${m.display}</option>`)
       .join("");
   } catch (e) {
     setConn(false);
   }
 }
 
-// Stream a chat completion. Calls paintTile() per chunk; resolves with the
-// final Ollama chunk (done: true) stored in state.doneInfo.
+// Stream a chat completion from the configured backend. Calls paintTile()
+// per chunk; resolves with the final Ollama chunk (done: true) stored in
+// state.doneInfo.
 async function streamOllama(messages) {
+  if (state.cfg.backend === "llamacpp") return streamLlamaCpp(messages);
+  return streamOllamaNative(messages);
+}
+
+// llama.cpp's llama-server: OpenAI-compatible /v1/chat/completions with
+// SSE streaming ("data: {json}" lines, ending with "data: [DONE]").
+// include_usage asks for a final chunk with token counts so the speed
+// badge works like it does with Ollama.
+async function streamLlamaCpp(messages) {
+  const cfg = state.cfg;
+  const controller = new AbortController();
+  state.abort = controller;
+
+  const res = await fetch(base(cfg.llamaCppUrl) + "/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: cfg.model,
+      messages,
+      stream: true,
+      stream_options: { include_usage: true },
+      temperature: cfg.temperature,
+      top_p: cfg.topP,
+    }),
+    signal: controller.signal,
+  });
+  if (!res.ok) {
+    let detail = "";
+    try { detail = (await res.text() || "").slice(0, 300).trim(); } catch (e) {}
+    throw new Error(`llama.cpp API error: ${res.status} ${res.statusText}${detail ? ` — ${detail}` : ""}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  const showThinking = cfg.showThinking;
+  let buffer = "";
+  let thinkingStarted = false;
+  let thinkingClosed = false;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop(); // keep partial line
+    for (const line of lines) {
+      const s = line.trim();
+      if (!s.startsWith("data:")) continue; // skip "event:" and blank lines
+      const payload = s.slice(5).trim();
+      if (!payload || payload === "[DONE]") continue;
+      let parsed;
+      try { parsed = JSON.parse(payload); } catch (e) { continue; }
+      if (parsed.error) throw new Error(parsed.error.message || JSON.stringify(parsed.error));
+      const usage = parsed.usage;
+      if (usage) {
+        state.doneInfo = {
+          eval_count: usage.completion_tokens || state.genTokens,
+          eval_duration: Math.max(1, performance.now() - state.genStart) * 1000, // µs, like Ollama
+        };
+        continue;
+      }
+      const delta = ((parsed.choices && parsed.choices[0]) || {}).delta;
+      if (!delta) continue;
+      const content = delta.content || "";
+      // llama.cpp surfaces chain-of-thought (thinking-capable chat templates)
+      // as reasoning_content on the delta.
+      const reasoning = delta.reasoning_content || delta.reasoning || "";
+      if (reasoning || content) {
+        state.genTokens += 1;
+        if (showThinking && reasoning) {
+          if (!thinkingStarted) { state.bufferText += "<think>\n"; thinkingStarted = true; }
+          state.bufferText += reasoning;
+        }
+        if (content) {
+          if (showThinking && thinkingStarted && !thinkingClosed) {
+            state.bufferText += "\n</think>\n\n";
+            thinkingClosed = true;
+          }
+          state.bufferText += content;
+        }
+        paintTile();
+        emitStats(true);
+      }
+    }
+  }
+}
+
+async function streamOllamaNative(messages) {
   const cfg = state.cfg;
   const controller = new AbortController();
   state.abort = controller;
@@ -327,19 +440,57 @@ async function searchHive(query) {
     body: JSON.stringify({ query, dbName: cfg.hiveDb || "*", searchType: "text" }),
   });
   if (!res.ok) throw new Error(`Hive search error: ${res.status}`);
-  const data = await res.json();
+  return groupHiveResults(await res.json());
+}
+
+// Hive answers /api/search with top-scoring CHUNKS (documents are sliced at
+// index time), so one well-matching document can fill the whole result list.
+// Group the chunks back by source document — merging the best few chunks of
+// each — so the model sees several documents, not five slices of one.
+function groupHiveResults(data) {
   if (!Array.isArray(data)) return [];
-  return data
-    .map((r) => {
-      const m = (r.document && r.document.meta) || {};
-      return {
+  const scoreOf = (r) => Number(
+    r.score != null ? r.score : (r.rrfScore != null ? r.rrfScore : (r.similarity != null ? r.similarity : 0))
+  );
+  const docs = new Map();
+  for (const r of data) {
+    const m = (r.document && r.document.meta) || {};
+    if (!m.content && !m.href) continue;
+    const key = ((r.document && r.document._db) || "") + "|" +
+      (m.href || m.title || (r.document && r.document.id) || "");
+    let d = docs.get(key);
+    if (!d) {
+      d = {
         source: "hive",
         title: m.title || (m.href ? m.href.split("/").pop() : "document"),
         href: m.href || "",
-        content: m.content || "",
+        score: 0,
+        chunks: [],
       };
+      docs.set(key, d);
+    }
+    const s = scoreOf(r);
+    if (s > d.score) d.score = s;
+    if (m.content) d.chunks.push({ text: m.content, score: s });
+  }
+  const MAX_DOCS = 5, MAX_CHUNKS = 3, MAX_CHARS = 4000;
+  return Array.from(docs.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_DOCS)
+    .map((d) => {
+      d.chunks.sort((x, y) => y.score - x.score);
+      const parts = [];
+      let len = 0;
+      for (const c of d.chunks.slice(0, MAX_CHUNKS)) {
+        if (len >= MAX_CHARS) break;
+        const t = c.text.slice(0, MAX_CHARS - len);
+        parts.push(t);
+        len += t.length;
+      }
+      d.content = parts.join("\n […] \n");
+      return d;
     })
-    .filter((r) => r.content || r.href);
+    .filter((d) => d.content || d.href);
 }
 
 // ─────────────── Exa web search client ───────────────
@@ -423,7 +574,10 @@ async function gatherContext(query) {
   if ($("embedcheck").checked && state.cfg.hiveUrl) jobs.push(searchHive(query));
   if (!jobs.length) return [];
   const settled = await Promise.allSettled(jobs);
-  return settled.flatMap((r) => (r.status === "fulfilled" ? r.value : [])).slice(0, 5);
+  // Up to 8 sources overall; the character budget in buildContextText()
+  // trims further. Hive results are already grouped per document (see
+  // groupHiveResults), so these are distinct documents, not chunks.
+  return settled.flatMap((r) => (r.status === "fulfilled" ? r.value : [])).slice(0, 8);
 }
 
 // Format results into the context block appended to the user prompt
@@ -433,8 +587,10 @@ function buildContextText(results) {
   let out = "";
   for (const r of results) {
     const head = r.title ? (r.href ? `${r.title} (${r.href})` : r.title) : r.href;
+    // 4500: large enough for a merged multi-chunk Hive document (groupHiveResults
+    // caps those at 4000); Exa highlights are ≤2000 by request anyway.
     const block = `${head ? `[${head}]
-` : ""}${(r.content || "").slice(0, 2000)}`;
+` : ""}${(r.content || "").slice(0, 4500)}`;
     if (out && out.length + block.length > MAX) break;
     out = out ? out + "\n\n" + block : block;
   }
@@ -1443,9 +1599,21 @@ function stopCapture() {
 }
 
 // ─────────────── settings ───────────────
+// Show only the URL field belonging to the selected backend, so switching
+// Ollama ⇄ llama.cpp flips the visible endpoint (:11434 ⇄ :9931) instead of
+// offering two URLs at once. Both values are kept and saved independently.
+function showBackendFields() {
+  const isLlama = $("cfg-backend").value === "llamacpp";
+  $("cfg-ollama-url").parentElement.style.display = isLlama ? "none" : "";
+  $("cfg-llamacpp-url").parentElement.style.display = isLlama ? "" : "none";
+}
+
 function openSettings() {
   const c = state.cfg;
+  $("cfg-backend").value = c.backend === "llamacpp" ? "llamacpp" : "ollama";
   $("cfg-ollama-url").value = c.ollamaUrl;
+  $("cfg-llamacpp-url").value = c.llamaCppUrl;
+  showBackendFields();
   $("cfg-models").innerHTML = ""; // populated by refreshCfgModels()
   $("cfg-system").value = c.systemPrompt;
   $("cfg-temp").value = c.temperature;
@@ -1508,16 +1676,18 @@ function populateTtsVoices() {
 
 async function refreshCfgModels() {
   const select = $("cfg-models");
-  const url = $("cfg-ollama-url").value.trim() || DEFAULTS.ollamaUrl;
   try {
-    const res = await fetch(base(url) + "/api/tags");
-    const data = await res.json();
-    const models = (data.models || []).map((m) => m.name);
+    // Honour the form's (unsaved) backend/URL fields.
+    const models = await listModels({
+      backend: $("cfg-backend").value,
+      ollamaUrl: $("cfg-ollama-url").value.trim() || DEFAULTS.ollamaUrl,
+      llamaCppUrl: $("cfg-llamacpp-url").value.trim() || DEFAULTS.llamaCppUrl,
+    });
     select.innerHTML = models
-      .map((m) => `<option value="${m}"${m === state.cfg.model ? " selected" : ""}>${m}</option>`)
+      .map((m) => `<option value="${m.name}"${m.name === state.cfg.model ? " selected" : ""}>${m.display}</option>`)
       .join("");
   } catch (e) {
-    select.innerHTML = '<option value="">(Ollama unreachable)</option>';
+    select.innerHTML = '<option value="">(server unreachable)</option>';
   }
 }
 
@@ -1525,7 +1695,9 @@ function closeSettings() { $("settings").classList.remove("show"); }
 
 async function saveSettings() {
   const c = state.cfg;
+  c.backend = $("cfg-backend").value === "llamacpp" ? "llamacpp" : "ollama";
   c.ollamaUrl = $("cfg-ollama-url").value.trim() || DEFAULTS.ollamaUrl;
+  c.llamaCppUrl = $("cfg-llamacpp-url").value.trim() || DEFAULTS.llamaCppUrl;
   c.model = $("cfg-models").value;
   c.systemPrompt = $("cfg-system").value;
   c.temperature = parseFloat($("cfg-temp").value);
@@ -1563,11 +1735,20 @@ async function testConnection() {
   el.className = "status loading";
   el.textContent = "Testing…";
   try {
-    const url = $("cfg-ollama-url").value.trim() || DEFAULTS.ollamaUrl;
-    const res = await fetch(base(url) + "/api/tags");
-    if (!res.ok) throw new Error(`Ollama API error: ${res.status}`);
-    const data = await res.json();
-    let msg = `Ollama OK — ${(data.models || []).length} model(s)`;
+    let msg;
+    if ($("cfg-backend").value === "llamacpp") {
+      const url = $("cfg-llamacpp-url").value.trim() || DEFAULTS.llamaCppUrl;
+      const res = await fetch(base(url) + "/v1/models");
+      if (!res.ok) throw new Error(`llama.cpp API error: ${res.status}`);
+      const data = await res.json();
+      msg = `llama.cpp OK — ${(data.data || []).length} model(s)`;
+    } else {
+      const url = $("cfg-ollama-url").value.trim() || DEFAULTS.ollamaUrl;
+      const res = await fetch(base(url) + "/api/tags");
+      if (!res.ok) throw new Error(`Ollama API error: ${res.status}`);
+      const data = await res.json();
+      msg = `Ollama OK — ${(data.models || []).length} model(s)`;
+    }
     const hiveUrl = $("cfg-hive-url").value.trim();
     if (hiveUrl) {
       try {
@@ -1760,6 +1941,10 @@ function wire() {
   $("cfg-test").addEventListener("click", testConnection);
   $("cfg-close").addEventListener("click", closeSettings);
   $("cfg-models-refresh").addEventListener("click", refreshCfgModels);
+  $("cfg-backend").addEventListener("change", () => {
+    showBackendFields();
+    refreshCfgModels(); // model list follows the newly selected backend
+  });
   $("exam-btn").addEventListener("click", () => { $("messageInput").value = EXAM_PROMPT; sendMessage(); });
   $("voice-btn").addEventListener("click", onVoiceButton);
 

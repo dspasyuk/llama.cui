@@ -79,6 +79,44 @@
     sendOpen(payload);
   }
 
+  // Small bottom-center toast; the ingest flow opens no panel, so this is
+  // the user's only feedback.
+  function toast(msg, bad) {
+    const el = styled("div", {
+      position: "fixed",
+      left: "50%",
+      bottom: "28px",
+      transform: "translateX(-50%)",
+      zIndex: "2147483647",
+      padding: "8px 14px",
+      background: bad ? "#4a1f24" : "#1e3322",
+      color: "#e8eaed",
+      border: "1px solid rgba(255,255,255,0.18)",
+      borderRadius: "8px",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+      fontFamily: '"Segoe UI", system-ui, -apple-system, sans-serif',
+      fontSize: "13px",
+      maxWidth: "70vw",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+    });
+    el.textContent = msg;
+    (document.body || document.documentElement).appendChild(el);
+    setTimeout(() => el.remove(), 3200);
+  }
+
+  async function ingestHere(t, scope) {
+    toast("Ingesting into Hive…");
+    try {
+      const res = await browser.runtime.sendMessage({ type: "INGEST", text: t, title: document.title, scope });
+      if (res && res.success) toast("Saved to Hive → " + (res.db || "") + " (" + (res.entries || "?") + " slices)");
+      else toast("Hive ingest failed: " + ((res && res.error) || "unknown error"), true);
+    } catch (e) {
+      toast("Hive ingest failed: " + e.message, true);
+    }
+  }
+
   function buildMenu(items, x, y) {
     hideMenu();
     const menu = styled("div", {
@@ -165,6 +203,26 @@
           const snippet = t.length > 4000 ? t.slice(0, 4000) + "…" : t;
           hideMenu();
           sendOpen({ prompt: "Summarize this page content:\n\n" + snippet, replace: false, label: "Summarize page" });
+        },
+      });
+      items.push({
+        label: "Ingest selection into Hive",
+        run: () => {
+          hideMenu();
+          ingestHere(text, "selection"); // just the selected text
+        },
+      });
+      items.push({
+        label: "Snapshot this page into Hive",
+        run: () => {
+          // Everything visible in this frame (in the Outlook reading pane
+          // that IS the email). If the frame has no real body text — e.g.
+          // the mail lives one iframe deeper — fall back to the selection.
+          let t = "";
+          try { t = document.body ? (document.body.innerText || "") : ""; } catch (e) {}
+          if (t.trim().length < 80) t = text;
+          hideMenu();
+          ingestHere(t, "page");
         },
       });
       buildMenu(items, x, y);

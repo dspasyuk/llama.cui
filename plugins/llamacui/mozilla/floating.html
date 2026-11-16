@@ -73,10 +73,21 @@
           <h1>Settings</h1>
           <div class="sub">Stored locally in this browser</div>
 
-          <div class="section">Ollama</div>
+          <div class="section">Model server</div>
           <div class="field">
-            <label>Server URL</label>
+            <label>Backend</label>
+            <select id="cfg-backend">
+              <option value="ollama">Ollama</option>
+              <option value="llamacpp">llama.cpp server</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Ollama URL</label>
             <input type="text" id="cfg-ollama-url" placeholder="http://localhost:11434" />
+          </div>
+          <div class="field">
+            <label>llama.cpp URL</label>
+            <input type="text" id="cfg-llamacpp-url" placeholder="http://localhost:9931" />
           </div>
           <div class="field">
             <label>Model</label>

@@ -87,6 +87,92 @@ async function getPageText(tabId) {
   }
 }
 
+// Page text from EVERY frame, concatenated — Outlook renders the mail in an
+// iframe, so a top-frame-only read would miss it.
+async function getPageTextAllFrames(tabId) {
+  try {
+    const results = await browser.scripting.executeScript({
+      target: { tabId, allFrames: true },
+      func: () => (document.body ? document.body.innerText || "" : ""),
+    });
+    return (results || [])
+      .map((r) => (typeof r.result === "string" ? r.result : ""))
+      .filter((t) => t.trim())
+      .join("\n\n");
+  } catch (e) {
+    return "";
+  }
+}
+
+// Tidy a browser tab title into a document title: drop the unread-count
+// prefix webmail adds ("(12) …") and the trailing app name.
+function cleanTitle(t) {
+  return (t || "")
+    .replace(/^\s*\(\d+\)\s*/, "")
+    .replace(/\s*[-–—]\s*(Outlook|Microsoft Outlook|Gmail)\s*$/i, "")
+    .trim();
+}
+
+// ─────────────── Hive ingest ───────────────
+// Store a snapshot (page text, email body, …) as a text document on the
+// Hive server, in the signed-in user's default database — by convention
+// the database named after the hiveUser configured in settings. The login
+// handshake mirrors app.js: POST /login answers JSON { success } and sets
+// a session cookie that credentials:"include" replays on the upload call.
+async function ingestToHive(text, title) {
+  const stored = await browser.storage.local.get("llcuiConfig");
+  const cfg = stored.llcuiConfig || {};
+  const hiveUrl = (cfg.hiveUrl || "").trim().replace(/\/+$/, "");
+  if (!hiveUrl) throw new Error("Hive URL is not set in settings");
+  if (!text || !text.trim()) throw new Error("nothing to ingest");
+  const db = (cfg.hiveUser || "").trim()
+    || (cfg.hiveDb && cfg.hiveDb !== "*" ? cfg.hiveDb : "default");
+  const MAX_CHARS = 300000;
+  const clipped = text.length > MAX_CHARS ? text.slice(0, MAX_CHARS) : text;
+
+  const login = await fetch(hiveUrl + "/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+    body: JSON.stringify({ username: cfg.hiveUser || "", password: cfg.hivePass || "" }),
+    credentials: "include",
+  });
+  const isJson = (login.headers.get("content-type") || "").includes("application/json");
+  const loginData = isJson ? await login.json().catch(() => ({})) : {};
+  if (!isJson || loginData.success !== true) {
+    throw new Error("Hive login failed — check the Hive user/password in settings");
+  }
+  const res = await fetch(hiveUrl + "/api/databases/text", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dbName: db, title: title || "snapshot", text: clipped }),
+    credentials: "include",
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data && data.error) || "Hive upload failed (" + res.status + ")");
+  return { db, entries: data.entries };
+}
+
+// Toolbar-icon badge feedback for menu-triggered ingests — this action
+// opens no panel, so the badge (✓ / !) is the only confirmation.
+function flashBadge(tabId, mark, color) {
+  const act = browser.action || browser.browserAction;
+  if (!act || !act.setBadgeText) return;
+  try { act.setBadgeBackgroundColor({ tabId, color }); } catch (e) {}
+  try { act.setBadgeText({ tabId, text: mark }); } catch (e) {}
+  setTimeout(() => { try { act.setBadgeText({ tabId, text: "" }); } catch (e) {} }, 2500);
+}
+
+async function runIngest(tabId, text, title) {
+  try {
+    const r = await ingestToHive(text, title);
+    flashBadge(tabId, "✓", "#1a7f37");
+    console.log(`[llamacui] ingested "${title}" → Hive "${r.db}" (${r.entries || "?"} slices)`);
+  } catch (e) {
+    flashBadge(tabId, "!", "#c62828");
+    console.error("[llamacui] ingest failed:", e.message);
+  }
+}
+
 // Runs a function in the active tab's page context. With allFrames it runs in
 // every frame and returns the first frame where the op succeeded — that's the
 // frame holding the real selection (e.g. Outlook renders the email body in an
@@ -235,6 +321,15 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const result = await execInTab(tab.id, selectionOp, [mode, message.text], true, pick);
           return { success: !!(result && result.ok), error: result && result.error };
         }
+        case "INGEST": {
+          // In-page menu ingest → Hive. The tab's own title (the email
+          // subject in Outlook) beats the frame's usually-empty document.title.
+          // scope "selection" marks selection-only ingests in the document title.
+          let title = cleanTitle((sender && sender.tab && sender.tab.title) || message.title);
+          if (message.scope === "selection" && title) title += " (selection)";
+          const r = await ingestToHive(message.text, title);
+          return { success: true, db: r.db, entries: r.entries };
+        }
         default:
           return { success: false, error: "unknown message " + message.type };
       }
@@ -320,6 +415,8 @@ async function buildMenus() {
     }
     await safe({ id: "llcui-ask-selection", title: "Ask about this…", contexts: ["selection"] });
     await safe({ id: "llcui-ask-page", title: "Summarize this page", contexts: ["page"] });
+    await safe({ id: "llcui-ingest-selection", title: "Ingest selection into Hive", contexts: ["selection"] });
+    await safe({ id: "llcui-ingest-page", title: "Snapshot page into Hive", contexts: ["page"] });
 
     console.log("[llamacui] built " + ok + " context menu items");
   })();
@@ -380,6 +477,20 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
       await browser.storage.local.set({
         llcuiPendingRequest: { prompt: "Summarize this page content:\n\n" + snippet, replace: false, label: "Summarize page" },
       });
+      return;
+    }
+
+    if (id === "llcui-ingest-selection") {
+      // Just the selected text, not the whole page. Badge feedback, no panel.
+      await runIngest(tab.id, info.selectionText || "", cleanTitle(tab.title) + " (selection)");
+      return;
+    }
+
+    if (id === "llcui-ingest-page") {
+      // Whole-page snapshot: every frame's text concatenated (the mail
+      // lives in an iframe). Badge feedback, no panel.
+      const text = await getPageTextAllFrames(tab.id);
+      await runIngest(tab.id, text, cleanTitle(tab.title));
     }
   })();
 });
