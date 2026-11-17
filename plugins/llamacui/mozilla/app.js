@@ -13,9 +13,10 @@ const DEFAULT_SYSTEM_PROMPT =
   "Output Formatting: Use /n/n```language /n``` formatting for programming code.";
 
 const DEFAULTS = {
-  backend: "ollama", // "ollama" | "llamacpp" — llama.cpp's llama-server (OpenAI-compatible API)
+  backend: "ollama", // "ollama" | "llamacpp" (llama-server) | "lmstudio" — the latter two share the OpenAI-compatible API
   ollamaUrl: "http://localhost:11434",
   llamaCppUrl: "http://localhost:9931", // default llama-server --port
+  lmstudioUrl: "http://127.0.0.1:1234", // LM Studio's default dev server port
   model: "",
   systemPrompt: DEFAULT_SYSTEM_PROMPT,
   temperature: 0.7,
@@ -192,9 +193,10 @@ async function ollamaTags() {
 // form passes its unsaved field values so Refresh reflects them.
 async function listModels(override) {
   const c = { ...state.cfg, ...(override || {}) };
-  if (c.backend === "llamacpp") {
-    const res = await fetch(base(c.llamaCppUrl) + "/v1/models");
-    if (!res.ok) throw new Error(`llama.cpp API error: ${res.status}`);
+  if (c.backend === "llamacpp" || c.backend === "lmstudio") {
+    const isStudio = c.backend === "lmstudio";
+    const res = await fetch(base(isStudio ? c.lmstudioUrl : c.llamaCppUrl) + "/v1/models");
+    if (!res.ok) throw new Error(`${isStudio ? "LM Studio" : "llama.cpp"} API error: ${res.status}`);
     const data = await res.json();
     return (data.data || []).map((m) => ({
       name: m.id,
@@ -235,20 +237,22 @@ async function refreshModels() {
 // per chunk; resolves with the final Ollama chunk (done: true) stored in
 // state.doneInfo.
 async function streamOllama(messages) {
-  if (state.cfg.backend === "llamacpp") return streamLlamaCpp(messages);
+  const b = state.cfg.backend;
+  if (b === "llamacpp") return streamOpenAICompat(messages, state.cfg.llamaCppUrl, "llama.cpp");
+  if (b === "lmstudio") return streamOpenAICompat(messages, state.cfg.lmstudioUrl, "LM Studio");
   return streamOllamaNative(messages);
 }
 
-// llama.cpp's llama-server: OpenAI-compatible /v1/chat/completions with
-// SSE streaming ("data: {json}" lines, ending with "data: [DONE]").
-// include_usage asks for a final chunk with token counts so the speed
-// badge works like it does with Ollama.
-async function streamLlamaCpp(messages) {
+// OpenAI-compatible /v1/chat/completions with SSE streaming ("data: {json}"
+// lines, ending with "data: [DONE]") — served by both llama.cpp's
+// llama-server and LM Studio. include_usage asks for a final chunk with
+// token counts so the speed badge works like it does with Ollama.
+async function streamOpenAICompat(messages, url, label) {
   const cfg = state.cfg;
   const controller = new AbortController();
   state.abort = controller;
 
-  const res = await fetch(base(cfg.llamaCppUrl) + "/v1/chat/completions", {
+  const res = await fetch(base(url) + "/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -264,7 +268,7 @@ async function streamLlamaCpp(messages) {
   if (!res.ok) {
     let detail = "";
     try { detail = (await res.text() || "").slice(0, 300).trim(); } catch (e) {}
-    throw new Error(`llama.cpp API error: ${res.status} ${res.statusText}${detail ? ` — ${detail}` : ""}`);
+    throw new Error(`${label} API error: ${res.status} ${res.statusText}${detail ? ` — ${detail}` : ""}`);
   }
 
   const reader = res.body.getReader();
@@ -1600,19 +1604,23 @@ function stopCapture() {
 
 // ─────────────── settings ───────────────
 // Show only the URL field belonging to the selected backend, so switching
-// Ollama ⇄ llama.cpp flips the visible endpoint (:11434 ⇄ :9931) instead of
-// offering two URLs at once. Both values are kept and saved independently.
+// Ollama ⇄ llama.cpp ⇄ LM Studio flips the visible endpoint (:11434 ⇄ :9931
+// ⇄ :1234) instead of offering three URLs at once. All values are kept and
+// saved independently.
+const BACKEND_URL_FIELDS = { ollama: "cfg-ollama-url", llamacpp: "cfg-llamacpp-url", lmstudio: "cfg-lmstudio-url" };
 function showBackendFields() {
-  const isLlama = $("cfg-backend").value === "llamacpp";
-  $("cfg-ollama-url").parentElement.style.display = isLlama ? "none" : "";
-  $("cfg-llamacpp-url").parentElement.style.display = isLlama ? "" : "none";
+  const active = BACKEND_URL_FIELDS[$("cfg-backend").value] || "cfg-ollama-url";
+  for (const id of Object.values(BACKEND_URL_FIELDS)) {
+    $(id).parentElement.style.display = id === active ? "" : "none";
+  }
 }
 
 function openSettings() {
   const c = state.cfg;
-  $("cfg-backend").value = c.backend === "llamacpp" ? "llamacpp" : "ollama";
+  $("cfg-backend").value = c.backend === "llamacpp" || c.backend === "lmstudio" ? c.backend : "ollama";
   $("cfg-ollama-url").value = c.ollamaUrl;
   $("cfg-llamacpp-url").value = c.llamaCppUrl;
+  $("cfg-lmstudio-url").value = c.lmstudioUrl;
   showBackendFields();
   $("cfg-models").innerHTML = ""; // populated by refreshCfgModels()
   $("cfg-system").value = c.systemPrompt;
@@ -1682,6 +1690,7 @@ async function refreshCfgModels() {
       backend: $("cfg-backend").value,
       ollamaUrl: $("cfg-ollama-url").value.trim() || DEFAULTS.ollamaUrl,
       llamaCppUrl: $("cfg-llamacpp-url").value.trim() || DEFAULTS.llamaCppUrl,
+      lmstudioUrl: $("cfg-lmstudio-url").value.trim() || DEFAULTS.lmstudioUrl,
     });
     select.innerHTML = models
       .map((m) => `<option value="${m.name}"${m.name === state.cfg.model ? " selected" : ""}>${m.display}</option>`)
@@ -1695,9 +1704,11 @@ function closeSettings() { $("settings").classList.remove("show"); }
 
 async function saveSettings() {
   const c = state.cfg;
-  c.backend = $("cfg-backend").value === "llamacpp" ? "llamacpp" : "ollama";
+  const b = $("cfg-backend").value;
+  c.backend = b === "llamacpp" || b === "lmstudio" ? b : "ollama";
   c.ollamaUrl = $("cfg-ollama-url").value.trim() || DEFAULTS.ollamaUrl;
   c.llamaCppUrl = $("cfg-llamacpp-url").value.trim() || DEFAULTS.llamaCppUrl;
+  c.lmstudioUrl = $("cfg-lmstudio-url").value.trim() || DEFAULTS.lmstudioUrl;
   c.model = $("cfg-models").value;
   c.systemPrompt = $("cfg-system").value;
   c.temperature = parseFloat($("cfg-temp").value);
@@ -1736,12 +1747,16 @@ async function testConnection() {
   el.textContent = "Testing…";
   try {
     let msg;
-    if ($("cfg-backend").value === "llamacpp") {
-      const url = $("cfg-llamacpp-url").value.trim() || DEFAULTS.llamaCppUrl;
+    const backend = $("cfg-backend").value;
+    if (backend === "llamacpp" || backend === "lmstudio") {
+      const isStudio = backend === "lmstudio";
+      const label = isStudio ? "LM Studio" : "llama.cpp";
+      const url = (isStudio ? $("cfg-lmstudio-url").value : $("cfg-llamacpp-url").value).trim()
+        || (isStudio ? DEFAULTS.lmstudioUrl : DEFAULTS.llamaCppUrl);
       const res = await fetch(base(url) + "/v1/models");
-      if (!res.ok) throw new Error(`llama.cpp API error: ${res.status}`);
+      if (!res.ok) throw new Error(`${label} API error: ${res.status}`);
       const data = await res.json();
-      msg = `llama.cpp OK — ${(data.data || []).length} model(s)`;
+      msg = `${label} OK — ${(data.data || []).length} model(s)`;
     } else {
       const url = $("cfg-ollama-url").value.trim() || DEFAULTS.ollamaUrl;
       const res = await fetch(base(url) + "/api/tags");
